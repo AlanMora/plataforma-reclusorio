@@ -6,8 +6,8 @@ import { ObservabilityModule } from '@icms/observability';
 import { SharedAuthModule, JwtAuthGuard } from '@icms/auth';
 import { DatabaseModule } from '@icms/database';
 import { MessagingModule } from '@icms/messaging';
+import { RedisModule } from '@icms/redis';
 import { User } from './users/user.entity';
-import { Session } from './sessions/session.entity';
 import { AuditLog } from './audit/audit-log.entity';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -21,8 +21,9 @@ import { AuditModule } from './audit/audit.module';
     LoggingModule,
     ObservabilityModule,
     SharedAuthModule,
+    RedisModule,
     MessagingModule.forRoot(),
-    DatabaseModule.forRoot({ database: 'icms_auth', entities: [User, Session, AuditLog] }),
+    DatabaseModule.forRoot({ database: 'icms_auth', entities: [User, AuditLog] }),
     AuthModule,
     UsersModule,
     RecoveryModule,

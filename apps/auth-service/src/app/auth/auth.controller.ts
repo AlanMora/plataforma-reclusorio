@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Public } from '@icms/auth';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { AuthenticatedUser, CurrentUser, Public } from '@icms/auth';
 import { AuthService } from './auth.service';
 import { LoginDto, RefreshDto, RegisterDto } from './dto';
 
@@ -27,9 +27,18 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Renovar access token con refresh token' })
-  refresh(@Body() _dto: RefreshDto) {
-    // TODO(proyecto): validar refresh token contra la sesión y rotar.
-    return { message: 'not-implemented' };
+  @ApiOperation({ summary: 'Renovar access token (valida y rota el refresh en Redis)' })
+  refresh(@Body() dto: RefreshDto) {
+    return this.auth.refresh(dto.refreshToken);
+  }
+
+  @Post('logout')
+  @HttpCode(204)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cerrar sesión (revoca la sesión actual en Redis)' })
+  async logout(@CurrentUser() user: AuthenticatedUser) {
+    if (user.sessionId) {
+      await this.auth.revoke(user.sessionId);
+    }
   }
 }

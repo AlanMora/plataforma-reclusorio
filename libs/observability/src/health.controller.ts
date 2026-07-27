@@ -1,16 +1,15 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, VERSION_NEUTRAL } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { HealthCheck, HealthCheckService } from '@nestjs/terminus';
 
 /**
- * Endpoints de salud estándar:
+ * Endpoints de salud estándar (sin versión ni prefijo `/api`, para que balanceadores
+ * y healthchecks de Docker los alcancen en una ruta fija):
  *  - `GET /health`        liveness (¿el proceso responde?)
  *  - `GET /health/ready`  readiness (¿dependencias listas?)
- *
- * Cada servicio puede extender la lista de indicadores (DB, Redis, broker).
  */
 @ApiTags('health')
-@Controller('health')
+@Controller({ path: 'health', version: VERSION_NEUTRAL })
 export class HealthController {
   constructor(private readonly health: HealthCheckService) {}
 

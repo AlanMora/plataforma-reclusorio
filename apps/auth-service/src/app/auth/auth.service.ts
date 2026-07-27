@@ -3,13 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
+import * as bcrypt from 'bcryptjs';
 import { JwtPayload } from '@icms/auth';
 import { UnauthorizedDomainException } from '@icms/common';
 import { EventPublisher } from '@icms/messaging';
 import { EventNames } from '@icms/contracts';
 import { User } from '../users/user.entity';
-import { Session } from '../sessions/session.entity';
+import { SessionStore } from '../sessions/session-store.service';
 import { LoginDto, RegisterDto } from './dto';
 
 export interface TokenPair {
@@ -18,10 +19,39 @@ export interface TokenPair {
   expiresIn: string;
 }
 
+const BCRYPT_ROUNDS = 12;
+
 /**
- * Núcleo de autenticación. El andamiaje deja el flujo y las firmas listas;
- * la verificación de contraseñas (bcrypt/argon2) y el hashing de refresh tokens
- * se completan por proyecto.
+ * Hash de un refresh token con SHA-256. Los tokens son de alta entropía, así que
+ * un hash rápido es apropiado — y evita la truncación de bcrypt a 72 bytes (un
+ * JWT excede ese límite y su parte única quedaría fuera).
+ */
+function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+/** Comparación en tiempo constante de dos hashes hex. */
+function safeEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  return bufA.length === bufB.length && timingSafeEqual(bufA, bufB);
+}
+
+/** Convierte TTLs tipo "900s", "15m", "7d" a segundos. */
+function ttlToSeconds(ttl: string): number {
+  const match = /^(\d+)\s*([smhd])?$/.exec(ttl.trim());
+  if (!match) return 0;
+  const value = Number(match[1]);
+  const unit = match[2] ?? 's';
+  const factors: Record<string, number> = { s: 1, m: 60, h: 3600, d: 86400 };
+  return value * (factors[unit] ?? 1);
+}
+
+/**
+ * Núcleo de autenticación:
+ *  - Contraseñas hasheadas con bcrypt (nunca en claro).
+ *  - Sesiones y refresh tokens en Redis (revocación instantánea + TTL nativo).
+ *  - Rotación de refresh token en cada renovación.
  */
 @Injectable()
 export class AuthService {
@@ -29,17 +59,17 @@ export class AuthService {
 
   constructor(
     @InjectRepository(User) private readonly users: Repository<User>,
-    @InjectRepository(Session) private readonly sessions: Repository<Session>,
+    private readonly sessions: SessionStore,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly events: EventPublisher,
   ) {}
 
   async register(dto: RegisterDto): Promise<{ id: string }> {
-    // TODO(proyecto): hashear contraseña con argon2/bcrypt.
+    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
     const user = this.users.create({
       email: dto.email,
-      passwordHash: `hash:${dto.password}`,
+      passwordHash,
       tenantId: dto.tenantId,
       roles: ['user'],
     });
@@ -50,15 +80,20 @@ export class AuthService {
 
   async login(dto: LoginDto): Promise<TokenPair> {
     const user = await this.users.findOne({ where: { email: dto.email, isActive: true } });
-    // TODO(proyecto): verificar hash de contraseña y, si aplica, el OTP de 2FA.
-    if (!user || user.passwordHash !== `hash:${dto.password}`) {
+    // Compara siempre contra un hash (aunque el usuario no exista) para no filtrar
+    // por tiempo si un email está o no registrado.
+    const stored = user?.passwordHash ?? '$2a$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinva';
+    const ok = await bcrypt.compare(dto.password, stored);
+    if (!user || !ok) {
       throw new UnauthorizedDomainException('Credenciales inválidas');
     }
+    // TODO(proyecto): si user.twoFactorEnabled, validar dto.otp antes de emitir tokens.
     return this.issueTokens(user);
   }
 
-  async issueTokens(user: User): Promise<TokenPair> {
-    const sessionId = randomUUID();
+  /** Emite un par de tokens. Si `existingSid` se pasa, rota la sesión existente. */
+  async issueTokens(user: User, existingSid?: string): Promise<TokenPair> {
+    const sessionId = existingSid ?? randomUUID();
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
@@ -74,25 +109,59 @@ export class AuthService {
     const secret = this.config.get<string>('JWT_SECRET', 'change-me-in-production');
 
     const accessToken = await this.jwt.signAsync(payload, { secret, expiresIn: accessTtl });
+    // `jti` único: garantiza que cada refresh token sea distinto (aunque se emitan
+    // en el mismo segundo), para que la rotación invalide de verdad el anterior.
     const refreshToken = await this.jwt.signAsync(
-      { sub: user.id, sid: sessionId },
+      { sub: user.id, sid: sessionId, jti: randomUUID() },
       { secret, expiresIn: refreshTtl },
     );
 
-    await this.sessions.save(
-      this.sessions.create({
-        id: sessionId,
-        userId: user.id,
-        refreshTokenHash: `hash:${refreshToken}`,
-        expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000),
-      }),
-    );
+    const refreshTokenHash = hashToken(refreshToken);
+    if (existingSid) {
+      await this.sessions.rotate(sessionId, refreshTokenHash);
+    } else {
+      await this.sessions.create(
+        sessionId,
+        { userId: user.id, refreshTokenHash, createdAt: new Date().toISOString() },
+        ttlToSeconds(refreshTtl),
+      );
+    }
 
     return { accessToken, refreshToken, expiresIn: accessTtl };
   }
 
+  /** Renueva el access token validando y ROTANDO el refresh token contra Redis. */
+  async refresh(refreshToken: string): Promise<TokenPair> {
+    const secret = this.config.get<string>('JWT_SECRET', 'change-me-in-production');
+    let decoded: { sub: string; sid: string };
+    try {
+      decoded = this.jwt.verify(refreshToken, { secret });
+    } catch {
+      throw new UnauthorizedDomainException('Refresh token inválido o expirado');
+    }
+
+    const session = await this.sessions.get(decoded.sid);
+    if (!session) {
+      throw new UnauthorizedDomainException('Sesión inválida o revocada');
+    }
+
+    const matches = safeEqual(hashToken(refreshToken), session.refreshTokenHash);
+    if (!matches) {
+      // Posible reutilización/robo de token: revoca la sesión por seguridad.
+      await this.sessions.revoke(decoded.sid);
+      throw new UnauthorizedDomainException('Refresh token no reconocido');
+    }
+
+    const user = await this.users.findOne({ where: { id: decoded.sub, isActive: true } });
+    if (!user) {
+      throw new UnauthorizedDomainException('Usuario no válido');
+    }
+    return this.issueTokens(user, decoded.sid);
+  }
+
+  /** Revoca una sesión concreta (logout). */
   async revoke(sessionId: string): Promise<void> {
-    await this.sessions.update({ id: sessionId }, { revokedAt: new Date() });
+    await this.sessions.revoke(sessionId);
     await this.events.publish(EventNames.SessionRevoked, { sessionId });
   }
 }

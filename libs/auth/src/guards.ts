@@ -29,6 +29,13 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   }
 
   canActivate(context: ExecutionContext) {
+    // Endpoints de infraestructura siempre accesibles (healthchecks / scraping).
+    const req = context.switchToHttp().getRequest();
+    const path: string = (req?.path ?? req?.url ?? '').split('?')[0];
+    if (path === '/health' || path === '/health/ready' || path === '/metrics') {
+      return true;
+    }
+
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),

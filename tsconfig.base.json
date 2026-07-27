@@ -30,7 +30,8 @@
       "@icms/database": ["libs/database/src/index.ts"],
       "@icms/logging": ["libs/logging/src/index.ts"],
       "@icms/messaging": ["libs/messaging/src/index.ts"],
-      "@icms/observability": ["libs/observability/src/index.ts"]
+      "@icms/observability": ["libs/observability/src/index.ts"],
+      "@icms/redis": ["libs/redis/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp", "dist"]
