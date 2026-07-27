@@ -40,3 +40,7 @@ Thumbs.db
 # Infra data (local volumes)
 infra/**/data/
 *.pem
+
+# Staging del split a repos
+.split/
+.split-out/
