@@ -1,0 +1,158 @@
+# =====================================================================
+# ICMS · Entorno de DESARROLLO en Docker (infra + 10 servicios)
+#   docker compose -f docker-compose.dev.yml up
+# Hot-reload: el código se monta como volumen y `nx serve` recompila solo.
+# Subconjunto:  docker compose -f docker-compose.dev.yml up gateway-service auth-service
+# =====================================================================
+name: icms-dev
+
+# Reutiliza la infraestructura ya definida (Postgres, Redis, RabbitMQ, MinIO, observabilidad).
+include:
+  - infra/docker-compose.yml
+
+# ---- Entorno común a todos los servicios (hostnames de la red de Docker) ----
+x-service-env: &service-env
+  NODE_ENV: development
+  LOG_LEVEL: debug
+  NX_DAEMON: 'false' # evita choques del daemon de Nx entre contenedores
+  JWT_SECRET: change-me-in-production
+  JWT_ACCESS_TTL: 900s
+  JWT_REFRESH_TTL: 7d
+  JWT_ISSUER: icms-platform
+  POSTGRES_HOST: postgres-primary
+  POSTGRES_PORT: '5432'
+  POSTGRES_REPLICA_HOST: postgres-replica
+  POSTGRES_REPLICA_PORT: '5432'
+  POSTGRES_USER: icms
+  POSTGRES_PASSWORD: icms
+  POSTGRES_DB: icms
+  REDIS_HOST: redis
+  REDIS_PORT: '6379'
+  RABBITMQ_URL: amqp://icms:icms@rabbitmq:5672
+  RABBITMQ_EXCHANGE: icms.events
+  S3_ENDPOINT: http://minio:9000
+  S3_REGION: us-east-1
+  S3_ACCESS_KEY: icmsminio
+  S3_SECRET_KEY: icmsminio123
+  S3_BUCKET: icms-files
+  S3_FORCE_PATH_STYLE: 'true'
+
+# ---- Base común de cada servicio de desarrollo ----
+x-dev-service: &dev-service
+  build:
+    context: .
+    dockerfile: Dockerfile.dev
+  image: icms-dev-base
+  restart: unless-stopped
+  networks: [icms]
+  volumes:
+    - .:/workspace # código en caliente
+    - /workspace/node_modules # preserva las deps Linux de la imagen
+    - /workspace/.nx # aísla la caché de Nx por contenedor
+  depends_on:
+    postgres-primary:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+
+services:
+  gateway-service:
+    <<: *dev-service
+    command: pnpm exec nx serve gateway-service
+    ports: ['3000:3000']
+    environment:
+      <<: *service-env
+      GATEWAY_PORT: '3000'
+      RATE_LIMIT_TTL: '60'
+      RATE_LIMIT_MAX: '120'
+      AUTH_SERVICE_URL: http://auth-service:3001
+      CONFIGURATION_SERVICE_URL: http://configuration-service:3002
+      CORE_DOMAIN_SERVICE_URL: http://core-domain-service:3003
+      REPORTING_SERVICE_URL: http://reporting-service:3004
+      NOTIFICATION_SERVICE_URL: http://notification-service:3005
+      INTEGRATION_SERVICE_URL: http://integration-service:3006
+      FILE_SERVICE_URL: http://file-service:3007
+      REALTIME_SERVICE_URL: http://realtime-service:3009
+
+  auth-service:
+    <<: *dev-service
+    command: pnpm exec nx serve auth-service
+    ports: ['3001:3001']
+    environment:
+      <<: *service-env
+      AUTH_PORT: '3001'
+
+  configuration-service:
+    <<: *dev-service
+    command: pnpm exec nx serve configuration-service
+    ports: ['3002:3002']
+    environment:
+      <<: *service-env
+      CONFIGURATION_PORT: '3002'
+
+  core-domain-service:
+    <<: *dev-service
+    command: pnpm exec nx serve core-domain-service
+    ports: ['3003:3003']
+    environment:
+      <<: *service-env
+      CORE_DOMAIN_PORT: '3003'
+
+  reporting-service:
+    <<: *dev-service
+    command: pnpm exec nx serve reporting-service
+    ports: ['3004:3004']
+    environment:
+      <<: *service-env
+      REPORTING_PORT: '3004'
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      postgres-replica:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  notification-service:
+    <<: *dev-service
+    command: pnpm exec nx serve notification-service
+    ports: ['3005:3005']
+    environment:
+      <<: *service-env
+      NOTIFICATION_PORT: '3005'
+
+  integration-service:
+    <<: *dev-service
+    command: pnpm exec nx serve integration-service
+    ports: ['3006:3006']
+    environment:
+      <<: *service-env
+      INTEGRATION_PORT: '3006'
+
+  file-service:
+    <<: *dev-service
+    command: pnpm exec nx serve file-service
+    ports: ['3007:3007']
+    environment:
+      <<: *service-env
+      FILE_PORT: '3007'
+
+  scheduler-service:
+    <<: *dev-service
+    command: pnpm exec nx serve scheduler-service
+    ports: ['3008:3008']
+    environment:
+      <<: *service-env
+      SCHEDULER_PORT: '3008'
+
+  realtime-service:
+    <<: *dev-service
+    command: pnpm exec nx serve realtime-service
+    ports: ['3009:3009']
+    environment:
+      <<: *service-env
+      REALTIME_PORT: '3009'

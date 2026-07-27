@@ -1,0 +1,218 @@
+# =====================================================================
+# ICMS · Entorno de PRODUCCIÓN en Docker (infra + 10 imágenes compiladas)
+#   docker compose -f docker-compose.prod.yml build
+#   docker compose -f docker-compose.prod.yml up -d
+# Imágenes esbeltas (node slim + solo deps de producción), sin montaje de código.
+# Los secretos se toman del entorno/.env (ver .env.docker.example).
+# =====================================================================
+name: icms-prod
+
+include:
+  - infra/docker-compose.yml
+
+# ---- Entorno común (hostnames de Docker; secretos vía variables) ----
+x-service-env: &service-env
+  NODE_ENV: production
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+  JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-900s}
+  JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
+  JWT_ISSUER: ${JWT_ISSUER:-icms-platform}
+  POSTGRES_HOST: postgres-primary
+  POSTGRES_PORT: '5432'
+  POSTGRES_REPLICA_HOST: postgres-replica
+  POSTGRES_REPLICA_PORT: '5432'
+  POSTGRES_USER: ${POSTGRES_USER:-icms}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-icms}
+  POSTGRES_DB: ${POSTGRES_DB:-icms}
+  REDIS_HOST: redis
+  REDIS_PORT: '6379'
+  RABBITMQ_URL: amqp://${RABBITMQ_USER:-icms}:${RABBITMQ_PASSWORD:-icms}@rabbitmq:5672
+  RABBITMQ_EXCHANGE: icms.events
+  S3_ENDPOINT: http://minio:9000
+  S3_REGION: us-east-1
+  S3_ACCESS_KEY: ${S3_ACCESS_KEY:-icmsminio}
+  S3_SECRET_KEY: ${S3_SECRET_KEY:-icmsminio123}
+  S3_BUCKET: ${S3_BUCKET:-icms-files}
+  S3_FORCE_PATH_STYLE: 'true'
+
+x-prod-service: &prod-service
+  restart: unless-stopped
+  networks: [icms]
+  depends_on:
+    postgres-primary:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+
+services:
+  gateway-service:
+    <<: *prod-service
+    build: { context: ., dockerfile: Dockerfile, args: { SERVICE: gateway-service } }
+    image: icms/gateway-service:latest
+    ports: ['3000:3000']
+    environment:
+      <<: *service-env
+      GATEWAY_PORT: '3000'
+      RATE_LIMIT_TTL: '60'
+      RATE_LIMIT_MAX: '120'
+      AUTH_SERVICE_URL: http://auth-service:3001
+      CONFIGURATION_SERVICE_URL: http://configuration-service:3002
+      CORE_DOMAIN_SERVICE_URL: http://core-domain-service:3003
+      REPORTING_SERVICE_URL: http://reporting-service:3004
+      NOTIFICATION_SERVICE_URL: http://notification-service:3005
+      INTEGRATION_SERVICE_URL: http://integration-service:3006
+      FILE_SERVICE_URL: http://file-service:3007
+      REALTIME_SERVICE_URL: http://realtime-service:3009
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  auth-service:
+    <<: *prod-service
+    build: { context: ., dockerfile: Dockerfile, args: { SERVICE: auth-service } }
+    image: icms/auth-service:latest
+    ports: ['3001:3001']
+    environment:
+      <<: *service-env
+      AUTH_PORT: '3001'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3001/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  configuration-service:
+    <<: *prod-service
+    build: { context: ., dockerfile: Dockerfile, args: { SERVICE: configuration-service } }
+    image: icms/configuration-service:latest
+    ports: ['3002:3002']
+    environment:
+      <<: *service-env
+      CONFIGURATION_PORT: '3002'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3002/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  core-domain-service:
+    <<: *prod-service
+    build: { context: ., dockerfile: Dockerfile, args: { SERVICE: core-domain-service } }
+    image: icms/core-domain-service:latest
+    ports: ['3003:3003']
+    environment:
+      <<: *service-env
+      CORE_DOMAIN_PORT: '3003'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3003/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  reporting-service:
+    <<: *prod-service
+    build: { context: ., dockerfile: Dockerfile, args: { SERVICE: reporting-service } }
+    image: icms/reporting-service:latest
+    ports: ['3004:3004']
+    environment:
+      <<: *service-env
+      REPORTING_PORT: '3004'
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      postgres-replica:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3004/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  notification-service:
+    <<: *prod-service
+    build: { context: ., dockerfile: Dockerfile, args: { SERVICE: notification-service } }
+    image: icms/notification-service:latest
+    ports: ['3005:3005']
+    environment:
+      <<: *service-env
+      NOTIFICATION_PORT: '3005'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3005/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  integration-service:
+    <<: *prod-service
+    build: { context: ., dockerfile: Dockerfile, args: { SERVICE: integration-service } }
+    image: icms/integration-service:latest
+    ports: ['3006:3006']
+    environment:
+      <<: *service-env
+      INTEGRATION_PORT: '3006'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3006/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  file-service:
+    <<: *prod-service
+    build: { context: ., dockerfile: Dockerfile, args: { SERVICE: file-service } }
+    image: icms/file-service:latest
+    ports: ['3007:3007']
+    environment:
+      <<: *service-env
+      FILE_PORT: '3007'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3007/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  scheduler-service:
+    <<: *prod-service
+    build: { context: ., dockerfile: Dockerfile, args: { SERVICE: scheduler-service } }
+    image: icms/scheduler-service:latest
+    ports: ['3008:3008']
+    environment:
+      <<: *service-env
+      SCHEDULER_PORT: '3008'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3008/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  realtime-service:
+    <<: *prod-service
+    build: { context: ., dockerfile: Dockerfile, args: { SERVICE: realtime-service } }
+    image: icms/realtime-service:latest
+    ports: ['3009:3009']
+    environment:
+      <<: *service-env
+      REALTIME_PORT: '3009'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3009/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s

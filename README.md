@@ -64,6 +64,28 @@ local en Docker.
 
 ## Puesta en marcha
 
+Hay **dos formas** de ejecutar la plataforma. Elige una:
+
+### Opción A — Todo en Docker
+
+Un solo comando levanta infraestructura **y** servicios. No requiere Node/pnpm local.
+
+```bash
+# Desarrollo (hot-reload: editas en tu editor y el contenedor recompila solo)
+pnpm docker:dev          # docker compose -f docker-compose.dev.yml up --build
+# …o un subconjunto:
+docker compose -f docker-compose.dev.yml up gateway-service auth-service
+
+# Producción (imágenes compiladas y esbeltas por servicio)
+cp .env.docker.example .env.docker      # define tus secretos
+pnpm docker:prod:build                  # construye las 10 imágenes
+docker compose --env-file .env.docker -f docker-compose.prod.yml up -d
+```
+
+En ambos modos los puertos `3000–3009` quedan publicados en tu host, igual que abajo.
+
+### Opción B — Infra en Docker + servicios en el host (ciclo de desarrollo más ligero)
+
 Requisitos: Node ≥ 20, pnpm, Docker.
 
 ```bash
@@ -73,10 +95,10 @@ pnpm install
 # 2) Configuración
 cp .env.example .env
 
-# 3) Infraestructura (Postgres, Redis, RabbitMQ, MinIO, observabilidad)
+# 3) Solo la infraestructura (Postgres, Redis, RabbitMQ, MinIO, observabilidad)
 pnpm infra:up
 
-# 4) Servicios (todos, o uno concreto)
+# 4) Servicios (todos, o uno concreto) — corren en tu máquina
 pnpm serve                       # nx run-many -t serve
 npx nx serve auth-service        # un servicio
 
@@ -84,6 +106,11 @@ npx nx serve auth-service        # un servicio
 pnpm build
 pnpm lint
 ```
+
+> **¿Cuál usar?** *Opción A (dev)* si quieres todo containerizado sin instalar nada;
+> *Opción B* para el ciclo de edición más rápido y depuración directa. *Opción A (prod)*
+> es la que se despliega. Nota: en dev-Docker corren 10 watchers de webpack, así que
+> consume RAM — levanta solo los servicios que necesites.
 
 ### Endpoints comunes (en cada servicio)
 
@@ -114,8 +141,12 @@ Revisa el diff, ajusta el nombre de la BD (`icms_core`) si aplica y reconstruye.
 ## Estructura del repositorio
 
 ```
-apps/        # 10 microservicios NestJS
-libs/        # núcleo compartido (@icms/*)
-infra/       # docker-compose + configs (postgres, prometheus, grafana, ...)
-tools/       # utilidades (rename de la plantilla)
+apps/                     # 10 microservicios NestJS
+libs/                     # núcleo compartido (@icms/*)
+infra/                    # docker-compose de infraestructura + configs
+tools/                    # utilidades (rename de la plantilla)
+Dockerfile                # imagen de producción (multi-stage, parametrizada)
+Dockerfile.dev            # imagen de desarrollo (hot-reload)
+docker-compose.dev.yml    # dev: infra + 10 servicios con recarga en caliente
+docker-compose.prod.yml   # prod: infra + 10 imágenes compiladas
 ```
