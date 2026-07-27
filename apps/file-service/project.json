@@ -1,0 +1,10 @@
+{
+  "name": "file-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/file-service/src",
+  "projectType": "application",
+  "tags": [
+    "scope:file",
+    "type:app"
+  ]
+}

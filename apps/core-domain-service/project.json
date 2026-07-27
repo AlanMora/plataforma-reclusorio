@@ -1,0 +1,10 @@
+{
+  "name": "core-domain-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/core-domain-service/src",
+  "projectType": "application",
+  "tags": [
+    "scope:core",
+    "type:app"
+  ]
+}

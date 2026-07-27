@@ -1,0 +1,10 @@
+{
+  "name": "reporting-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/reporting-service/src",
+  "projectType": "application",
+  "tags": [
+    "scope:reporting",
+    "type:app"
+  ]
+}
