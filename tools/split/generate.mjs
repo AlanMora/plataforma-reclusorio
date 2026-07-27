@@ -14,7 +14,10 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const OUT = join(ROOT, '.split-out');
-const SCOPE = process.env.SCOPE || '@c5desarrollos';
+// El scope de GitHub Packages DEBE coincidir con el dueño (usuario u org),
+// en minúsculas. Ej: OWNER=AlanMora -> @alanmora ; OWNER=C5Desarrollos -> @c5desarrollos.
+const OWNER = process.env.OWNER || process.env.ORG || 'AlanMora';
+const SCOPE = process.env.SCOPE || `@${OWNER.toLowerCase()}`;
 const SHARED = `${SCOPE}/shared`;
 const REGISTRY_HOST = 'npm.pkg.github.com';
 
@@ -118,7 +121,7 @@ function genShared() {
     },
     scripts: { build: 'tsc -p tsconfig.build.json', prepublishOnly: 'npm run build' },
     publishConfig: { registry: `https://${REGISTRY_HOST}` },
-    repository: { type: 'git', url: `git+https://github.com/C5Desarrollos/${repo}.git` },
+    repository: { type: 'git', url: `git+https://github.com/${OWNER}/${repo}.git` },
     dependencies: deps([
       '@golevelup/nestjs-rabbitmq', '@nestjs/common', '@nestjs/config', '@nestjs/core',
       '@nestjs/jwt', '@nestjs/passport', '@nestjs/swagger', '@nestjs/terminus', '@nestjs/typeorm',

@@ -15,15 +15,19 @@ Swarm, infra, docs).
 
 ## Cómo se hace
 
-Todo está automatizado. Desde tu máquina (donde tu `gh`/git ya tiene acceso a la
-organización), en un clon de este repo:
+Todo está automatizado. Desde tu máquina, tras `gh auth login`, en un clon de
+este repo. El script **crea los repos y sube el contenido** en un solo comando
+(el scope del paquete se deriva del dueño: `AlanMora` -> `@alanmora/shared`):
 
 ```bash
-# genera y sube los 11 repos a la organización
-ORG=C5Desarrollos ./tools/split-and-push.sh
+# cuenta personal: crea + sube los 11 repos
+OWNER=AlanMora ./tools/split-and-push.sh
 
-# o solo generar en .split-out/ para revisar antes de subir
-ORG=C5Desarrollos PUSH=0 ./tools/split-and-push.sh
+# una organización
+OWNER=C5Desarrollos ./tools/split-and-push.sh
+
+# solo generar en .split-out/ para revisar antes de subir
+OWNER=AlanMora PUSH=0 ./tools/split-and-push.sh
 ```
 
 El generador (`tools/split/generate.mjs`) reutiliza el código real de `libs/` y
