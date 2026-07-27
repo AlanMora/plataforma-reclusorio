@@ -7,8 +7,22 @@ mensajería, observabilidad), diez servicios ejecutables y la infraestructura
 local en Docker.
 
 > Estado: **andamiaje**. Cada servicio arranca, expone health/Swagger/metrics y
-> deja la estructura de módulos con límites claros. La lógica de negocio profunda
-> se completa por proyecto (marcada con `TODO(proyecto)`).
+> deja la estructura de módulos con límites claros. La lógica de negocio de cada
+> dominio se completa por proyecto (marcada con `TODO(proyecto)`). La **seguridad de
+> `auth`** (bcrypt, sesiones y refresh en Redis con rotación) ya está implementada.
+
+## Arranque rápido
+
+```bash
+git clone https://github.com/AlanMora/icms-platform.git
+cd icms-platform
+cp .env.example .env
+pnpm docker:dev            # levanta infra + los 10 servicios (todo en Docker)
+```
+
+Luego abre: **gateway** en http://localhost:3000, y el **Swagger** de cada servicio
+en http://localhost:3001/api/docs … http://localhost:3009. Detalle de las dos formas
+de arranque (Docker o híbrido) en [Puesta en marcha](#puesta-en-marcha).
 
 ## Arquitectura
 
@@ -55,6 +69,7 @@ local en Docker.
 | `@icms/messaging`   | RabbitMQ (exchange topic + DLX) + `EventPublisher`.                        |
 | `@icms/observability` | Health checks (Terminus) + métricas Prometheus (`/metrics`).            |
 | `@icms/contracts`   | Contratos de eventos de dominio compartidos.                              |
+| `@icms/redis`       | Cliente Redis compartido (rate limiting, sesiones, locks, adaptador WS).  |
 
 ### Infraestructura (`infra/docker-compose.yml`)
 
@@ -127,6 +142,8 @@ gateway** (p. ej. `POST http://localhost:3000/api/v1/auth/login`).
 - **Eventos de dominio** vía RabbitMQ (`@icms/messaging`), routing keys en `@icms/contracts`.
 - **CorrelationId** (`x-correlation-id`) se propaga desde el gateway y aparece en todos los logs.
 - **Errores** normalizados al sobre `ApiResponse` en toda la plataforma.
+- **Seguridad (auth)**: contraseñas con bcrypt; sesiones y refresh tokens en Redis con
+  revocación instantánea y **rotación con detección de reuso**; rate limiting del gateway en Redis.
 
 ## Renombrar la plantilla de dominio
 
@@ -138,13 +155,20 @@ pnpm rename:core loans-service   # renombra app, configs y referencias
 
 Revisa el diff, ajusta el nombre de la BD (`icms_core`) si aplica y reconstruye.
 
+## Separar en repos independientes (opcional, a futuro)
+
+Este monorepo puede dividirse en un repo por microservicio + un núcleo compartido,
+cuando necesites despliegues o permisos independientes. Todo está automatizado en
+un script. Ver la guía: [`docs/SPLIT-A-REPOS.md`](docs/SPLIT-A-REPOS.md).
+
 ## Estructura del repositorio
 
 ```
 apps/                     # 10 microservicios NestJS
 libs/                     # núcleo compartido (@icms/*)
 infra/                    # docker-compose de infraestructura + configs
-tools/                    # utilidades (rename de la plantilla)
+tools/                    # utilidades (rename de plantilla, split a repos)
+docs/                     # guías (p.ej. SPLIT-A-REPOS.md)
 Dockerfile                # imagen de producción (multi-stage, parametrizada)
 Dockerfile.dev            # imagen de desarrollo (hot-reload)
 docker-compose.dev.yml    # dev: infra + 10 servicios con recarga en caliente
