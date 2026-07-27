@@ -1,13 +1,14 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import type { EntityClassOrSchema } from '@nestjs/typeorm/dist/interfaces/entity-class-or-schema.type';
 import { parseNumber } from '@icms/config';
 
 export interface DatabaseModuleOptions {
   /** Nombre de la base de datos propia del servicio (database-per-service). */
   database: string;
   /** Entidades del servicio a registrar. */
-  entities: (new () => object)[] | Function[];
+  entities: EntityClassOrSchema[];
   /** Sincronizar el esquema automáticamente (sólo desarrollo). */
   synchronize?: boolean;
 }
@@ -58,7 +59,7 @@ export class DatabaseModule {
   }
 
   /** Registra entidades para inyección de repositorios en un módulo de feature. */
-  static forFeature(entities: Function[]): DynamicModule {
+  static forFeature(entities: EntityClassOrSchema[]): DynamicModule {
     return TypeOrmModule.forFeature(entities);
   }
 }

@@ -27,10 +27,9 @@ import { CorrelationIdMiddleware } from './correlation-id.middleware';
           }),
           res: (res: ServerResponse) => ({ statusCode: res.statusCode }),
         },
-        transport:
-          process.env.NODE_ENV !== 'production'
-            ? { target: 'pino-pretty', options: { singleLine: true } }
-            : undefined,
+        // Logs en JSON a stdout (ideal para Loki/observabilidad y robusto al
+        // empaquetado con webpack). Para logs legibles en desarrollo, pipea la
+        // salida por pino-pretty:  npx nx serve auth-service | npx pino-pretty
       },
     }),
   ],

@@ -12,8 +12,9 @@ export class FeatureFlagsService {
   private readonly cache = new Map<string, boolean>();
 
   isEnabled(flag: string, defaultValue = false): boolean {
-    if (this.cache.has(flag)) {
-      return this.cache.get(flag)!;
+    const cached = this.cache.get(flag);
+    if (cached !== undefined) {
+      return cached;
     }
     const envKey = `FEATURE_${flag.toUpperCase().replace(/[.-]/g, '_')}`;
     const raw = process.env[envKey];

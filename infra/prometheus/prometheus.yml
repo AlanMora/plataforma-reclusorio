@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Los servicios corren en el host (nx serve) y exponen /metrics.
+# host.docker.internal apunta al host desde el contenedor de Prometheus.
+scrape_configs:
+  - job_name: 'icms-services'
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - 'host.docker.internal:3000' # gateway-service
+          - 'host.docker.internal:3001' # auth-service
+          - 'host.docker.internal:3002' # configuration-service
+          - 'host.docker.internal:3003' # core-domain-service
+          - 'host.docker.internal:3004' # reporting-service
+          - 'host.docker.internal:3005' # notification-service
+          - 'host.docker.internal:3006' # integration-service
+          - 'host.docker.internal:3007' # file-service
+          - 'host.docker.internal:3008' # scheduler-service
+          - 'host.docker.internal:3009' # realtime-service
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

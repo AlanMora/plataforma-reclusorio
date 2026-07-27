@@ -1,0 +1,195 @@
+# =====================================================================
+# ICMS Platform - infraestructura local
+# Levanta con:  pnpm infra:up   (docker compose -f infra/docker-compose.yml up -d)
+# =====================================================================
+name: icms-platform
+
+services:
+  # ------------------------------------------------------------------
+  # PostgreSQL primary (escrituras) — replicación por streaming (bitnami)
+  # ------------------------------------------------------------------
+  postgres-primary:
+    image: bitnami/postgresql:16
+    container_name: icms-postgres-primary
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    environment:
+      POSTGRESQL_REPLICATION_MODE: master
+      POSTGRESQL_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:-replicator}
+      POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-replicator}
+      POSTGRESQL_USERNAME: ${POSTGRES_USER:-icms}
+      POSTGRESQL_PASSWORD: ${POSTGRES_PASSWORD:-icms}
+      POSTGRESQL_DATABASE: ${POSTGRES_DB:-icms}
+      POSTGRESQL_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-icms}
+    volumes:
+      - postgres_primary_data:/bitnami/postgresql
+      - ./postgres/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', '${POSTGRES_USER:-icms}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [icms]
+
+  # ------------------------------------------------------------------
+  # PostgreSQL réplica de lectura (usada por reporting-service)
+  # ------------------------------------------------------------------
+  postgres-replica:
+    image: bitnami/postgresql:16
+    container_name: icms-postgres-replica
+    ports:
+      - '${POSTGRES_REPLICA_PORT:-5433}:5432'
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    environment:
+      POSTGRESQL_REPLICATION_MODE: slave
+      POSTGRESQL_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:-replicator}
+      POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-replicator}
+      POSTGRESQL_MASTER_HOST: postgres-primary
+      POSTGRESQL_MASTER_PORT_NUMBER: 5432
+      POSTGRESQL_USERNAME: ${POSTGRES_USER:-icms}
+      POSTGRESQL_PASSWORD: ${POSTGRES_PASSWORD:-icms}
+    volumes:
+      - postgres_replica_data:/bitnami/postgresql
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', '${POSTGRES_USER:-icms}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [icms]
+
+  # ------------------------------------------------------------------
+  # Redis (rate limiting, locks distribuidos, adaptador WebSocket)
+  # ------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: icms-redis
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [icms]
+
+  # ------------------------------------------------------------------
+  # RabbitMQ (eventos de dominio, colas de salida, reintentos)
+  # ------------------------------------------------------------------
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: icms-rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672' # management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-icms}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-icms}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks: [icms]
+
+  # ------------------------------------------------------------------
+  # MinIO (object storage S3-compatible) — usado por file-service
+  # ------------------------------------------------------------------
+  minio:
+    image: minio/minio:latest
+    container_name: icms-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - '9000:9000'
+      - '9001:9001' # consola
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-icmsminio}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-icmsminio123}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks: [icms]
+
+  # Crea el bucket por defecto al arrancar.
+  minio-setup:
+    image: minio/mc:latest
+    container_name: icms-minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${S3_ACCESS_KEY:-icmsminio} ${S3_SECRET_KEY:-icmsminio123} &&
+      mc mb --ignore-existing local/${S3_BUCKET:-icms-files} &&
+      echo 'bucket listo';
+      "
+    networks: [icms]
+
+  # ------------------------------------------------------------------
+  # Observabilidad: Prometheus + Grafana + Loki + Promtail
+  # ------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: icms-prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    networks: [icms]
+
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: icms-loki
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - '3100:3100'
+    networks: [icms]
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: icms-promtail
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./promtail/config.yml:/etc/promtail/config.yml:ro
+      - /var/log:/var/log:ro
+    depends_on: [loki]
+    networks: [icms]
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: icms-grafana
+    ports:
+      - '3200:3000' # evita colisión con los puertos de servicio (3000-3009)
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: 'true'
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    depends_on: [prometheus, loki]
+    networks: [icms]
+
+networks:
+  icms:
+    driver: bridge
+
+volumes:
+  postgres_primary_data:
+  postgres_replica_data:
+  redis_data:
+  rabbitmq_data:
+  minio_data:
+  grafana_data:

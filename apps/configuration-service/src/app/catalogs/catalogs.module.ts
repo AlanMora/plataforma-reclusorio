@@ -1,5 +1,5 @@
 import { Column, Entity, Index } from 'typeorm';
-import { Body, Controller, Get, Injectable, Module, Param, Post } from '@nestjs/common';
+import { Controller, Get, Injectable, Module, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
