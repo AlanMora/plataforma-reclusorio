@@ -5,6 +5,8 @@ import { Repository } from 'typeorm';
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { IsIn, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
 import { DatabaseModule } from '@icms/database';
+import { InboxService } from '@icms/messaging';
+import { Idempotent } from '@icms/redis';
 import { DomainEvent, EventNames, NotificationRequestedPayload } from '@icms/contracts';
 import {
   Channel,
@@ -65,7 +67,10 @@ export class NotificationsService {
 /** Suscriptor de eventos: reacciona a `notification.requested` publicado por otros servicios. */
 @Injectable()
 export class NotificationConsumer {
-  constructor(private readonly notifications: NotificationsService) {}
+  constructor(
+    private readonly notifications: NotificationsService,
+    private readonly inbox: InboxService,
+  ) {}
 
   @RabbitSubscribe({
     exchange: process.env.RABBITMQ_EXCHANGE ?? 'icms.events',
@@ -73,8 +78,11 @@ export class NotificationConsumer {
     queue: 'notification-service.requested',
   })
   async onNotificationRequested(event: DomainEvent<NotificationRequestedPayload>): Promise<void> {
-    const { channel, to, template, variables } = event.payload;
-    await this.notifications.dispatch({ channel, to, template, variables });
+    // Inbox: procesa el evento una sola vez aunque el broker lo entregue duplicado.
+    await this.inbox.processOnce(event.eventId, 'notification-service', async () => {
+      const { channel, to, template, variables } = event.payload;
+      await this.notifications.dispatch({ channel, to, template, variables });
+    });
   }
 }
 
@@ -85,7 +93,8 @@ export class NotificationsController {
   constructor(private readonly notifications: NotificationsService) {}
 
   @Post('send')
-  @ApiOperation({ summary: 'Enviar una notificación directa' })
+  @Idempotent()
+  @ApiOperation({ summary: 'Enviar una notificación directa (idempotente)' })
   send(@Body() dto: SendNotificationDto) {
     return this.notifications.dispatch(dto);
   }

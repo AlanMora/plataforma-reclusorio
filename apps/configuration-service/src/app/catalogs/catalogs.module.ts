@@ -2,9 +2,10 @@ import { Column, Entity, Index } from 'typeorm';
 import { Controller, Get, Injectable, Module, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { BaseEntity, DatabaseModule } from '@icms/database';
-import { EventPublisher } from '@icms/messaging';
+import { OutboxService } from '@icms/messaging';
+import { Idempotent } from '@icms/redis';
 import { EventNames } from '@icms/contracts';
 
 @Entity('catalogs')
@@ -38,7 +39,8 @@ export class CatalogsService {
   constructor(
     @InjectRepository(CatalogItem) private readonly items: Repository<CatalogItem>,
     @InjectRepository(Parameter) private readonly parameters: Repository<Parameter>,
-    private readonly events: EventPublisher,
+    private readonly dataSource: DataSource,
+    private readonly outbox: OutboxService,
   ) {}
 
   listCatalog(catalog: string) {
@@ -49,9 +51,13 @@ export class CatalogsService {
     return this.parameters.find();
   }
 
-  /** Publica los cambios de configuración: notifica a los servicios para invalidar caché. */
+  /** Publica los cambios de configuración (Outbox transaccional) para invalidar cachés. */
   async publish() {
-    await this.events.publish(EventNames.ConfigurationPublished, { at: new Date().toISOString() });
+    await this.dataSource.transaction(async (manager) => {
+      await this.outbox.enqueue(manager, EventNames.ConfigurationPublished, {
+        at: new Date().toISOString(),
+      });
+    });
     return { published: true };
   }
 }
@@ -73,7 +79,8 @@ export class CatalogsController {
   }
 
   @Post('publish')
-  @ApiOperation({ summary: 'Publicar cambios de configuración (invalida cachés)' })
+  @Idempotent()
+  @ApiOperation({ summary: 'Publicar cambios de configuración (idempotente + outbox)' })
   publish() {
     return this.service.publish();
   }

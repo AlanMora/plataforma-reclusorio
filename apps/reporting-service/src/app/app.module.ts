@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppConfigModule } from '@icms/config';
 import { LoggingModule } from '@icms/logging';
 import { ObservabilityModule } from '@icms/observability';
-import { SharedAuthModule, JwtAuthGuard } from '@icms/auth';
+import { SharedAuthModule, JwtAuthGuard, TenantContextInterceptor } from '@icms/auth';
 import { DatabaseModule } from '@icms/database';
 import { ReportsModule } from './reports/reports.module';
 
@@ -17,6 +17,9 @@ import { ReportsModule } from './reports/reports.module';
     DatabaseModule.forRoot({ database: process.env.POSTGRES_DB ?? 'icms', entities: [] }),
     ReportsModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],
+  providers: [
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_INTERCEPTOR, useClass: TenantContextInterceptor },
+  ],
 })
 export class AppModule {}

@@ -1,11 +1,12 @@
 import { Body, Controller, Injectable, Logger, Module, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { IsNotEmpty, IsObject, IsString } from 'class-validator';
 import { DatabaseModule } from '@icms/database';
 import { Public } from '@icms/auth';
-import { EventPublisher } from '@icms/messaging';
+import { Idempotent } from '@icms/redis';
+import { OutboxService } from '@icms/messaging';
 import { EventNames } from '@icms/contracts';
 import { OutboxMessage } from './outbox.entity';
 
@@ -25,19 +26,25 @@ export class IntegrationService {
   private readonly logger = new Logger(IntegrationService.name);
 
   constructor(
-    @InjectRepository(OutboxMessage) private readonly outbox: Repository<OutboxMessage>,
-    private readonly events: EventPublisher,
+    @InjectRepository(OutboxMessage) private readonly outboundRepo: Repository<OutboxMessage>,
+    private readonly dataSource: DataSource,
+    private readonly outbox: OutboxService,
   ) {}
 
   enqueueOutbound(dto: EnqueueOutboundDto) {
-    return this.outbox.save(this.outbox.create({ ...dto, status: 'pending' }));
+    return this.outboundRepo.save(this.outboundRepo.create({ ...dto, status: 'pending' }));
   }
 
-  /** Recibe un webhook externo, lo transforma y lo publica hacia el dominio. */
+  /**
+   * Recibe un webhook externo y publica el evento de dominio de forma
+   * transaccional (Outbox). TODO(proyecto): validar firma/timestamp/nonce y
+   * persistir el crudo antes de procesar (§4.7).
+   */
   async handleInboundWebhook(source: string, body: unknown) {
     this.logger.log(`Webhook entrante de "${source}"`);
-    // TODO(proyecto): validar firma del webhook y transformar el formato externo.
-    await this.events.publish(EventNames.IntegrationInbound, { source, body });
+    await this.dataSource.transaction(async (manager) => {
+      await this.outbox.enqueue(manager, EventNames.IntegrationInbound, { source, body });
+    });
     return { received: true };
   }
 }
@@ -48,15 +55,16 @@ export class IntegrationController {
   constructor(private readonly service: IntegrationService) {}
 
   @Post('outbound')
+  @Idempotent()
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Encolar un mensaje de salida (outbox)' })
+  @ApiOperation({ summary: 'Encolar un mensaje de salida (idempotente)' })
   enqueue(@Body() dto: EnqueueOutboundDto) {
     return this.service.enqueueOutbound(dto);
   }
 
   @Public()
   @Post('webhooks/:source')
-  @ApiOperation({ summary: 'Recibir webhook de un sistema externo' })
+  @ApiOperation({ summary: 'Recibir webhook de un sistema externo (outbox transaccional)' })
   webhook(@Param('source') source: string, @Body() body: unknown) {
     return this.service.handleInboundWebhook(source, body);
   }

@@ -1,6 +1,7 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, CurrentUser, Public } from '@icms/auth';
+import { Idempotent } from '@icms/redis';
 import { AuthService } from './auth.service';
 import { LoginDto, RefreshDto, RegisterDto } from './dto';
 
@@ -10,8 +11,10 @@ export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
   @Public()
+  @Idempotent()
   @Post('register')
-  @ApiOperation({ summary: 'Registrar un usuario de acceso' })
+  @ApiHeader({ name: 'Idempotency-Key', required: true, description: 'Clave de idempotencia (UUID)' })
+  @ApiOperation({ summary: 'Registrar un usuario de acceso (idempotente + outbox)' })
   register(@Body() dto: RegisterDto) {
     return this.auth.register(dto);
   }

@@ -2,12 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { hash as argon2Hash, verify as argon2Verify } from '@node-rs/argon2';
 import { JwtPayload } from '@icms/auth';
 import { UnauthorizedDomainException } from '@icms/common';
-import { EventPublisher } from '@icms/messaging';
+import { EventPublisher, OutboxService } from '@icms/messaging';
 import { EventNames } from '@icms/contracts';
 import { User } from '../users/user.entity';
 import { SessionStore } from '../sessions/session-store.service';
@@ -68,19 +68,29 @@ export class AuthService {
     private readonly config: ConfigService,
     private readonly events: EventPublisher,
     private readonly keys: KeyService,
+    private readonly dataSource: DataSource,
+    private readonly outbox: OutboxService,
   ) {}
 
+  /** Crea el usuario y publica UserRegistered de forma transaccional (Outbox). */
   async register(dto: RegisterDto): Promise<{ id: string }> {
     const passwordHash = await argon2Hash(dto.password); // argon2id por defecto
-    const user = this.users.create({
-      email: dto.email,
-      passwordHash,
-      tenantId: dto.tenantId,
-      roles: ['user'],
+    return this.dataSource.transaction(async (manager) => {
+      const user = manager.getRepository(User).create({
+        email: dto.email,
+        passwordHash,
+        tenantId: dto.tenantId,
+        roles: ['user'],
+      });
+      const saved = await manager.save(user);
+      await this.outbox.enqueue(
+        manager,
+        EventNames.UserRegistered,
+        { userId: saved.id, email: saved.email },
+        { tenantId: saved.tenantId ?? undefined, aggregateId: saved.id },
+      );
+      return { id: saved.id };
     });
-    const saved = await this.users.save(user);
-    await this.events.publish(EventNames.UserRegistered, { userId: saved.id, email: saved.email });
-    return { id: saved.id };
   }
 
   async login(dto: LoginDto): Promise<TokenPair> {

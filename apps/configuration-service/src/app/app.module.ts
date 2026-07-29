@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppConfigModule } from '@icms/config';
 import { LoggingModule } from '@icms/logging';
 import { ObservabilityModule } from '@icms/observability';
-import { SharedAuthModule, JwtAuthGuard, PermissionsGuard } from '@icms/auth';
+import { SharedAuthModule, JwtAuthGuard, PermissionsGuard, TenantContextInterceptor } from '@icms/auth';
 import { DatabaseModule } from '@icms/database';
-import { MessagingModule } from '@icms/messaging';
+import { MessagingModule, OutboxModule, OutboxEvent, InboxEvent } from '@icms/messaging';
+import { RedisModule, IdempotencyInterceptor } from '@icms/redis';
 import { Branch, Institution, OperationalUser } from './organization/organization.entities';
 import { Permission, Role } from './permissions/permissions.module';
 import { CatalogItem, Parameter } from './catalogs/catalogs.module';
@@ -19,11 +20,13 @@ import { CatalogsModule } from './catalogs/catalogs.module';
     LoggingModule,
     ObservabilityModule,
     SharedAuthModule,
+    RedisModule,
     MessagingModule.forRoot(),
     DatabaseModule.forRoot({
       database: 'icms_configuration',
-      entities: [Institution, Branch, OperationalUser, Role, Permission, CatalogItem, Parameter],
+      entities: [Institution, Branch, OperationalUser, Role, Permission, CatalogItem, Parameter, OutboxEvent, InboxEvent],
     }),
+    OutboxModule.forRoot({ withRelay: true }),
     OrganizationModule,
     PermissionsModule,
     CatalogsModule,
@@ -31,6 +34,8 @@ import { CatalogsModule } from './catalogs/catalogs.module';
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: PermissionsGuard },
+    { provide: APP_INTERCEPTOR, useClass: TenantContextInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: IdempotencyInterceptor },
   ],
 })
 export class AppModule {}
