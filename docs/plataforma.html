@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Plataforma Base de Microservicios — Referencia</title>
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --surface: #ffffff;
+    --surface-2: #f0f2f6;
+    --ink: #16181d;
+    --muted: #5b6572;
+    --faint: #8a94a3;
+    --border: #e2e7ef;
+    --accent: #2d6ae0;
+    --accent-soft: #e7eefb;
+
+    --m-get: #1f9d6b;    --m-get-bg: #e4f4ec;
+    --m-post: #2d6ae0;   --m-post-bg: #e6eefc;
+    --m-put: #b7810f;    --m-put-bg: #f7efd9;
+    --m-del: #d5493f;    --m-del-bg: #fae7e5;
+    --m-ws: #6f52c9;     --m-ws-bg: #eee9fa;
+
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --maxw: 1080px;
+    --radius: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0c0f16;
+      --surface: #141924;
+      --surface-2: #1a2130;
+      --ink: #e7ebf2;
+      --muted: #9aa6b8;
+      --faint: #6b7688;
+      --border: #232c3b;
+      --accent: #6c9cff;
+      --accent-soft: #182338;
+
+      --m-get: #4fc48c;    --m-get-bg: #14251d;
+      --m-post: #6c9cff;   --m-post-bg: #172236;
+      --m-put: #e0b64a;    --m-put-bg: #262013;
+      --m-del: #f2857a;    --m-del-bg: #2a1817;
+      --m-ws: #a48af0;     --m-ws-bg: #201a33;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f4f6f9; --surface: #ffffff; --surface-2: #f0f2f6; --ink: #16181d;
+    --muted: #5b6572; --faint: #8a94a3; --border: #e2e7ef; --accent: #2d6ae0; --accent-soft: #e7eefb;
+    --m-get: #1f9d6b; --m-get-bg: #e4f4ec; --m-post: #2d6ae0; --m-post-bg: #e6eefc;
+    --m-put: #b7810f; --m-put-bg: #f7efd9; --m-del: #d5493f; --m-del-bg: #fae7e5;
+    --m-ws: #6f52c9; --m-ws-bg: #eee9fa;
+  }
+  :root[data-theme="dark"] {
+    --bg: #0c0f16; --surface: #141924; --surface-2: #1a2130; --ink: #e7ebf2;
+    --muted: #9aa6b8; --faint: #6b7688; --border: #232c3b; --accent: #6c9cff; --accent-soft: #182338;
+    --m-get: #4fc48c; --m-get-bg: #14251d; --m-post: #6c9cff; --m-post-bg: #172236;
+    --m-put: #e0b64a; --m-put-bg: #262013; --m-del: #f2857a; --m-del-bg: #2a1817;
+    --m-ws: #a48af0; --m-ws-bg: #201a33;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 0.7rem clamp(1rem, 4vw, 2rem);
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar .brand { display: flex; align-items: center; gap: 0.6rem; font-family: var(--mono); font-size: 0.86rem; font-weight: 600; letter-spacing: -0.01em; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+  .toggle {
+    font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.04em;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--muted);
+    border-radius: 999px; padding: 0.35rem 0.8rem; cursor: pointer;
+  }
+  .toggle:hover { color: var(--ink); border-color: var(--accent); }
+  .toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2rem); }
+
+  /* ---------- hero ---------- */
+  .hero { padding: clamp(2.4rem, 6vw, 4rem) 0 1.6rem; }
+  .eyebrow { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.9rem; }
+  h1 { font-size: clamp(1.9rem, 4.4vw, 3rem); line-height: 1.08; margin: 0 0 0.7rem; letter-spacing: -0.025em; text-wrap: balance; }
+  .lede { font-size: clamp(1.02rem, 1.7vw, 1.2rem); color: var(--muted); max-width: 60ch; margin: 0; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.6rem; }
+  .chip {
+    font-family: var(--mono); font-size: 0.76rem; color: var(--muted);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 999px; padding: 0.34rem 0.75rem;
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- section scaffolding ---------- */
+  section { padding: 2.2rem 0; border-top: 1px solid var(--border); }
+  .sec-head { display: flex; align-items: baseline; gap: 0.8rem; margin-bottom: 1.4rem; }
+  .sec-num { font-family: var(--mono); font-size: 0.8rem; color: var(--faint); }
+  h2 { font-size: clamp(1.3rem, 2.6vw, 1.7rem); margin: 0; letter-spacing: -0.02em; }
+  .sec-sub { color: var(--muted); margin: -0.6rem 0 1.4rem; max-width: 68ch; }
+
+  /* ---------- command blocks ---------- */
+  .cmd-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .cmd {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .cmd .label { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.03em; color: var(--muted); background: var(--surface-2); }
+  .cmd pre { margin: 0; padding: 0.9rem; overflow-x: auto; font-family: var(--mono); font-size: 0.82rem; line-height: 1.7; color: var(--ink); }
+  .cmd pre .c { color: var(--faint); }
+  .cmd pre .a { color: var(--accent); }
+
+  /* ---------- architecture diagram ---------- */
+  .arch { display: grid; gap: 0.9rem; }
+  .arch-row { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: stretch; }
+  .node {
+    flex: 1 1 auto; min-width: 120px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 0.6rem 0.8rem; font-family: var(--mono); font-size: 0.76rem;
+    display: flex; flex-direction: column; gap: 0.15rem;
+  }
+  .node .n-title { color: var(--ink); font-weight: 600; }
+  .node .n-sub { color: var(--faint); font-size: 0.68rem; }
+  .node.gw { border-color: var(--accent); background: var(--accent-soft); }
+  .node.infra { background: var(--surface-2); }
+  .arch-label { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); align-self: center; padding: 0 0.4rem; }
+  .flow-arrow { text-align: center; color: var(--faint); font-family: var(--mono); font-size: 0.9rem; line-height: 1; }
+
+  /* ---------- service cards ---------- */
+  .svc { display: grid; gap: 1.1rem; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .card > header { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 0.9rem; padding: 0.9rem 1.1rem; border-bottom: 1px solid var(--border); }
+  .card h3 { font-family: var(--mono); font-size: 0.98rem; margin: 0; letter-spacing: -0.01em; }
+  .port { font-family: var(--mono); font-size: 0.74rem; color: var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 0.18rem 0.5rem; }
+  .role { font-size: 0.82rem; color: var(--muted); flex: 1 1 200px; }
+  .card .desc { padding: 0.9rem 1.1rem 0; color: var(--muted); font-size: 0.9rem; margin: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  .tbl-scroll { overflow-x: auto; padding: 0.7rem 0.4rem 0.4rem; }
+  th { text-align: left; font-family: var(--mono); font-weight: 500; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); padding: 0.4rem 0.7rem; border-bottom: 1px solid var(--border); }
+  td { padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.path { font-family: var(--mono); font-size: 0.82rem; color: var(--ink); white-space: nowrap; }
+  td.path .v { color: var(--faint); }
+  td.note { color: var(--muted); }
+
+  .m { font-family: var(--mono); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; padding: 0.2rem 0.5rem; border-radius: 5px; display: inline-block; min-width: 3.6rem; text-align: center; }
+  .m.get { color: var(--m-get); background: var(--m-get-bg); }
+  .m.post { color: var(--m-post); background: var(--m-post-bg); }
+  .m.put, .m.patch { color: var(--m-put); background: var(--m-put-bg); }
+  .m.del { color: var(--m-del); background: var(--m-del-bg); }
+  .m.ws { color: var(--m-ws); background: var(--m-ws-bg); }
+
+  .tag { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.02em; color: var(--muted); border: 1px solid var(--border); border-radius: 5px; padding: 0.1rem 0.4rem; margin-left: 0.35rem; white-space: nowrap; }
+
+  /* ---------- convention grid ---------- */
+  .conv { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .conv .item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.1rem; }
+  .conv h4 { font-family: var(--mono); font-size: 0.84rem; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+  .conv p { margin: 0; font-size: 0.86rem; color: var(--muted); }
+
+  .note-box { background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border)); border-radius: var(--radius); padding: 1rem 1.2rem; font-size: 0.92rem; }
+  .note-box code { font-family: var(--mono); background: var(--surface); padding: 0.1rem 0.35rem; border-radius: 5px; border: 1px solid var(--border); font-size: 0.85em; }
+
+  footer { padding: 2.4rem 0 3rem; color: var(--faint); font-family: var(--mono); font-size: 0.76rem; border-top: 1px solid var(--border); }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span> icms-platform · referencia</div>
+    <button class="toggle" id="themeToggle" type="button" aria-label="Cambiar tema">◐ tema</button>
+  </div>
+
+  <div class="wrap">
+    <header class="hero">
+      <p class="eyebrow">Plataforma base reutilizable · NestJS + Nx</p>
+      <h1>10 microservicios base, listos para clonar y construir encima.</h1>
+      <p class="lede">Un monorepo con la infraestructura, el núcleo compartido y los endpoints funcionales de cada servicio ya resueltos. Esta página resume qué existe, en qué puerto vive y cómo se usa.</p>
+      <div class="chips">
+        <span class="chip"><b>10</b> servicios</span>
+        <span class="chip"><b>Monorepo</b> Nx + pnpm</span>
+        <span class="chip">NestJS · TypeScript</span>
+        <span class="chip">Postgres <b>primary + réplica</b></span>
+        <span class="chip">Redis · RabbitMQ · MinIO</span>
+        <span class="chip">JWT <b>RS256 + JWKS</b></span>
+        <span class="chip">Errores <b>RFC 9457</b></span>
+        <span class="chip">OpenTelemetry</span>
+      </div>
+    </header>
+
+    <!-- 1. Cómo levantar -->
+    <section id="arranque">
+      <div class="sec-head"><span class="sec-num">01</span><h2>Cómo levantarlo</h2></div>
+      <p class="sec-sub">Todo vive en el mismo repositorio. Un solo comando levanta infraestructura + los 10 servicios. Elige desarrollo (con hot-reload) o producción (imágenes optimizadas).</p>
+      <div class="cmd-grid">
+        <div class="cmd">
+          <div class="label">🔧 Desarrollo (hot-reload)</div>
+          <pre><span class="c"># infra + 10 servicios, recarga en caliente</span>
+pnpm <span class="a">docker:dev</span>
+
+<span class="c"># o un subconjunto</span>
+docker compose -f docker-compose.dev.yml \
+  up gateway-service auth-service</pre>
+        </div>
+        <div class="cmd">
+          <div class="label">🚀 Producción</div>
+          <pre><span class="c"># construir imágenes esbeltas</span>
+pnpm <span class="a">docker:prod:build</span>
+
+<span class="c"># levantar el stack</span>
+pnpm <span class="a">docker:prod</span></pre>
+        </div>
+        <div class="cmd">
+          <div class="label">💻 Alternativa en el host</div>
+          <pre><span class="c"># solo infraestructura en docker</span>
+pnpm <span class="a">infra:up</span>
+
+<span class="c"># servicios con Nx en el host</span>
+pnpm install
+pnpm <span class="a">serve</span></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Swagger -->
+    <section id="swagger">
+      <div class="sec-head"><span class="sec-num">02</span><h2>¿Qué endpoints existen? → Swagger</h2></div>
+      <p class="sec-sub">Cada servicio publica su documentación interactiva. Ahí ves cada endpoint con sus parámetros y DTOs, y puedes probarlos con el botón <b>Authorize</b> (token Bearer) desde el navegador.</p>
+      <div class="note-box">
+        Swagger de cada servicio en <code>http://localhost:&lt;puerto&gt;/api/docs</code> — por ejemplo
+        <code>http://localhost:3001/api/docs</code> (auth) o <code>http://localhost:3003/api/docs</code> (core-domain).
+        Todas las rutas de negocio están versionadas bajo <code>/api/v1</code> y pasan por el <b>gateway</b> en el puerto <code>3000</code>.
+      </div>
+    </section>
+
+    <!-- 3. Arquitectura -->
+    <section id="arquitectura">
+      <div class="sec-head"><span class="sec-num">03</span><h2>Flujo de la arquitectura</h2></div>
+      <p class="sec-sub">El gateway es la única entrada pública: pre-valida el JWT y aplica rate limiting sobre Redis, luego reenvía a los servicios internos. Cada servicio tiene su propia base de datos (database-per-service) y se comunica de forma asíncrona por RabbitMQ (patrón outbox/inbox).</p>
+      <div class="arch">
+        <div class="arch-row">
+          <div class="node gw"><span class="n-title">gateway-service</span><span class="n-sub">:3000 · única entrada pública · JWT + rate limit</span></div>
+        </div>
+        <div class="flow-arrow">▼ &nbsp; reenvía /api/v1/* &nbsp; ▼</div>
+        <div class="arch-row">
+          <div class="node"><span class="n-title">auth</span><span class="n-sub">:3001</span></div>
+          <div class="node"><span class="n-title">configuration</span><span class="n-sub">:3002</span></div>
+          <div class="node"><span class="n-title">core-domain</span><span class="n-sub">:3003</span></div>
+          <div class="node"><span class="n-title">reporting</span><span class="n-sub">:3004</span></div>
+          <div class="node"><span class="n-title">notification</span><span class="n-sub">:3005</span></div>
+        </div>
+        <div class="arch-row">
+          <div class="node"><span class="n-title">integration</span><span class="n-sub">:3006</span></div>
+          <div class="node"><span class="n-title">file</span><span class="n-sub">:3007</span></div>
+          <div class="node"><span class="n-title">scheduler</span><span class="n-sub">:3008</span></div>
+          <div class="node"><span class="n-title">realtime</span><span class="n-sub">:3009 · WebSocket</span></div>
+        </div>
+        <div class="flow-arrow">▼ &nbsp; persistencia + eventos + almacenamiento &nbsp; ▼</div>
+        <div class="arch-row">
+          <div class="node infra"><span class="n-title">PostgreSQL</span><span class="n-sub">primary :5432 · réplica :5433</span></div>
+          <div class="node infra"><span class="n-title">Redis</span><span class="n-sub">:6379 · sesiones, locks, rate limit</span></div>
+          <div class="node infra"><span class="n-title">RabbitMQ</span><span class="n-sub">:5672 · eventos de dominio</span></div>
+          <div class="node infra"><span class="n-title">MinIO (S3)</span><span class="n-sub">:9000 · binarios</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Catálogo de servicios -->
+    <section id="servicios">
+      <div class="sec-head"><span class="sec-num">04</span><h2>Catálogo de servicios y endpoints</h2></div>
+      <p class="sec-sub">Además de lo listado, <b>todos</b> los servicios exponen: <span class="tag">GET /health</span> <span class="tag">GET /health/ready</span> <span class="tag">GET /metrics</span> <span class="tag">GET /api/docs</span></p>
+
+      <div class="svc">
+
+        <!-- gateway -->
+        <div class="card">
+          <header><h3>gateway-service</h3><span class="port">:3000</span><span class="role">Entrada pública. Proxy, pre-validación de JWT y rate limiting. Sin lógica de negocio.</span></header>
+          <div class="tbl-scroll"><table>
+            <tr><th>Método</th><th>Ruta</th><th>Descripción</th></tr>
+            <tr><td><span class="m post">PROXY</span></td><td class="path">/api/v1/<span class="v">**</span></td><td class="note">Reenvía cualquier ruta a su servicio interno propagando <code>x-correlation-id</code>.</td></tr>
+          </table></div>
+        </div>
+
+        <!-- auth -->
+        <div class="card">
+          <header><h3>auth-service</h3><span class="port">:3001</span><span class="role">Identidad: registro, login, refresh con rotación, sesiones en Redis y JWKS.</span></header>
+          <div class="tbl-scroll"><table>
+            <tr><th>Método</th><th>Ruta</th><th>Descripción</th></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/auth/register</td><td class="note">Alta de usuario (argon2id). Público · idempotente.</td></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/auth/login</td><td class="note">Autentica y emite access + refresh token.</td></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/auth/refresh</td><td class="note">Renueva y rota el refresh token (detección de reuso).</td></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/auth/logout</td><td class="note">Revoca la sesión actual.</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/auth/sessions</td><td class="note">Lista las sesiones activas del usuario.</td></tr>
+            <tr><td><span class="m del">DELETE</span></td><td class="path">/api/v1/auth/sessions/<span class="v">:sid</span></td><td class="note">Revoca una sesión propia por id.</td></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/auth/sessions/revoke-all</td><td class="note">Cierre global de todas las sesiones del usuario.</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/users/me</td><td class="note">Perfil del usuario autenticado (sin passwordHash).</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/users</td><td class="note">Lista de usuarios del tenant (paginado). Permiso <code>users:read</code>.</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/users/<span class="v">:id</span></td><td class="note">Usuario por id.</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/.well-known/jwks.json</td><td class="note">Claves públicas para validar el JWT (RS256). Público.</td></tr>
+          </table></div>
+        </div>
+
+        <!-- configuration -->
+        <div class="card">
+          <header><h3>configuration-service</h3><span class="port">:3002</span><span class="role">Organización (instituciones, sucursales, usuarios operativos), permisos y catálogos/parámetros.</span></header>
+          <div class="tbl-scroll"><table>
+            <tr><th>Método</th><th>Ruta</th><th>Descripción</th></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/organization/institutions</td><td class="note">Lista instituciones (paginado).</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/organization/institutions/<span class="v">:id</span></td><td class="note">Institución por id.</td></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/organization/institutions</td><td class="note">Crea institución. Permiso <code>organization:write</code>.</td></tr>
+            <tr><td><span class="m patch">PATCH</span></td><td class="path">/api/v1/organization/institutions/<span class="v">:id</span></td><td class="note">Actualiza institución.</td></tr>
+            <tr><td><span class="m del">DELETE</span></td><td class="path">/api/v1/organization/institutions/<span class="v">:id</span></td><td class="note">Borrado lógico.</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/organization/branches</td><td class="note">Lista sucursales (filtro opcional <code>?institutionId</code>).</td></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/organization/branches</td><td class="note">Crea sucursal.</td></tr>
+            <tr><td><span class="m patch">PATCH</span></td><td class="path">/api/v1/organization/branches/<span class="v">:id</span></td><td class="note">Actualiza sucursal.</td></tr>
+            <tr><td><span class="m del">DELETE</span></td><td class="path">/api/v1/organization/branches/<span class="v">:id</span></td><td class="note">Borrado lógico.</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/organization/operational-users</td><td class="note">Lista usuarios operativos del negocio.</td></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/organization/operational-users</td><td class="note">Crea usuario operativo.</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/permissions/roles</td><td class="note">Lista roles.</td></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/permissions/roles</td><td class="note">Crea rol con sus permisos.</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/permissions</td><td class="note">Lista permisos disponibles.</td></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/permissions</td><td class="note">Registra un permiso.</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/catalogs/<span class="v">:catalog</span></td><td class="note">Elementos habilitados de un catálogo.</td></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/catalogs/items</td><td class="note">Crea un elemento de catálogo.</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/catalogs/parameters</td><td class="note">Lista parámetros de configuración.</td></tr>
+            <tr><td><span class="m put">PUT</span></td><td class="path">/api/v1/catalogs/parameters</td><td class="note">Crea o actualiza un parámetro por clave (upsert).</td></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/catalogs/publish</td><td class="note">Publica cambios de config (idempotente + outbox).</td></tr>
+          </table></div>
+        </div>
+
+        <!-- core-domain -->
+        <div class="card">
+          <header><h3>core-domain-service</h3><span class="port">:3003</span><span class="role">Plantilla de dominio renombrable por proyecto. Muestra el patrón entidad + reglas + eventos.</span></header>
+          <div class="tbl-scroll"><table>
+            <tr><th>Método</th><th>Ruta</th><th>Descripción</th></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/example</td><td class="note">Lista (paginado, filtrado por tenant).</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/example/<span class="v">:id</span></td><td class="note">Entidad por id.</td></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/example</td><td class="note">Crea (idempotente + evento outbox transaccional).</td></tr>
+            <tr><td><span class="m patch">PATCH</span></td><td class="path">/api/v1/example/<span class="v">:id</span></td><td class="note">Actualización parcial.</td></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/example/<span class="v">:id</span>/activate</td><td class="note">Transición de flujo (regla de negocio de ejemplo).</td></tr>
+            <tr><td><span class="m del">DELETE</span></td><td class="path">/api/v1/example/<span class="v">:id</span></td><td class="note">Borrado lógico.</td></tr>
+          </table></div>
+        </div>
+
+        <!-- reporting -->
+        <div class="card">
+          <header><h3>reporting-service</h3><span class="port">:3004</span><span class="role">Reportes de solo lectura sobre la réplica. Exporta CSV / Excel / PDF.</span></header>
+          <div class="tbl-scroll"><table>
+            <tr><th>Método</th><th>Ruta</th><th>Descripción</th></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/reports/sample</td><td class="note">Reporte de ejemplo ejecutado contra la read-replica.</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/reports/sample/export<span class="v">?format=</span></td><td class="note">Exporta el reporte (<code>csv</code> · <code>excel</code> · <code>pdf</code>).</td></tr>
+          </table></div>
+        </div>
+
+        <!-- notification -->
+        <div class="card">
+          <header><h3>notification-service</h3><span class="port">:3005</span><span class="role">Envío por email/SMS/push/interno. Reacciona a eventos vía RabbitMQ (inbox).</span></header>
+          <div class="tbl-scroll"><table>
+            <tr><th>Método</th><th>Ruta</th><th>Descripción</th></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/notifications/send</td><td class="note">Envía una notificación directa. Idempotente.</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/notifications/history</td><td class="note">Historial de entregas (últimas 100).</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/notifications/<span class="v">:id</span></td><td class="note">Estado de una entrega por id.</td></tr>
+            <tr><td><span class="m ws">EVENT</span></td><td class="path">notification.requested</td><td class="note">Consumidor RabbitMQ; procesa una sola vez (inbox).</td></tr>
+          </table></div>
+        </div>
+
+        <!-- integration -->
+        <div class="card">
+          <header><h3>integration-service</h3><span class="port">:3006</span><span class="role">Aísla formatos externos: webhooks de entrada y colas de salida (outbox) para reintento/conciliación.</span></header>
+          <div class="tbl-scroll"><table>
+            <tr><th>Método</th><th>Ruta</th><th>Descripción</th></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/integration/outbound</td><td class="note">Lista mensajes de salida (paginado).</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/integration/outbound/<span class="v">:id</span></td><td class="note">Mensaje de salida por id.</td></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/integration/outbound</td><td class="note">Encola un mensaje de salida. Idempotente.</td></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/integration/webhooks/<span class="v">:source</span></td><td class="note">Recibe webhook externo (outbox transaccional). Público.</td></tr>
+          </table></div>
+        </div>
+
+        <!-- file -->
+        <div class="card">
+          <header><h3>file-service</h3><span class="port">:3007</span><span class="role">Carga/descarga con metadatos en Postgres y binarios en MinIO. URLs temporales (presigned).</span></header>
+          <div class="tbl-scroll"><table>
+            <tr><th>Método</th><th>Ruta</th><th>Descripción</th></tr>
+            <tr><td><span class="m post">POST</span></td><td class="path">/api/v1/files</td><td class="note">Sube archivo (multipart) + evento outbox. Idempotente.</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/files</td><td class="note">Lista archivos del tenant (paginado).</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/files/<span class="v">:id</span></td><td class="note">Metadatos de un archivo.</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/files/<span class="v">:id</span>/url</td><td class="note">URL temporal de descarga (presigned).</td></tr>
+            <tr><td><span class="m del">DELETE</span></td><td class="path">/api/v1/files/<span class="v">:id</span></td><td class="note">Borrado lógico de los metadatos.</td></tr>
+          </table></div>
+        </div>
+
+        <!-- scheduler -->
+        <div class="card">
+          <header><h3>scheduler-service</h3><span class="port">:3008</span><span class="role">Cron distribuido con lock en Redis (una sola instancia ejecuta) + historial de corridas.</span></header>
+          <div class="tbl-scroll"><table>
+            <tr><th>Método</th><th>Ruta</th><th>Descripción</th></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/scheduler/runs</td><td class="note">Historial de ejecuciones (últimas 100).</td></tr>
+            <tr><td><span class="m get">GET</span></td><td class="path">/api/v1/scheduler/runs/<span class="v">:id</span></td><td class="note">Ejecución de job por id.</td></tr>
+            <tr><td><span class="m ws">CRON</span></td><td class="path">example-heartbeat</td><td class="note">Job de ejemplo cada minuto, protegido por lock distribuido.</td></tr>
+          </table></div>
+        </div>
+
+        <!-- realtime -->
+        <div class="card">
+          <header><h3>realtime-service</h3><span class="port">:3009</span><span class="role">Gateway WebSocket (socket.io) con adaptador Redis para escalado horizontal. Auth por JWT.</span></header>
+          <div class="tbl-scroll"><table>
+            <tr><th>Método</th><th>Ruta</th><th>Descripción</th></tr>
+            <tr><td><span class="m ws">WS</span></td><td class="path">ws://…:3009</td><td class="note">Conexión WebSocket autenticada; mensajes en tiempo real multi-instancia vía Redis.</td></tr>
+          </table></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 5. Infraestructura -->
+    <section id="infra">
+      <div class="sec-head"><span class="sec-num">05</span><h2>Infraestructura</h2></div>
+      <p class="sec-sub">Se levanta con <code style="font-family:var(--mono)">pnpm infra:up</code> (o incluida en los compose de dev/prod).</p>
+      <div class="card"><div class="tbl-scroll"><table>
+        <tr><th>Componente</th><th>Puerto(s)</th><th>Para qué sirve</th></tr>
+        <tr><td class="path">PostgreSQL primary</td><td class="path">5432</td><td class="note">Base de datos de escritura (una por servicio).</td></tr>
+        <tr><td class="path">PostgreSQL réplica</td><td class="path">5433</td><td class="note">Réplica de lectura (streaming) usada por reporting.</td></tr>
+        <tr><td class="path">Redis</td><td class="path">6379</td><td class="note">Sesiones, rate limiting, locks (redlock), idempotencia, WebSocket.</td></tr>
+        <tr><td class="path">RabbitMQ</td><td class="path">5672 · <span class="v">15672</span></td><td class="note">Bus de eventos de dominio. UI de administración en 15672.</td></tr>
+        <tr><td class="path">MinIO (S3)</td><td class="path">9000 · <span class="v">9001</span></td><td class="note">Almacenamiento de objetos. Consola web en 9001.</td></tr>
+        <tr><td class="path">Prometheus</td><td class="path">9090</td><td class="note">Métricas de todos los servicios (<code>/metrics</code>).</td></tr>
+        <tr><td class="path">Grafana</td><td class="path">3200</td><td class="note">Tableros de métricas y logs.</td></tr>
+        <tr><td class="path">Loki / Promtail</td><td class="path">3100</td><td class="note">Agregación de logs estructurados (pino).</td></tr>
+        <tr><td class="path">Jaeger</td><td class="path">16686 · <span class="v">4318/4317</span></td><td class="note">Trazas distribuidas (OpenTelemetry OTLP).</td></tr>
+      </table></div></div>
+    </section>
+
+    <!-- 6. Convenciones -->
+    <section id="convenciones">
+      <div class="sec-head"><span class="sec-num">06</span><h2>Convenciones transversales</h2></div>
+      <p class="sec-sub">Todo servicio hereda estos comportamientos del núcleo compartido (<code>libs/</code>). Al construir encima, ya vienen resueltos.</p>
+      <div class="conv">
+        <div class="item"><h4>Errores RFC 9457</h4><p>Respuestas de error uniformes en <code>application/problem+json</code> con <code>code</code> estable, <code>status</code>, <code>detail</code> e <code>instance</code>.</p></div>
+        <div class="item"><h4>Multi-tenant</h4><p>El <code>tenantId</code> viaja en el JWT y se propaga con AsyncLocalStorage; los listados se filtran por tenant automáticamente.</p></div>
+        <div class="item"><h4>Idempotencia</h4><p>Los <code>POST</code> sensibles aceptan <code>Idempotency-Key</code>; la respuesta se cachea en Redis y el reintento devuelve el mismo resultado.</p></div>
+        <div class="item"><h4>Outbox / Inbox</h4><p>Los eventos de dominio se escriben en la misma transacción que los datos y un relay los publica; los consumidores deduplican con inbox.</p></div>
+        <div class="item"><h4>JWT RS256 + JWKS</h4><p>auth firma con clave privada; cualquier servicio valida con las claves públicas de <code>/.well-known/jwks.json</code>.</p></div>
+        <div class="item"><h4>Identificadores UUID v7</h4><p>Claves primarias ordenables en el tiempo, con columnas de auditoría (createdBy/updatedBy) y borrado lógico.</p></div>
+        <div class="item"><h4>Observabilidad</h4><p><code>/health</code>, <code>/health/ready</code>, <code>/metrics</code> (Prometheus) y trazas OTLP hacia Jaeger en cada servicio.</p></div>
+        <div class="item"><h4>Correlation ID</h4><p>Se lee/genera <code>x-correlation-id</code>, se inyecta en los logs y se propaga entre servicios y eventos.</p></div>
+      </div>
+    </section>
+
+    <footer>
+      icms-platform · plataforma base reutilizable · documento de referencia generado del estado actual del monorepo.
+    </footer>
+  </div>
+
+<script>
+  (function () {
+    var btn = document.getElementById('themeToggle');
+    var root = document.documentElement;
+    btn.addEventListener('click', function () {
+      var current = root.getAttribute('data-theme');
+      if (!current) {
+        current = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      root.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    });
+  })();
+</script>
+</body>
+</html>
