@@ -59,7 +59,9 @@ export class DatabaseModule {
             // porque el bundle de webpack no incluye los archivos de migración).
             migrationsRun: false,
             autoLoadEntities: true,
-            logging: config.get<string>('LOG_LEVEL') === 'debug',
+            // El log de queries es MUY ruidoso (el relay del outbox consulta cada
+            // pocos segundos), así que es opt-in explícito: DB_LOGGING=true.
+            logging: config.get<string>('DB_LOGGING') === 'true',
           }),
         }),
       ],

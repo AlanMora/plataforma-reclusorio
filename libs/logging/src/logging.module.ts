@@ -15,6 +15,16 @@ import { CorrelationIdMiddleware } from './correlation-id.middleware';
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.LOG_LEVEL ?? 'info',
+        // No loguear el ruido operativo: scrapes de Prometheus y health checks
+        // llegan cada pocos segundos y ahogan los logs de negocio.
+        autoLogging: {
+          ignore: (req: IncomingMessage) => {
+            const url = (req as { url?: string }).url ?? '';
+            return (
+              url === '/metrics' || url === '/health' || url.startsWith('/health/')
+            );
+          },
+        },
         genReqId: (req: IncomingMessage) =>
           (req.headers[CORRELATION_ID_HEADER] as string) ?? randomUUID(),
         customProps: (req: IncomingMessage) => ({
