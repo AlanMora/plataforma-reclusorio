@@ -1,9 +1,11 @@
 import { Column, Entity, Index } from 'typeorm';
-import { Controller, Get, Injectable, Module } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Injectable, Module, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ArrayNotEmpty, IsArray, IsOptional, IsString } from 'class-validator';
 import { BaseEntity, DatabaseModule } from '@icms/database';
+import { RequirePermissions } from '@icms/auth';
 
 @Entity('permissions')
 export class Permission extends BaseEntity {
@@ -25,6 +27,16 @@ export class Role extends BaseEntity {
   permissionKeys!: string[];
 }
 
+class CreateRoleDto {
+  @IsString() name!: string;
+  @IsArray() @ArrayNotEmpty() @IsString({ each: true }) permissionKeys!: string[];
+}
+
+class CreatePermissionDto {
+  @IsString() key!: string;
+  @IsOptional() @IsString() description?: string;
+}
+
 @Injectable()
 export class PermissionsService {
   constructor(
@@ -36,8 +48,16 @@ export class PermissionsService {
     return this.roles.find();
   }
 
+  createRole(dto: CreateRoleDto) {
+    return this.roles.save(this.roles.create(dto));
+  }
+
   listPermissions() {
     return this.permissions.find();
+  }
+
+  createPermission(dto: CreatePermissionDto) {
+    return this.permissions.save(this.permissions.create(dto));
   }
 }
 
@@ -48,13 +68,29 @@ export class PermissionsController {
   constructor(private readonly service: PermissionsService) {}
 
   @Get('roles')
+  @ApiOperation({ summary: 'Listar roles' })
   roles() {
     return this.service.listRoles();
   }
 
+  @Post('roles')
+  @RequirePermissions('permissions:write')
+  @ApiOperation({ summary: 'Crear un rol con sus permisos' })
+  createRole(@Body() dto: CreateRoleDto) {
+    return this.service.createRole(dto);
+  }
+
   @Get()
+  @ApiOperation({ summary: 'Listar permisos disponibles' })
   permissions() {
     return this.service.listPermissions();
+  }
+
+  @Post()
+  @RequirePermissions('permissions:write')
+  @ApiOperation({ summary: 'Registrar un permiso' })
+  createPermission(@Body() dto: CreatePermissionDto) {
+    return this.service.createPermission(dto);
   }
 }
 

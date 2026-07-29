@@ -1,10 +1,13 @@
 import {
   Controller,
+  Delete,
   Get,
+  HttpCode,
   Injectable,
   Module,
   Param,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -14,7 +17,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { randomUUID } from 'node:crypto';
 import { DatabaseModule } from '@icms/database';
-import { EntityNotFoundException } from '@icms/common';
+import { EntityNotFoundException, PaginationQueryDto, paginate } from '@icms/common';
 import { AuthenticatedUser, CurrentUser } from '@icms/auth';
 import { Idempotent } from '@icms/redis';
 import { OutboxService } from '@icms/messaging';
@@ -67,9 +70,30 @@ export class FilesService {
   }
 
   async temporaryUrl(id: string): Promise<{ url: string }> {
+    const meta = await this.findOne(id);
+    return { url: await this.storage.presignedDownload(meta.objectKey) };
+  }
+
+  async findOne(id: string): Promise<FileMetadata> {
     const meta = await this.files.findOne({ where: { id } });
     if (!meta) throw new EntityNotFoundException('Archivo', id);
-    return { url: await this.storage.presignedDownload(meta.objectKey) };
+    return meta;
+  }
+
+  async list(query: PaginationQueryDto, user: AuthenticatedUser) {
+    const [items, total] = await this.files.findAndCount({
+      where: user.tenantId ? { tenantId: user.tenantId } : {},
+      skip: (query.page - 1) * query.limit,
+      take: query.limit,
+      order: { createdAt: 'DESC' },
+    });
+    return paginate(items, total, query);
+  }
+
+  /** Borrado lógico de los metadatos; el binario permanece en el object storage. */
+  async remove(id: string): Promise<void> {
+    const meta = await this.findOne(id);
+    await this.files.softRemove(meta);
   }
 }
 
@@ -88,10 +112,29 @@ export class FilesController {
     return this.files.upload(file, user);
   }
 
+  @Get()
+  @ApiOperation({ summary: 'Listar archivos del tenant (paginado)' })
+  list(@Query() query: PaginationQueryDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.files.list(query, user);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener los metadatos de un archivo' })
+  findOne(@Param('id') id: string) {
+    return this.files.findOne(id);
+  }
+
   @Get(':id/url')
-  @ApiOperation({ summary: 'Obtener URL temporal de descarga' })
+  @ApiOperation({ summary: 'Obtener URL temporal de descarga (presigned)' })
   url(@Param('id') id: string) {
     return this.files.temporaryUrl(id);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Eliminar (borrado lógico) un archivo' })
+  remove(@Param('id') id: string) {
+    return this.files.remove(id);
   }
 }
 

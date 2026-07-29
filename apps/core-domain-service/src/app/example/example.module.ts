@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Injectable, Module, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Injectable, Module, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -12,6 +12,11 @@ import { ExampleEntity } from './example.entity';
 
 class CreateExampleDto {
   @IsString() name!: string;
+  @IsOptional() @IsObject() attributes?: Record<string, unknown>;
+}
+
+class UpdateExampleDto {
+  @IsOptional() @IsString() name?: string;
   @IsOptional() @IsObject() attributes?: Record<string, unknown>;
 }
 
@@ -65,13 +70,32 @@ export class ExampleService {
     return this.repo.save(entity);
   }
 
-  async list(query: PaginationQueryDto) {
+  async list(query: PaginationQueryDto, user: AuthenticatedUser) {
     const [items, total] = await this.repo.findAndCount({
+      where: user.tenantId ? { tenantId: user.tenantId } : {},
       skip: (query.page - 1) * query.limit,
       take: query.limit,
       order: { createdAt: 'DESC' },
     });
     return paginate(items, total, query);
+  }
+
+  async findOne(id: string): Promise<ExampleEntity> {
+    const entity = await this.repo.findOne({ where: { id } });
+    if (!entity) throw new EntityNotFoundException('ExampleEntity', id);
+    return entity;
+  }
+
+  async update(id: string, dto: UpdateExampleDto, user: AuthenticatedUser): Promise<ExampleEntity> {
+    const entity = await this.findOne(id);
+    Object.assign(entity, dto, { updatedBy: user.id });
+    return this.repo.save(entity);
+  }
+
+  /** Borrado lógico (deletedAt) — estrategia por defecto (§19). */
+  async remove(id: string): Promise<void> {
+    const entity = await this.findOne(id);
+    await this.repo.softRemove(entity);
   }
 }
 
@@ -82,8 +106,15 @@ export class ExampleController {
   constructor(private readonly service: ExampleService) {}
 
   @Get()
-  list(@Body() _b: unknown, @CurrentUser() _u: AuthenticatedUser) {
-    return this.service.list(new PaginationQueryDto());
+  @ApiOperation({ summary: 'Listar entidades de ejemplo (paginado, filtrado por tenant)' })
+  list(@Query() query: PaginationQueryDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.service.list(query, user);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener una entidad de ejemplo por id' })
+  findOne(@Param('id') id: string) {
+    return this.service.findOne(id);
   }
 
   @Post()
@@ -94,10 +125,23 @@ export class ExampleController {
     return this.service.create(dto, user);
   }
 
+  @Patch(':id')
+  @ApiOperation({ summary: 'Actualizar parcialmente una entidad de ejemplo' })
+  update(@Param('id') id: string, @Body() dto: UpdateExampleDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.service.update(id, dto, user);
+  }
+
   @Post(':id/activate')
   @ApiOperation({ summary: 'Activar (transición de flujo de ejemplo)' })
   activate(@Param('id') id: string) {
     return this.service.activate(id);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Eliminar (borrado lógico) una entidad de ejemplo' })
+  remove(@Param('id') id: string) {
+    return this.service.remove(id);
   }
 }
 

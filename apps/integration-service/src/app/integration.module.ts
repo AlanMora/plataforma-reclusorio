@@ -1,9 +1,10 @@
-import { Body, Controller, Injectable, Logger, Module, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Injectable, Logger, Module, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { IsNotEmpty, IsObject, IsString } from 'class-validator';
 import { DatabaseModule } from '@icms/database';
+import { EntityNotFoundException, PaginationQueryDto, paginate } from '@icms/common';
 import { Public } from '@icms/auth';
 import { Idempotent } from '@icms/redis';
 import { OutboxService } from '@icms/messaging';
@@ -35,6 +36,21 @@ export class IntegrationService {
     return this.outboundRepo.save(this.outboundRepo.create({ ...dto, status: 'pending' }));
   }
 
+  async listOutbound(query: PaginationQueryDto) {
+    const [items, total] = await this.outboundRepo.findAndCount({
+      skip: (query.page - 1) * query.limit,
+      take: query.limit,
+      order: { createdAt: 'DESC' },
+    });
+    return paginate(items, total, query);
+  }
+
+  async getOutbound(id: string) {
+    const message = await this.outboundRepo.findOne({ where: { id } });
+    if (!message) throw new EntityNotFoundException('Mensaje de salida', id);
+    return message;
+  }
+
   /**
    * Recibe un webhook externo y publica el evento de dominio de forma
    * transaccional (Outbox). TODO(proyecto): validar firma/timestamp/nonce y
@@ -53,6 +69,20 @@ export class IntegrationService {
 @Controller('integration')
 export class IntegrationController {
   constructor(private readonly service: IntegrationService) {}
+
+  @Get('outbound')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Listar mensajes de salida (paginado)' })
+  listOutbound(@Query() query: PaginationQueryDto) {
+    return this.service.listOutbound(query);
+  }
+
+  @Get('outbound/:id')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Obtener un mensaje de salida por id' })
+  getOutbound(@Param('id') id: string) {
+    return this.service.getOutbound(id);
+  }
 
   @Post('outbound')
   @Idempotent()

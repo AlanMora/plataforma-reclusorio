@@ -80,4 +80,30 @@ export class SessionStore {
   async listUserSessions(userId: string): Promise<string[]> {
     return this.redis.smembers(this.userKey(userId));
   }
+
+  /** Lista las sesiones activas del usuario con sus metadatos (sin el hash del token). */
+  async listUserSessionsDetailed(
+    userId: string,
+  ): Promise<Array<{ sessionId: string; userId: string; userAgent?: string; ipAddress?: string; createdAt: string }>> {
+    const sids = await this.listUserSessions(userId);
+    const sessions: Array<{
+      sessionId: string;
+      userId: string;
+      userAgent?: string;
+      ipAddress?: string;
+      createdAt: string;
+    }> = [];
+    for (const sid of sids) {
+      const data = await this.get(sid);
+      if (!data) continue; // sesión ya expirada: se ignora
+      sessions.push({
+        sessionId: sid,
+        userId: data.userId,
+        userAgent: data.userAgent,
+        ipAddress: data.ipAddress,
+        createdAt: data.createdAt,
+      });
+    }
+    return sessions;
+  }
 }

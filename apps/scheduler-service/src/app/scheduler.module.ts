@@ -1,9 +1,10 @@
-import { Controller, Get, Injectable, Logger, Module } from '@nestjs/common';
+import { Controller, Get, Injectable, Logger, Module, Param } from '@nestjs/common';
 import { ScheduleModule, Cron } from '@nestjs/schedule';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DatabaseModule } from '@icms/database';
+import { EntityNotFoundException } from '@icms/common';
 import { DistributedLockService } from './distributed-lock.service';
 import { JobRun } from './job-run.entity';
 
@@ -18,6 +19,12 @@ export class SchedulerService {
 
   history() {
     return this.runs.find({ order: { startedAt: 'DESC' }, take: 100 });
+  }
+
+  async getRun(id: string): Promise<JobRun> {
+    const run = await this.runs.findOne({ where: { id } });
+    if (!run) throw new EntityNotFoundException('Ejecución de job', id);
+    return run;
   }
 
   /**
@@ -52,8 +59,15 @@ export class SchedulerController {
   constructor(private readonly service: SchedulerService) {}
 
   @Get('runs')
+  @ApiOperation({ summary: 'Historial de ejecuciones (últimas 100)' })
   runs() {
     return this.service.history();
+  }
+
+  @Get('runs/:id')
+  @ApiOperation({ summary: 'Obtener una ejecución de job por id' })
+  getRun(@Param('id') id: string) {
+    return this.service.getRun(id);
   }
 }
 

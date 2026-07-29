@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Injectable, Logger, Module, Post } from '@nestjs/common';
+import { Body, Controller, Get, Injectable, Logger, Module, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { IsIn, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
 import { DatabaseModule } from '@icms/database';
+import { EntityNotFoundException } from '@icms/common';
 import { InboxService } from '@icms/messaging';
 import { Idempotent } from '@icms/redis';
 import { DomainEvent, EventNames, NotificationRequestedPayload } from '@icms/contracts';
@@ -62,6 +63,12 @@ export class NotificationsService {
   history() {
     return this.deliveries.find({ order: { createdAt: 'DESC' }, take: 100 });
   }
+
+  async getDelivery(id: string): Promise<NotificationDelivery> {
+    const delivery = await this.deliveries.findOne({ where: { id } });
+    if (!delivery) throw new EntityNotFoundException('Notificación', id);
+    return delivery;
+  }
 }
 
 /** Suscriptor de eventos: reacciona a `notification.requested` publicado por otros servicios. */
@@ -100,8 +107,15 @@ export class NotificationsController {
   }
 
   @Get('history')
+  @ApiOperation({ summary: 'Historial de entregas (últimas 100)' })
   history() {
     return this.notifications.history();
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener el estado de una entrega por id' })
+  getDelivery(@Param('id') id: string) {
+    return this.notifications.getDelivery(id);
   }
 }
 
