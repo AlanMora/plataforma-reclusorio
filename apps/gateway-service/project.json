@@ -3,5 +3,21 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/gateway-service/src",
   "projectType": "application",
-  "tags": ["scope:gateway", "type:app"]
+  "tags": [
+    "scope:gateway",
+    "type:app"
+  ],
+  "targets": {
+    "serve": {
+      "executor": "@nx/js:node",
+      "dependsOn": [
+        "build"
+      ],
+      "options": {
+        "buildTarget": "gateway-service:build",
+        "runBuildTargetDependencies": false,
+        "watch": true
+      }
+    }
+  }
 }

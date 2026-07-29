@@ -6,5 +6,18 @@
   "tags": [
     "scope:file",
     "type:app"
-  ]
+  ],
+  "targets": {
+    "serve": {
+      "executor": "@nx/js:node",
+      "dependsOn": [
+        "build"
+      ],
+      "options": {
+        "buildTarget": "file-service:build",
+        "runBuildTargetDependencies": false,
+        "watch": true
+      }
+    }
+  }
 }

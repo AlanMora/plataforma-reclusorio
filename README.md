@@ -99,6 +99,11 @@ docker compose --env-file .env.docker -f docker-compose.prod.yml up -d
 
 En ambos modos los puertos `3000–3009` quedan publicados en tu host, igual que abajo.
 
+> **Memoria (Docker Desktop):** el modo desarrollo corre 10 watchers de webpack.
+> Asigna **≥ 8 GB** a Docker Desktop (Settings → Resources → Memory) o levanta
+> solo el subconjunto de servicios que necesites. Si un servicio muere con
+> `Killed` en los logs, es falta de memoria, no un error del código.
+
 ### Opción B — Infra en Docker + servicios en el host (ciclo de desarrollo más ligero)
 
 Requisitos: Node ≥ 20, pnpm, Docker.

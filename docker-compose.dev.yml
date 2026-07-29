@@ -14,7 +14,13 @@ include:
 x-service-env: &service-env
   NODE_ENV: development
   LOG_LEVEL: debug
-  NX_DAEMON: 'false' # evita choques del daemon de Nx entre contenedores
+  # El daemon de Nx es NECESARIO para el hot-reload (@nx/js:node reinicia el
+  # proceso al recompilar). Cada contenedor tiene su propio volumen .nx, así
+  # que los daemons no chocan entre sí.
+  NX_DAEMON: 'true'
+  # Omite el type-checker de webpack (ForkTsChecker) dentro de Docker: ahorra
+  # cientos de MB por servicio y evita OOM kills. Tipos: IDE + build de prod.
+  SKIP_TYPE_CHECK: 'true'
   JWT_SECRET: change-me-in-production
   JWT_ACCESS_TTL: 900s
   JWT_REFRESH_TTL: 7d
