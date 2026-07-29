@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
-import * as bcrypt from 'bcryptjs';
+import { hash as argon2Hash, verify as argon2Verify } from '@node-rs/argon2';
 import { JwtPayload } from '@icms/auth';
 import { UnauthorizedDomainException } from '@icms/common';
 import { EventPublisher } from '@icms/messaging';
@@ -19,7 +19,10 @@ export interface TokenPair {
   expiresIn: string;
 }
 
-const BCRYPT_ROUNDS = 12;
+// Hash dummy (argon2id) para comparar en tiempo constante cuando el usuario no
+// existe, evitando filtrar por tiempo qué correos están registrados.
+let dummyHashPromise: Promise<string> | null = null;
+const dummyHash = () => (dummyHashPromise ??= argon2Hash('invalid-password-placeholder'));
 
 /**
  * Hash de un refresh token con SHA-256. Los tokens son de alta entropía, así que
@@ -66,7 +69,7 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto): Promise<{ id: string }> {
-    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
+    const passwordHash = await argon2Hash(dto.password); // argon2id por defecto
     const user = this.users.create({
       email: dto.email,
       passwordHash,
@@ -82,8 +85,13 @@ export class AuthService {
     const user = await this.users.findOne({ where: { email: dto.email, isActive: true } });
     // Compara siempre contra un hash (aunque el usuario no exista) para no filtrar
     // por tiempo si un email está o no registrado.
-    const stored = user?.passwordHash ?? '$2a$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinva';
-    const ok = await bcrypt.compare(dto.password, stored);
+    const stored = user?.passwordHash ?? (await dummyHash());
+    let ok = false;
+    try {
+      ok = await argon2Verify(stored, dto.password);
+    } catch {
+      ok = false;
+    }
     if (!user || !ok) {
       throw new UnauthorizedDomainException('Credenciales inválidas');
     }

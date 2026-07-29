@@ -20,6 +20,7 @@ export class OutboxModule {
   static forRoot(options: { withRelay?: boolean } = {}): DynamicModule {
     return {
       module: OutboxModule,
+      global: true,
       imports: [
         TypeOrmModule.forFeature([OutboxEvent, InboxEvent]),
         ...(options.withRelay ? [ScheduleModule.forRoot()] : []),

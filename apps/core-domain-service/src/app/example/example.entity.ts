@@ -1,4 +1,4 @@
-import { Column, Entity, Index } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 import { BaseEntity } from '@icms/database';
 
 /**
@@ -8,10 +8,6 @@ import { BaseEntity } from '@icms/database';
  */
 @Entity('example_entities')
 export class ExampleEntity extends BaseEntity {
-  @Index()
-  @Column({ name: 'tenant_id', nullable: true })
-  tenantId?: string;
-
   @Column()
   name!: string;
 

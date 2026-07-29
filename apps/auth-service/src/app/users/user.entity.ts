@@ -14,9 +14,6 @@ export class User extends BaseEntity {
   @Column({ name: 'is_active', default: true })
   isActive!: boolean;
 
-  @Column({ name: 'tenant_id', nullable: true })
-  tenantId?: string;
-
   @Column({ name: 'two_factor_enabled', default: false })
   twoFactorEnabled!: boolean;
 

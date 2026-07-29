@@ -1,12 +1,13 @@
 import { Body, Controller, Get, Injectable, Module, Param, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { IsObject, IsOptional, IsString } from 'class-validator';
 import { DatabaseModule } from '@icms/database';
 import { BusinessRuleException, EntityNotFoundException, PaginationQueryDto, paginate } from '@icms/common';
-import { AuthenticatedUser, CurrentUser } from '@icms/auth';
-import { EventPublisher } from '@icms/messaging';
+import { AuthenticatedUser, CurrentUser, TenantContext } from '@icms/auth';
+import { Idempotent } from '@icms/redis';
+import { OutboxService } from '@icms/messaging';
 import { ExampleEntity } from './example.entity';
 
 class CreateExampleDto {
@@ -22,14 +23,35 @@ class CreateExampleDto {
 export class ExampleService {
   constructor(
     @InjectRepository(ExampleEntity) private readonly repo: Repository<ExampleEntity>,
-    private readonly events: EventPublisher,
+    private readonly dataSource: DataSource,
+    private readonly outbox: OutboxService,
   ) {}
 
+  /**
+   * Crea la entidad y publica el evento de dominio de forma **transaccional**:
+   * el evento se escribe en el Outbox dentro de la MISMA transacción (§7.1).
+   */
   async create(dto: CreateExampleDto, user: AuthenticatedUser) {
-    const entity = this.repo.create({ ...dto, tenantId: user.tenantId, status: 'draft' });
-    const saved = await this.repo.save(entity);
-    await this.events.publish('example.created', { id: saved.id }, { tenantId: user.tenantId });
-    return saved;
+    return this.dataSource.transaction(async (manager) => {
+      const entity = manager.getRepository(ExampleEntity).create({
+        ...dto,
+        tenantId: user.tenantId,
+        createdBy: user.id,
+        status: 'draft',
+      });
+      const saved = await manager.save(entity);
+      await this.outbox.enqueue(
+        manager,
+        'example.created',
+        { id: saved.id },
+        {
+          tenantId: user.tenantId,
+          aggregateId: saved.id,
+          correlationId: TenantContext.get()?.correlationId,
+        },
+      );
+      return saved;
+    });
   }
 
   async activate(id: string) {
@@ -65,7 +87,9 @@ export class ExampleController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Crear entidad de ejemplo' })
+  @Idempotent()
+  @ApiHeader({ name: 'Idempotency-Key', required: true, description: 'Clave de idempotencia (UUID)' })
+  @ApiOperation({ summary: 'Crear entidad de ejemplo (idempotente + outbox transaccional)' })
   create(@Body() dto: CreateExampleDto, @CurrentUser() user: AuthenticatedUser) {
     return this.service.create(dto, user);
   }

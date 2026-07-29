@@ -37,9 +37,9 @@ export class OutboxEvent {
 /**
  * Tabla Inbox (§7.1): registra los eventos ya procesados por un consumidor para
  * garantizar idempotencia (at-least-once + dedup = efecto exactly-once).
+ * La clave primaria compuesta (eventId, consumer) ya garantiza la unicidad.
  */
 @Entity('inbox_events')
-@Index(['eventId', 'consumer'], { unique: true })
 export class InboxEvent {
   @PrimaryColumn('uuid')
   eventId!: string;
