@@ -55,7 +55,9 @@ export class DatabaseModule {
             synchronize:
               options.synchronize ?? config.get<string>('NODE_ENV') !== 'production',
             migrations: options.migrations ?? [],
-            migrationsRun: config.get<string>('NODE_ENV') === 'production',
+            // Las migraciones se corren con la CLI en el pipeline (no al arrancar,
+            // porque el bundle de webpack no incluye los archivos de migración).
+            migrationsRun: false,
             autoLoadEntities: true,
             logging: config.get<string>('LOG_LEVEL') === 'debug',
           }),
