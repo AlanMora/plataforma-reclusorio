@@ -52,11 +52,12 @@ Son afinamientos; el estándar ya es sólido.
 
 ## 3. Pendiente / roadmap (no bloquea el arranque)
 
-- **OpenTelemetry con el bundle de webpack:** la instrumentación automática requiere
-  cargarse antes que los módulos. Para cobertura total conviene un preload
-  (`NODE_OPTIONS="--require @opentelemetry/auto-instrumentations-node/register"`) o
-  ejecutar sin bundle. Hoy queda **cableado y opt‑in**; falta validar trazas contra
-  un colector (Tempo/Jaeger).
+- **OpenTelemetry — VERIFICADO con Jaeger.** Recomendado el preload
+  `NODE_OPTIONS="--require @opentelemetry/auto-instrumentations-node/register"` +
+  `OTEL_SERVICE_NAME`, `OTEL_TRACES_EXPORTER=otlp`, `OTEL_EXPORTER_OTLP_ENDPOINT`.
+  Probado: `auth-service` exportó trazas a Jaeger (spans HTTP `GET` y `pg.query:SELECT/COMMIT`).
+  Jaeger está en `infra/docker-compose.yml` (UI en http://localhost:16686). El helper
+  `initTracing()` sigue disponible como alternativa sin preload.
 - **Migraciones por servicio:** el soporte está en `DatabaseModule`; falta generar
   los archivos de migración por servicio y un `data-source.ts` para el CLI.
 - **Cobertura de pruebas:** hay semilla; falta subir cobertura (integración,
