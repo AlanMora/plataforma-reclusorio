@@ -7,11 +7,12 @@ name: icms-platform
 services:
   # ------------------------------------------------------------------
   # PostgreSQL primary (escrituras) — replicación por streaming (bitnami)
-  # NOTA: Bitnami retiró sus imágenes públicas de Docker Hub (2025); usamos el
-  # namespace de archivo `bitnamilegacy/`. La config de replicación es idéntica.
+  # NOTA: Bitnami retiró sus tags versionados de Docker Hub (2025); en el
+  # namespace `bitnami/` solo queda `latest`. Se puede fijar otra imagen
+  # (p.ej. bitnamilegacy/postgresql:16) con la variable POSTGRES_IMAGE.
   # ------------------------------------------------------------------
   postgres-primary:
-    image: bitnamilegacy/postgresql:16
+    image: ${POSTGRES_IMAGE:-bitnami/postgresql:latest}
     container_name: icms-postgres-primary
     ports:
       - '${POSTGRES_PORT:-5432}:5432'
@@ -37,7 +38,7 @@ services:
   # PostgreSQL réplica de lectura (usada por reporting-service)
   # ------------------------------------------------------------------
   postgres-replica:
-    image: bitnamilegacy/postgresql:16
+    image: ${POSTGRES_IMAGE:-bitnami/postgresql:latest}
     container_name: icms-postgres-replica
     ports:
       - '${POSTGRES_REPLICA_PORT:-5433}:5432'
