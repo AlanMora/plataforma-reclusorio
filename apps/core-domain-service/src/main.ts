@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import { Logger as PinoLogger } from 'nestjs-pino';
 import helmet from 'helmet';
 import { configureApp } from '@icms/common';
+import { initTracing } from '@icms/observability';
 import { AppModule } from './app/app.module';
 
 /**
@@ -10,6 +11,7 @@ import { AppModule } from './app/app.module';
  * `pnpm rename:core <nuevo-nombre>` (ver tools/rename-core-domain.mjs).
  */
 async function bootstrap() {
+  await initTracing('core-domain-service'); // no-op si OTEL_EXPORTER_OTLP_ENDPOINT no está definido
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   app.useLogger(app.get(PinoLogger));
   app.use(helmet());

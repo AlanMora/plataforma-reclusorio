@@ -11,6 +11,8 @@ export interface DatabaseModuleOptions {
   entities: EntityClassOrSchema[];
   /** Sincronizar el esquema automáticamente (sólo desarrollo). */
   synchronize?: boolean;
+  /** Rutas glob a las migraciones del servicio. En producción se corren al arrancar. */
+  migrations?: string[];
 }
 
 /**
@@ -48,8 +50,12 @@ export class DatabaseModule {
               ],
             },
             entities: options.entities,
+            // synchronize SOLO en desarrollo; en producción se usan migraciones
+            // versionadas (estrategia expand-migrate-contract, §5.1).
             synchronize:
               options.synchronize ?? config.get<string>('NODE_ENV') !== 'production',
+            migrations: options.migrations ?? [],
+            migrationsRun: config.get<string>('NODE_ENV') === 'production',
             autoLoadEntities: true,
             logging: config.get<string>('LOG_LEVEL') === 'debug',
           }),
