@@ -15,9 +15,10 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiResponse<T>
     const request = context.switchToHttp().getRequest<Request>();
     const correlationId = (request as any)[CORRELATION_ID_KEY];
 
-    // /metrics debe devolverse en texto plano crudo (formato Prometheus), sin envolver.
+    // /metrics (texto Prometheus) y /.well-known/jwks.json (JSON estándar) se
+    // devuelven crudos, sin el sobre ApiResponse.
     const path = ((request as any)?.path ?? (request as any)?.url ?? '').split('?')[0];
-    if (path === '/metrics') {
+    if (path === '/metrics' || path === '/.well-known/jwks.json') {
       return next.handle() as unknown as Observable<ApiResponse<T>>;
     }
 

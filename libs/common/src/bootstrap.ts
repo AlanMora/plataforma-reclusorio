@@ -24,7 +24,9 @@ export interface BootstrapOptions {
 export function configureApp(app: INestApplication, options: BootstrapOptions): void {
   const globalPrefix = options.globalPrefix ?? 'api';
 
-  app.setGlobalPrefix(globalPrefix, { exclude: ['health', 'health/ready', 'metrics'] });
+  app.setGlobalPrefix(globalPrefix, {
+    exclude: ['health', 'health/ready', 'metrics', '.well-known/jwks.json'],
+  });
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
   if (options.enableCors) {

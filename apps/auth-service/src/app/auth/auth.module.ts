@@ -5,11 +5,13 @@ import { User } from '../users/user.entity';
 import { SessionStore } from '../sessions/session-store.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { KeyService } from './key.service';
+import { JwksController } from './jwks.controller';
 
 @Module({
   imports: [DatabaseModule.forFeature([User]), JwtModule.register({})],
-  controllers: [AuthController],
-  providers: [AuthService, SessionStore],
+  controllers: [AuthController, JwksController],
+  providers: [AuthService, SessionStore, KeyService],
   exports: [AuthService, SessionStore],
 })
 export class AuthModule {}

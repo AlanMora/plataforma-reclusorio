@@ -32,7 +32,12 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     // Endpoints de infraestructura siempre accesibles (healthchecks / scraping).
     const req = context.switchToHttp().getRequest();
     const path: string = (req?.path ?? req?.url ?? '').split('?')[0];
-    if (path === '/health' || path === '/health/ready' || path === '/metrics') {
+    if (
+      path === '/health' ||
+      path === '/health/ready' ||
+      path === '/metrics' ||
+      path === '/.well-known/jwks.json'
+    ) {
       return true;
     }
 

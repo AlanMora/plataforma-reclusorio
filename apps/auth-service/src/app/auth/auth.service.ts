@@ -11,6 +11,7 @@ import { EventPublisher } from '@icms/messaging';
 import { EventNames } from '@icms/contracts';
 import { User } from '../users/user.entity';
 import { SessionStore } from '../sessions/session-store.service';
+import { KeyService } from './key.service';
 import { LoginDto, RegisterDto } from './dto';
 
 export interface TokenPair {
@@ -66,6 +67,7 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly events: EventPublisher,
+    private readonly keys: KeyService,
   ) {}
 
   async register(dto: RegisterDto): Promise<{ id: string }> {
@@ -105,7 +107,7 @@ export class AuthService {
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
-      tenantId: user.tenantId,
+      tenantId: user.tenantId ?? undefined,
       roles: user.roles ?? [],
       permissions: [],
       sid: sessionId,
@@ -116,7 +118,13 @@ export class AuthService {
     const refreshTtl = this.config.get<string>('JWT_REFRESH_TTL', '7d');
     const secret = this.config.get<string>('JWT_SECRET', 'change-me-in-production');
 
-    const accessToken = await this.jwt.signAsync(payload, { secret, expiresIn: accessTtl });
+    // Access token firmado con RS256 (clave privada); se valida vía JWKS.
+    const accessToken = await this.jwt.signAsync(payload, {
+      privateKey: this.keys.privateKeyPem,
+      algorithm: 'RS256',
+      keyid: this.keys.kid,
+      expiresIn: accessTtl,
+    });
     // `jti` único: garantiza que cada refresh token sea distinto (aunque se emitan
     // en el mismo segundo), para que la rotación invalide de verdad el anterior.
     const refreshToken = await this.jwt.signAsync(
