@@ -8,16 +8,20 @@ import {
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { CORRELATION_ID_KEY } from '../constants';
-import { ApiError, ApiResponse } from '../dto/api-response.dto';
+import { PROBLEM_JSON_CONTENT_TYPE, ProblemDetails } from '../exceptions/problem-details';
 
 /**
- * Filtro global que normaliza CUALQUIER excepción al sobre de respuesta
- * uniforme `ApiResponse`. Se registra en el bootstrap de cada servicio y en
- * el gateway, garantizando errores consistentes en toda la plataforma.
+ * Filtro global que normaliza CUALQUIER excepción a **RFC 9457
+ * (application/problem+json)**. Se registra en el bootstrap de cada servicio y
+ * en el gateway, garantizando errores consistentes en toda la plataforma.
+ *
+ * El tipo del problema usa `PROBLEM_TYPE_BASE` (URI base) si está definido; en
+ * su defecto, `about:blank` como indica el RFC.
  */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
+  private readonly typeBase = process.env.PROBLEM_TYPE_BASE?.replace(/\/$/, '');
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
@@ -25,50 +29,58 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
     const correlationId = (request as any)[CORRELATION_ID_KEY];
 
-    const { status, error } = this.normalize(exception);
+    const problem = this.toProblem(exception, request, correlationId);
 
-    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+    if (problem.status >= HttpStatus.INTERNAL_SERVER_ERROR) {
       this.logger.error(
-        `[${correlationId}] ${request.method} ${request.url} -> ${status}: ${error.message}`,
+        `[${correlationId}] ${request.method} ${request.url} -> ${problem.status}: ${problem.detail}`,
         exception instanceof Error ? exception.stack : undefined,
       );
     } else {
-      this.logger.warn(`[${correlationId}] ${request.method} ${request.url} -> ${status}: ${error.code}`);
+      this.logger.warn(
+        `[${correlationId}] ${request.method} ${request.url} -> ${problem.status}: ${problem.code}`,
+      );
     }
 
-    response.status(status).json(ApiResponse.fail(error, correlationId));
+    response.status(problem.status).type(PROBLEM_JSON_CONTENT_TYPE).json(problem);
   }
 
-  private normalize(exception: unknown): { status: number; error: ApiError } {
-    if (exception instanceof HttpException) {
-      const status = exception.getStatus();
-      const res = exception.getResponse();
+  private toProblem(exception: unknown, request: Request, correlationId?: string): ProblemDetails {
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let code = 'INTERNAL_ERROR';
+    let detail = 'Ocurrió un error interno inesperado';
+    let errors: unknown;
 
+    if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      code = this.codeFromStatus(status);
+      const res = exception.getResponse();
       if (typeof res === 'object' && res !== null) {
         const body = res as Record<string, unknown>;
-        return {
-          status,
-          error: {
-            code: (body.code as string) ?? this.codeFromStatus(status),
-            message: this.extractMessage(body) ?? exception.message,
-            details: body.details,
-          },
-        };
+        code = (body.code as string) ?? code;
+        detail = this.extractMessage(body) ?? exception.message;
+        errors = body.details ?? (Array.isArray(body.message) ? body.message : undefined);
+      } else {
+        detail = String(res);
       }
-
-      return {
-        status,
-        error: { code: this.codeFromStatus(status), message: String(res) },
-      };
     }
 
     return {
-      status: HttpStatus.INTERNAL_SERVER_ERROR,
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: 'Ocurrió un error interno inesperado',
-      },
+      type: this.typeFor(code),
+      title: this.titleFromStatus(status),
+      status,
+      detail,
+      instance: request.originalUrl ?? request.url,
+      correlationId,
+      code,
+      ...(errors !== undefined ? { errors } : {}),
     };
+  }
+
+  private typeFor(code: string): string {
+    if (!this.typeBase) return 'about:blank';
+    const slug = code.toLowerCase().replace(/_/g, '-');
+    return `${this.typeBase}/problems/${slug}`;
   }
 
   private extractMessage(body: Record<string, unknown>): string | undefined {
@@ -80,5 +92,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
   private codeFromStatus(status: number): string {
     return HttpStatus[status] ?? `HTTP_${status}`;
+  }
+
+  private titleFromStatus(status: number): string {
+    const name = HttpStatus[status];
+    return name ? name.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase()) : 'Error';
   }
 }

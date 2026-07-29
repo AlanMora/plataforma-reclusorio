@@ -2,6 +2,7 @@ export * from './constants';
 export * from './dto/api-response.dto';
 export * from './dto/pagination.dto';
 export * from './exceptions/domain.exception';
+export * from './exceptions/problem-details';
 export * from './filters/all-exceptions.filter';
 export * from './interceptors/response.interceptor';
 export * from './bootstrap';

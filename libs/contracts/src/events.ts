@@ -7,17 +7,31 @@
  *  - No elimines campos sin versionar la routing key.
  */
 
+/**
+ * Contrato estándar de evento (§7.2). Inmutable, versionado y validable.
+ * `eventType` sigue la convención `Nombre.vN` (p.ej. `IncidentCreated.v1`).
+ */
 export interface DomainEvent<T = unknown> {
-  /** Nombre del evento / routing key, p.ej. "user.registered". */
-  name: string;
-  /** Identificador único del evento (idempotencia). */
+  /** Identificador único del evento (idempotencia / Inbox). */
   eventId: string;
-  /** Momento de emisión en ISO-8601. */
+  /** Tipo versionado del evento, p.ej. "user.registered.v1". */
+  eventType: string;
+  /** Momento de emisión en ISO-8601 (UTC). */
   occurredAt: string;
-  /** Correlación con la petición que originó el evento. */
+  /** Servicio productor del evento. */
+  producer: string;
+  /** Correlación con la operación distribuida que lo originó. */
   correlationId?: string;
-  /** Tenant/institución dueña del evento. */
+  /** Comando o evento que causó éste (cadena de causalidad). */
+  causationId?: string;
+  /** Traza OpenTelemetry asociada. */
+  traceId?: string;
+  /** Tenant dueño del evento. */
   tenantId?: string;
+  /** Agregado/entidad al que pertenece el evento. */
+  aggregateId?: string;
+  /** Versión del schema del payload. */
+  schemaVersion: number;
   /** Carga útil específica del evento. */
   payload: T;
 }
