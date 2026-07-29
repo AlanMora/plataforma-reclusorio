@@ -28,7 +28,7 @@
     "node": ">=20"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["@nestjs/core", "@parcel/watcher", "@scarf/scarf", "nx"]
+    "onlyBuiltDependencies": ["@nestjs/core", "@parcel/watcher", "@scarf/scarf", "nx", "protobufjs"]
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.703.0",
