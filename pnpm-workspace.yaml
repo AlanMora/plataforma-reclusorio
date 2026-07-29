@@ -1,3 +1,30 @@
 packages:
   - 'apps/*'
   - 'libs/*'
+
+# ---------------------------------------------------------------------
+# Configuración de pnpm (desde pnpm 10/11 vive aquí, ya no en package.json)
+# ---------------------------------------------------------------------
+
+# Aprobación de scripts de build (binarios nativos, etc.). Evita el error
+# ERR_PNPM_IGNORED_BUILDS sin pasar por `pnpm approve-builds` interactivo.
+# pnpm 11 usa `allowBuilds`; `onlyBuiltDependencies` se mantiene por
+# compatibilidad con pnpm 10.
+allowBuilds:
+  '@nestjs/core': true
+  '@parcel/watcher': true
+  '@scarf/scarf': true
+  nx: true
+  protobufjs: true
+
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - '@parcel/watcher'
+  - '@scarf/scarf'
+  - nx
+  - protobufjs
+
+# Los scripts `docker:*` solo levantan contenedores; las dependencias se
+# instalan DENTRO de la imagen. No forzar `pnpm install` en el host antes
+# de correr un script.
+verifyDepsBeforeRun: false
