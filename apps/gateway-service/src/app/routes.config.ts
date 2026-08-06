@@ -25,6 +25,16 @@ export const UPSTREAM_ROUTES: UpstreamRoute[] = [
   { prefix: '/api/v1/integration', envKey: 'INTEGRATION_SERVICE_URL', fallback: 'http://localhost:3006', protected: true },
   { prefix: '/api/v1/files', envKey: 'FILE_SERVICE_URL', fallback: 'http://localhost:3007', protected: true },
   { prefix: '/api/v1/realtime', envKey: 'REALTIME_SERVICE_URL', fallback: 'http://localhost:3009', protected: true },
+  // reclusorio-service: dominio completo (F10 — el frontend entra por el gateway)
+  { prefix: '/api/v1/personas', envKey: 'RECLUSORIO_SERVICE_URL', fallback: 'http://localhost:3010', protected: true },
+  { prefix: '/api/v1/elementos', envKey: 'RECLUSORIO_SERVICE_URL', fallback: 'http://localhost:3010', protected: true },
+  { prefix: '/api/v1/catalogos', envKey: 'RECLUSORIO_SERVICE_URL', fallback: 'http://localhost:3010', protected: true },
+  { prefix: '/api/v1/incidencias', envKey: 'RECLUSORIO_SERVICE_URL', fallback: 'http://localhost:3010', protected: true },
+  { prefix: '/api/v1/archivos', envKey: 'RECLUSORIO_SERVICE_URL', fallback: 'http://localhost:3010', protected: true },
+  { prefix: '/api/v1/audiencias', envKey: 'RECLUSORIO_SERVICE_URL', fallback: 'http://localhost:3010', protected: true },
+  { prefix: '/api/v1/traslados', envKey: 'RECLUSORIO_SERVICE_URL', fallback: 'http://localhost:3010', protected: true },
+  { prefix: '/api/v1/ingresos-egresos', envKey: 'RECLUSORIO_SERVICE_URL', fallback: 'http://localhost:3010', protected: true },
+  { prefix: '/api/v1/movimientos', envKey: 'RECLUSORIO_SERVICE_URL', fallback: 'http://localhost:3010', protected: true },
 ];
 
 export function resolveTarget(route: UpstreamRoute, config: ConfigService): string {

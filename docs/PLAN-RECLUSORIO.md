@@ -49,7 +49,7 @@ Los patrones transversales ya resueltos por la base cubren directamente: UUID (R
 | **F7. Seguridad y sesión** | Permisos por módulo/acción en todos los endpoints, cambio de contraseña, auditoría de sesión (con IP, DP-003), revocación en tiempo real vía WebSocket | RF-SEG-*, RF-AUT-*, RF-SES-*, RF-CUE-* | 2.5 d |
 | **F8. Notificaciones** | Bandeja por usuario: listar, buscar, paginar, marcar leída | RF-NOT-001…004 | 1.5 d |
 | **F9. Aceptación** | Pruebas e2e de CU-01…CU-07, matriz RF → código → prueba (instrucción §22.12) | §20 completo | 2 d |
-| **(F10. Frontend)** | Login, layout privado, sidebar por permisos, módulos — framework **pendiente de definir** | RF-UI-* | por definir |
+| **F10. Frontend** | `apps/reclusorio-web` — **Angular 19 + Tailwind CSS 4** (decisión del equipo, 06/08/2026): login, layout privado, sidebar por permisos del JWT, aviso de expiración a 5 min, revocación en vivo (WebSocket), módulos de personas/actividades/elementos/incidencias/catálogos/notificaciones/cuenta; errores problem+json | RF-UI-*, RF-SES-* (lado cliente) | hecho |
 
 \* Estimaciones de esfuerzo del agente por fase; cada fase termina con build + tests + push y matriz de RFs cubiertos.
 
@@ -66,7 +66,7 @@ Registradas conforme al mandato §22.10 (no asumir silenciosamente):
 | P5 | **Modelo de bitácora de dominio** (§4 línea final y §17) | "Queda pendiente el modelo de bitácora" | Proponer tabla de auditoría técnica en BD del servicio (fuera del esquema de dominio) |
 | P6 | **Política de archivos** (DP-006) | Tamaño máximo, MIME permitidos, antivirus, retención | Configurable por env; valores por confirmar |
 | P7 | **Política de contraseñas** (DP-004) | Longitud, complejidad, historial, bloqueo | Mínimo 12 caracteres + verificación de contraseña actual (RF-CUE-002); resto por confirmar |
-| P8 | **Framework del frontend** | La spec define comportamiento (RF-UI-*) pero no tecnología | Proponemos React + Vite como app del monorepo (F10) |
+| P8 | **Framework del frontend** | La spec define comportamiento (RF-UI-*) pero no tecnología | **RESUELTA (06/08/2026): el equipo eligió Angular.** Implementado en F10 como `apps/reclusorio-web` (Angular 19 + Tailwind CSS 4, app del monorepo detrás del gateway) |
 
 ## 5. Definiciones ya resueltas por la base
 

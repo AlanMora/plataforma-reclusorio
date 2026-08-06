@@ -1,0 +1,204 @@
+@import 'tailwindcss';
+
+/* =====================================================================
+   Tema "consola de mando" — Plataforma de Gestión de Reclusorio (F10)
+   Oscuro, denso, acento cian; etiquetas mono en mayúsculas.
+   ===================================================================== */
+
+@theme {
+  --color-fondo: #05080f;
+  --color-panel: #0a1120;
+  --color-panel-2: #0e1628;
+  --color-borde: #1c2a44;
+  --color-neon: #22d3ee;
+  --color-neon-2: #818cf8;
+  --color-ok: #34d399;
+  --color-alerta: #fbbf24;
+  --color-peligro: #fb7185;
+  --font-mono:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+}
+
+/* Fondo con retícula sutil */
+body {
+  background-color: var(--color-fondo);
+  background-image:
+    linear-gradient(rgba(34, 211, 238, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 211, 238, 0.035) 1px, transparent 1px);
+  background-size: 42px 42px;
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(34, 211, 238, 0.35);
+}
+
+/* Scrollbars discretos */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1c2a44 transparent;
+}
+
+@layer components {
+  /* --- superficies --- */
+  .panel {
+    @apply rounded-xl border border-borde bg-panel/90 backdrop-blur;
+    box-shadow:
+      0 0 0 1px rgba(34, 211, 238, 0.04),
+      0 10px 40px rgba(0, 0, 0, 0.45);
+  }
+  .panel-glow {
+    box-shadow:
+      0 0 0 1px rgba(34, 211, 238, 0.12),
+      0 0 32px rgba(34, 211, 238, 0.08),
+      0 10px 40px rgba(0, 0, 0, 0.45);
+  }
+
+  /* --- tipografía de sistema --- */
+  .etiqueta {
+    @apply font-mono text-[10px] uppercase tracking-[0.22em] text-slate-500;
+  }
+  .titulo {
+    @apply text-lg font-semibold tracking-wide text-slate-100;
+  }
+
+  /* --- formularios --- */
+  .campo {
+    @apply w-full rounded-lg border border-borde bg-panel-2 px-3 py-2 text-sm text-slate-100;
+  }
+  .campo::placeholder {
+    color: #475569;
+  }
+  .campo:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--color-neon) 60%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-neon) 20%, transparent);
+  }
+  .campo:disabled {
+    opacity: 0.4;
+  }
+  select.campo {
+    @apply appearance-none pr-8;
+  }
+  .campo-etiqueta {
+    @apply mb-1 block font-mono text-[10px] uppercase tracking-[0.18em] text-slate-400;
+  }
+  .obligatorio::after {
+    content: ' *';
+    color: var(--color-neon);
+  }
+
+  /* --- botones --- */
+  .btn,
+  .btn-primario,
+  .btn-secundario,
+  .btn-peligro {
+    @apply inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors;
+  }
+  .btn:disabled,
+  .btn-primario:disabled,
+  .btn-secundario:disabled,
+  .btn-peligro:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+  .btn-primario {
+    @apply border-neon/50 bg-neon/10 text-neon;
+    text-shadow: 0 0 12px rgba(34, 211, 238, 0.4);
+  }
+  .btn-primario:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-neon) 20%, transparent);
+  }
+  .btn-secundario {
+    @apply border-borde bg-panel-2 text-slate-300;
+  }
+  .btn-secundario:hover:not(:disabled) {
+    border-color: #64748b;
+    color: #f1f5f9;
+  }
+  .btn-peligro {
+    @apply border-peligro/40 bg-peligro/10 text-peligro;
+  }
+  .btn-peligro:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-peligro) 20%, transparent);
+  }
+  .btn-mini {
+    @apply px-2.5 py-1 text-xs;
+  }
+
+  /* --- tablas --- */
+  .tabla {
+    @apply w-full border-collapse text-sm;
+  }
+  .tabla th {
+    @apply border-b border-borde px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.18em] text-slate-500;
+  }
+  .tabla td {
+    @apply border-b border-borde/60 px-3 py-2.5 text-slate-300;
+  }
+  .tabla tbody tr {
+    @apply transition-colors;
+  }
+  .tabla tbody tr:hover {
+    background: rgba(34, 211, 238, 0.04);
+  }
+
+  /* --- chips / estado --- */
+  .chip,
+  .chip-neon,
+  .chip-ok,
+  .chip-alerta,
+  .chip-apagado,
+  .chip-peligro {
+    @apply inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-widest;
+  }
+  .chip-neon {
+    @apply border-neon/40 bg-neon/10 text-neon;
+  }
+  .chip-ok {
+    @apply border-ok/40 bg-ok/10 text-ok;
+  }
+  .chip-alerta {
+    @apply border-alerta/40 bg-alerta/10 text-alerta;
+  }
+  .chip-apagado {
+    @apply border-borde bg-panel-2 text-slate-500;
+  }
+  .chip-peligro {
+    @apply border-peligro/40 bg-peligro/10 text-peligro;
+  }
+
+  /* --- alertas problem+json (RF-GEN-005 / manejo de errores RF-UI) --- */
+  .alerta-error {
+    @apply rounded-lg border border-peligro/40 bg-peligro/10 px-4 py-3 text-sm text-peligro;
+  }
+  .alerta-info {
+    @apply rounded-lg border border-neon/30 bg-neon/5 px-4 py-3 text-sm text-slate-300;
+  }
+
+  /* --- navegación lateral --- */
+  .nav-item {
+    @apply flex items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-sm text-slate-400 transition-colors;
+  }
+  .nav-item:hover {
+    background: var(--color-panel-2);
+    color: #e2e8f0;
+  }
+  .nav-item.activo {
+    @apply border-neon/30 bg-neon/10 text-neon;
+    box-shadow: inset 0 0 24px rgba(34, 211, 238, 0.06);
+  }
+
+  /* --- pestañas --- */
+  .tab {
+    @apply cursor-pointer border-b-2 border-transparent px-4 py-2.5 font-mono text-[11px] uppercase
+      tracking-[0.18em] text-slate-500 transition-colors;
+  }
+  .tab:hover {
+    color: #cbd5e1;
+  }
+  .tab.activo {
+    @apply border-neon text-neon;
+  }
+}

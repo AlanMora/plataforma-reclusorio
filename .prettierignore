@@ -3,3 +3,5 @@ coverage
 .nx
 node_modules
 pnpm-lock.yaml
+
+.angular

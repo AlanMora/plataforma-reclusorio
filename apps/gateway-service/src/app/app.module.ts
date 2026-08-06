@@ -48,7 +48,12 @@ export class AppModule implements NestModule {
 
   configure(consumer: MiddlewareConsumer): void {
     // 1) Validación preliminar de JWT sólo en rutas protegidas.
-    const protectedPrefixes = UPSTREAM_ROUTES.filter((r) => r.protected).map((r) => `${r.prefix}/*`);
+    // Nota: `prefix/*` NO matchea el prefijo pelado (GET /api/v1/personas),
+    // por eso se registran ambos patrones (F10: listados de dominio en raíz).
+    const protectedPrefixes = UPSTREAM_ROUTES.filter((r) => r.protected).flatMap((r) => [
+      r.prefix,
+      `${r.prefix}/*`,
+    ]);
     if (protectedPrefixes.length > 0) {
       consumer
         .apply(JwtPreValidationMiddleware)
@@ -69,7 +74,12 @@ export class AppModule implements NestModule {
           },
         },
       });
-      consumer.apply(proxy).forRoutes({ path: `${route.prefix}/*`, method: RequestMethod.ALL });
+      consumer
+        .apply(proxy)
+        .forRoutes(
+          { path: route.prefix, method: RequestMethod.ALL },
+          { path: `${route.prefix}/*`, method: RequestMethod.ALL },
+        );
     }
   }
 }

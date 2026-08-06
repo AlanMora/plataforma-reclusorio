@@ -20,10 +20,13 @@ sobre una plataforma base reutilizable; el dominio vive en `apps/reclusorio-serv
   elementos, actividades (ingresos/movimientos/audiencias/traslados),
   incidencias, archivos (MinIO + SHA-256 + exclusividad), sesión de 30 min con
   revocación en tiempo real (WebSocket), bandeja de notificaciones, matriz RF.
-- **Pendiente F10**: frontend (framework sin definir; propuesta: React + Vite
-  como app del monorepo). RF-UI-*: login, layout privado, sidebar por permisos,
-  aviso de expiración a 5 min, manejo de errores.
-- **Pendientes P1–P8** (decisiones del equipo, ver PLAN): listados faltantes de
+- **F10 frontend hecho**: `apps/reclusorio-web` — **Angular 19 + Tailwind CSS 4**
+  (P8 resuelta por el equipo). Login, layout privado, sidebar por permisos del
+  JWT, aviso de expiración a 5 min con extensión, logout forzado por WebSocket
+  (`session.revoked`), módulos personas/actividades/elementos/incidencias/
+  catálogos/notificaciones/cuenta, errores problem+json. `npx nx serve
+  reclusorio-web` (:4200, proxy `/api`→gateway :3000 y `/socket.io`→:3009).
+- **Pendientes P1–P7** (decisiones del equipo, ver PLAN): listados faltantes de
   3 catálogos, valores ENUM Gender/MaritalStatus, baja de personas, bitácora de
   dominio, políticas de archivos y contraseñas.
 
@@ -35,7 +38,11 @@ sobre una plataforma base reutilizable; el dominio vive en `apps/reclusorio-serv
 - `apps/notification-service` (:3005) — bandeja `user_notifications`.
 - `apps/realtime-service` (:3009) — WebSocket; consume `session.revoked` y
   emite a la sala `user:{id}` (RF-SES-009).
-- `apps/gateway-service` (:3000) — única entrada pública.
+- `apps/gateway-service` (:3000) — única entrada pública; enruta también los
+  prefijos del dominio (`/api/v1/personas|catalogos|elementos|incidencias|
+  archivos|audiencias|traslados|ingresos-egresos|movimientos` → :3010).
+- `apps/reclusorio-web` (:4200) — frontend Angular 19 + Tailwind 4; consume
+  SOLO el gateway (HTTP) y el realtime (WebSocket).
 - Libs compartidas en `libs/` (@icms/*): errores RFC 9457, guards, outbox/inbox,
   idempotencia, paginación. Swagger por servicio en `/api/docs`; rutas `/api/v1`.
 - Permisos: claims `permissions` en el JWT (`modulo:accion`, p.ej.

@@ -7,7 +7,9 @@
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
       "!{projectRoot}/tsconfig.spec.json",
       "!{projectRoot}/jest.config.[jt]s",
-      "!{projectRoot}/**/*.md"
+      "!{projectRoot}/**/*.md",
+      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/eslint.config.cjs"
     ],
     "sharedGlobals": ["{workspaceRoot}/tsconfig.base.json"]
   },
@@ -23,6 +25,20 @@
     "test": {
       "inputs": ["default", "^production"],
       "cache": true
+    },
+    "@angular-devkit/build-angular:application": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
+    },
+    "@nx/eslint:lint": {
+      "cache": true,
+      "inputs": [
+        "default",
+        "{workspaceRoot}/.eslintrc.json",
+        "{workspaceRoot}/.eslintignore",
+        "{workspaceRoot}/eslint.config.cjs"
+      ]
     }
   },
   "plugins": [
@@ -52,6 +68,12 @@
       "application": {
         "linter": "eslint"
       }
+    },
+    "@nx/angular:application": {
+      "e2eTestRunner": "none",
+      "linter": "eslint",
+      "style": "css",
+      "unitTestRunner": "none"
     }
   }
 }

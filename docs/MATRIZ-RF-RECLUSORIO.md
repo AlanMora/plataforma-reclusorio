@@ -29,7 +29,9 @@ restricción verificada en la base de datos.
 | RF-CUE-001 | `GET /auth/session` (vigencia restante) + `GET /users/me` (datos y permisos) | E2E |
 | RF-CUE-002 | `POST /auth/change-password` (verifica actual, confirma, revoca sesiones) | E2E (401/204/login viejo 401) |
 | Auditoría §17 / DP-003 | `security_audit_logs`: login exitoso/fallido, logout, revocación, cambio de contraseña — con IP | E2E (filas verificadas) |
-| RF-UI-001..005 | Corresponde al frontend (F10, pendiente P8); rutas protegidas ya en backend | — |
+| RF-UI-001..005 | F10 `reclusorio-web/` (Angular 19 + Tailwind 4): login (`pages/login`), layout privado (`layout/shell` + `authGuard`), sidebar construido con los claims `permissions` (RF-SEG-001) + `permisoGuard`/`*rwPermiso` por módulo, aviso de expiración a 5 min con extensión (`core/session.service`), manejo de errores problem+json (`core/problem.ts` + alertas/toasts) | build prod + lint; revisión manual |
+| RF-SES-002/008 (cliente) | Cuenta regresiva sincronizada con `GET /auth/session`; refresh rota tokens y reinicia 30 min (`core/auth.service` single-flight; reintento ante 401 en `auth.interceptor`) | build + revisión |
+| RF-SES-009 (cliente) | `core/realtime.service`: socket.io autenticado con el access token; al recibir `session.revoked` de la propia sesión fuerza logout inmediato con motivo | build + revisión |
 | RF-NOT-001..004 | `GET /notifications/inbox` (búsqueda + paginación), `POST /inbox/:id/leida` | E2E completo |
 | RF-PER-001..005 | `GET/POST/PATCH /personas` con búsqueda por nombre/apellidos/alias/CURP; DP-007 en validación | E2E (sin CURP → 400) |
 | RF-PER-006..007 | `POST /personas/:id/domicilios` (números alfanuméricos) | E2E ("12-A", "S/N") |
