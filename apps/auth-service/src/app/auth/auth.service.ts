@@ -119,7 +119,7 @@ export class AuthService {
       email: user.email,
       tenantId: user.tenantId ?? undefined,
       roles: user.roles ?? [],
-      permissions: [],
+      permissions: user.permissions ?? [],
       sid: sessionId,
       iss: this.config.get<string>('JWT_ISSUER', 'icms-platform'),
     };

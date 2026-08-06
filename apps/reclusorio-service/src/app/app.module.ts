@@ -15,6 +15,8 @@ import { MessagingModule, OutboxModule, OutboxEvent, InboxEvent } from '@icms/me
 import { RedisModule, IdempotencyInterceptor } from '@icms/redis';
 import { ENTIDADES_RECLUSORIO } from './entities';
 import { CatalogosModule } from './catalogos/catalogos.module';
+import { PersonasModule } from './personas/personas.module';
+import { ElementosModule } from './elementos/elementos.module';
 import { CatalogSeederService } from './seeds/seeder.service';
 
 /**
@@ -37,6 +39,8 @@ import { CatalogSeederService } from './seeds/seeder.service';
     }),
     OutboxModule.forRoot({ withRelay: true }),
     CatalogosModule,
+    PersonasModule,
+    ElementosModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

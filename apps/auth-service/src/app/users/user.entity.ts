@@ -19,4 +19,12 @@ export class User extends BaseEntity {
 
   @Column('simple-array', { default: '' })
   roles!: string[];
+
+  /**
+   * Permisos efectivos que viajan en el JWT (p. ej. "personas:crear").
+   * En el estándar completo se resuelven desde roles del configuration-service;
+   * esta columna permite otorgarlos directamente mientras tanto.
+   */
+  @Column('simple-array', { default: '' })
+  permissions!: string[];
 }
