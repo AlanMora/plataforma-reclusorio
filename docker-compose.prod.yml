@@ -116,6 +116,21 @@ services:
       interval: 20s
       timeout: 5s
       retries: 5
+
+  # Proyecto REAL: dominio de la Plataforma de Gestión de Reclusorio.
+  reclusorio-service:
+    <<: *prod-service
+    build: { context: ., dockerfile: Dockerfile, args: { SERVICE: reclusorio-service } }
+    image: icms/reclusorio-service:latest
+    ports: ['3010:3010']
+    environment:
+      <<: *service-env
+      RECLUSORIO_PORT: '3010'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3010/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
       start_period: 30s
 
   reporting-service:

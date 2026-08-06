@@ -106,6 +106,15 @@ services:
       <<: *service-env
       CORE_DOMAIN_PORT: '3003'
 
+  # Proyecto REAL: dominio de la Plataforma de Gestión de Reclusorio.
+  reclusorio-service:
+    <<: *dev-service
+    command: pnpm exec nx serve reclusorio-service
+    ports: ['3010:3010']
+    environment:
+      <<: *service-env
+      RECLUSORIO_PORT: '3010'
+
   reporting-service:
     <<: *dev-service
     command: pnpm exec nx serve reporting-service

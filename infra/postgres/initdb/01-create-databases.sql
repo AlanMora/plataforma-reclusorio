@@ -7,3 +7,5 @@ SELECT 'CREATE DATABASE icms_notification'  WHERE NOT EXISTS (SELECT FROM pg_dat
 SELECT 'CREATE DATABASE icms_integration'   WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'icms_integration')\gexec
 SELECT 'CREATE DATABASE icms_files'         WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'icms_files')\gexec
 SELECT 'CREATE DATABASE icms_scheduler'     WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'icms_scheduler')\gexec
+-- Proyecto real: Plataforma de Gestión de Reclusorio.
+SELECT 'CREATE DATABASE reclusorio OWNER "icms"' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'reclusorio')\gexec

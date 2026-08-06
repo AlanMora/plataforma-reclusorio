@@ -1,0 +1,23 @@
+{
+  "name": "reclusorio-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/reclusorio-service/src",
+  "projectType": "application",
+  "tags": [
+    "scope:reclusorio",
+    "type:app"
+  ],
+  "targets": {
+    "serve": {
+      "executor": "@nx/js:node",
+      "dependsOn": [
+        "build"
+      ],
+      "options": {
+        "buildTarget": "reclusorio-service:build",
+        "runBuildTargetDependencies": false,
+        "watch": true
+      }
+    }
+  }
+}
