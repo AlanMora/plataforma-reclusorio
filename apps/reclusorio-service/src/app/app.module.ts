@@ -17,6 +17,10 @@ import { ENTIDADES_RECLUSORIO } from './entities';
 import { CatalogosModule } from './catalogos/catalogos.module';
 import { PersonasModule } from './personas/personas.module';
 import { ElementosModule } from './elementos/elementos.module';
+import { IngresosMovimientosModule } from './actividades/ingresos-movimientos.module';
+import { AudienciasTrasladosModule } from './actividades/audiencias-traslados.module';
+import { IncidenciasModule } from './incidencias/incidencias.module';
+import { ArchivosModule } from './archivos/archivos.module';
 import { CatalogSeederService } from './seeds/seeder.service';
 
 /**
@@ -41,6 +45,10 @@ import { CatalogSeederService } from './seeds/seeder.service';
     CatalogosModule,
     PersonasModule,
     ElementosModule,
+    IngresosMovimientosModule,
+    AudienciasTrasladosModule,
+    IncidenciasModule,
+    ArchivosModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
