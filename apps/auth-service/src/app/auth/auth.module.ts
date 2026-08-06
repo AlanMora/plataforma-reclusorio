@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { DatabaseModule } from '@icms/database';
+import { AuditModule } from '../audit/audit.module';
 import { User } from '../users/user.entity';
 import { SessionStore } from '../sessions/session-store.service';
 import { SessionsController } from '../sessions/sessions.controller';
@@ -10,7 +11,7 @@ import { KeyService } from './key.service';
 import { JwksController } from './jwks.controller';
 
 @Module({
-  imports: [DatabaseModule.forFeature([User]), JwtModule.register({})],
+  imports: [DatabaseModule.forFeature([User]), JwtModule.register({}), AuditModule],
   controllers: [AuthController, JwksController, SessionsController],
   providers: [AuthService, SessionStore, KeyService],
   exports: [AuthService, SessionStore],

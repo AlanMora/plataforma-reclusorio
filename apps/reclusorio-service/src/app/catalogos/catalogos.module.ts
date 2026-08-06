@@ -85,7 +85,7 @@ class ListarQuery {
 }
 
 /** Normalización para dedup (RF-CAT-006): trim + minúsculas + sin acentos. */
-function normalizar(nombre: string): string {
+export function normalizar(nombre: string): string {
   return nombre
     .trim()
     .toLowerCase()

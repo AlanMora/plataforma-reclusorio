@@ -31,3 +31,10 @@ export class RegisterDto {
   @IsString()
   tenantId?: string;
 }
+
+export class ChangePasswordDto {
+  @IsString() currentPassword!: string;
+  /** Política mínima provisional (DP-004 pendiente): 12 caracteres. */
+  @IsString() @MinLength(12) newPassword!: string;
+  @IsString() confirmPassword!: string;
+}

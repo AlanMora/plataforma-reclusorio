@@ -1,4 +1,5 @@
-import { Controller, Delete, Get, HttpCode, Param, Post } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, Param, Post, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, CurrentUser } from '@icms/auth';
 import { ForbiddenDomainException } from '@icms/common';
@@ -27,13 +28,15 @@ export class SessionsController {
   @Delete(':sid')
   @HttpCode(204)
   @ApiOperation({ summary: 'Revocar una sesión propia por id' })
-  async revoke(@Param('sid') sid: string, @CurrentUser() user: AuthenticatedUser) {
+  async revoke(@Param('sid') sid: string, @CurrentUser() user: AuthenticatedUser, @Req() req: Request) {
     const session = await this.sessions.get(sid);
-    // Sólo el dueño de la sesión puede revocarla.
-    if (session && session.userId !== user.id) {
+    // Sólo el dueño de la sesión (o un administrador de sesiones) puede revocarla.
+    const esAdmin = user.permissions?.includes('sesiones:revocar');
+    if (session && session.userId !== user.id && !esAdmin) {
       throw new ForbiddenDomainException('No puedes revocar sesiones de otro usuario');
     }
-    await this.auth.revoke(sid);
+    const motivo = session && session.userId !== user.id ? 'revocacion-administrativa' : 'logout';
+    await this.auth.revoke(sid, motivo, user.id, req.ip);
   }
 
   @Post('revoke-all')

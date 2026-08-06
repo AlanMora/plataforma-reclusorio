@@ -8,6 +8,7 @@ import { DatabaseModule } from '@icms/database';
 import { MessagingModule, OutboxModule, OutboxEvent, InboxEvent } from '@icms/messaging';
 import { RedisModule, IdempotencyInterceptor } from '@icms/redis';
 import { NotificationDelivery } from './delivery.entity';
+import { UserNotification } from './user-notification.entity';
 import { NotificationsModule } from './notifications.module';
 
 @Module({
@@ -18,7 +19,7 @@ import { NotificationsModule } from './notifications.module';
     SharedAuthModule,
     RedisModule,
     MessagingModule.forRoot(),
-    DatabaseModule.forRoot({ database: 'icms_notification', entities: [NotificationDelivery, OutboxEvent, InboxEvent] }),
+    DatabaseModule.forRoot({ database: 'icms_notification', entities: [NotificationDelivery, UserNotification, OutboxEvent, InboxEvent] }),
     // Sin relay: este servicio consume eventos (usa Inbox para dedup), no publica.
     OutboxModule.forRoot({ withRelay: false }),
     NotificationsModule,

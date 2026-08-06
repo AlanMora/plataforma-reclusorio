@@ -10,6 +10,7 @@ import { UnauthorizedDomainException } from '@icms/common';
 import { EventPublisher, OutboxService } from '@icms/messaging';
 import { EventNames } from '@icms/contracts';
 import { User } from '../users/user.entity';
+import { AuditService } from '../audit/audit.module';
 import { SessionStore } from '../sessions/session-store.service';
 import { KeyService } from './key.service';
 import { LoginDto, RegisterDto } from './dto';
@@ -70,6 +71,7 @@ export class AuthService {
     private readonly keys: KeyService,
     private readonly dataSource: DataSource,
     private readonly outbox: OutboxService,
+    private readonly audit: AuditService,
   ) {}
 
   /** Crea el usuario y publica UserRegistered de forma transaccional (Outbox). */
@@ -93,7 +95,7 @@ export class AuthService {
     });
   }
 
-  async login(dto: LoginDto): Promise<TokenPair> {
+  async login(dto: LoginDto, ipAddress?: string): Promise<TokenPair> {
     const user = await this.users.findOne({ where: { email: dto.email, isActive: true } });
     // Compara siempre contra un hash (aunque el usuario no exista) para no filtrar
     // por tiempo si un email está o no registrado.
@@ -105,8 +107,11 @@ export class AuthService {
       ok = false;
     }
     if (!user || !ok) {
+      await this.audit.record({ action: 'login', outcome: 'fallido', ipAddress });
       throw new UnauthorizedDomainException('Credenciales inválidas');
     }
+    // Auditoría obligatoria de inicio de sesión: usuario, fecha/hora e IP (DP-003).
+    await this.audit.record({ userId: user.id, action: 'login', outcome: 'exitoso', ipAddress });
     // TODO(proyecto): si user.twoFactorEnabled, validar dto.otp antes de emitir tokens.
     return this.issueTokens(user);
   }
@@ -185,9 +190,68 @@ export class AuthService {
     return this.issueTokens(user, decoded.sid);
   }
 
-  /** Revoca una sesión concreta (logout). */
-  async revoke(sessionId: string): Promise<void> {
+  /**
+   * Revoca una sesión concreta. Publica el evento con userId para que
+   * realtime-service notifique al cliente en tiempo real (RF-SES-009).
+   */
+  async revoke(
+    sessionId: string,
+    motivo: 'logout' | 'revocacion-administrativa' | 'cambio-password' = 'logout',
+    actorUserId?: string,
+    ipAddress?: string,
+  ): Promise<void> {
+    const session = await this.sessions.get(sessionId);
     await this.sessions.revoke(sessionId);
-    await this.events.publish(EventNames.SessionRevoked, { sessionId });
+    await this.events.publish(EventNames.SessionRevoked, {
+      sessionId,
+      userId: session?.userId,
+      motivo,
+    });
+    await this.audit.record({
+      userId: session?.userId,
+      action: motivo === 'logout' ? 'logout.explicito' : 'sesion.revocada',
+      outcome: motivo,
+      ipAddress,
+      metadata: actorUserId ? { actorUserId, sessionId } : { sessionId },
+    });
+  }
+
+  /**
+   * Cambio de contraseña (RF-CUE-002): exige la contraseña actual y la
+   * confirmación; revoca todas las sesiones del usuario y audita el evento
+   * (nunca la contraseña).
+   */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string,
+    ipAddress?: string,
+  ): Promise<void> {
+    if (newPassword !== confirmPassword) {
+      await this.audit.record({ userId, action: 'password.cambiado', outcome: 'fallido', ipAddress });
+      throw new UnauthorizedDomainException('La nueva contraseña y su confirmación no coinciden');
+    }
+    const user = await this.users.findOne({ where: { id: userId, isActive: true } });
+    let ok = false;
+    try {
+      ok = user ? await argon2Verify(user.passwordHash, currentPassword) : false;
+    } catch {
+      ok = false;
+    }
+    if (!user || !ok) {
+      await this.audit.record({ userId, action: 'password.cambiado', outcome: 'fallido', ipAddress });
+      throw new UnauthorizedDomainException('La contraseña actual es incorrecta');
+    }
+    user.passwordHash = await argon2Hash(newPassword);
+    await this.users.save(user);
+    // Cierre global: las sesiones previas dejan de ser válidas.
+    await this.sessions.revokeAllForUser(userId);
+    await this.audit.record({ userId, action: 'password.cambiado', outcome: 'exitoso', ipAddress });
+  }
+
+  /** Datos de la sesión actual: vigencia restante en segundos (RF-CUE-001). */
+  async sessionInfo(sessionId: string): Promise<{ sessionId: string; expiresInSeconds: number }> {
+    return { sessionId, expiresInSeconds: await this.sessions.ttlSeconds(sessionId) };
   }
 }

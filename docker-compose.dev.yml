@@ -22,8 +22,10 @@ x-service-env: &service-env
   # cientos de MB por servicio y evita OOM kills. Tipos: IDE + build de prod.
   SKIP_TYPE_CHECK: 'true'
   JWT_SECRET: change-me-in-production
-  JWT_ACCESS_TTL: 900s
-  JWT_REFRESH_TTL: 7d
+  # Validación RS256 entre servicios (el auth-service también valida así sus propios tokens).
+  JWKS_URI: http://auth-service:3001/.well-known/jwks.json
+  JWT_ACCESS_TTL: '10m' # sesión RF-SES-002
+  JWT_REFRESH_TTL: '30m' # vigencia de sesión de 30 min renovable
   JWT_ISSUER: icms-platform
   POSTGRES_HOST: postgres-primary
   POSTGRES_PORT: '5432'

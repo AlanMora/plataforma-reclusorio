@@ -77,6 +77,11 @@ export class SessionStore {
     return sids.length;
   }
 
+  /** Segundos de vigencia restante de la sesión (RF-CUE-001). */
+  async ttlSeconds(sid: string): Promise<number> {
+    return this.redis.ttl(this.key(sid));
+  }
+
   async listUserSessions(userId: string): Promise<string[]> {
     return this.redis.smembers(this.userKey(userId));
   }

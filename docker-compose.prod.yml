@@ -15,8 +15,11 @@ x-service-env: &service-env
   NODE_ENV: production
   LOG_LEVEL: ${LOG_LEVEL:-info}
   JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
-  JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-900s}
-  JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
+  # Sesión de 30 minutos renovable (RF-SES-002).
+  JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-10m}
+  JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-30m}
+  # Validación RS256 entre servicios (auth también valida así sus propios tokens).
+  JWKS_URI: http://auth-service:3001/.well-known/jwks.json
   JWT_ISSUER: ${JWT_ISSUER:-icms-platform}
   POSTGRES_HOST: postgres-primary
   POSTGRES_PORT: '5432'
