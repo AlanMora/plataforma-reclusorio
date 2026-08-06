@@ -3,7 +3,13 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppConfigModule } from '@icms/config';
 import { LoggingModule } from '@icms/logging';
 import { ObservabilityModule } from '@icms/observability';
-import { SharedAuthModule, JwtAuthGuard, TenantContextInterceptor } from '@icms/auth';
+import {
+  SharedAuthModule,
+  JwtAuthGuard,
+  PermissionsGuard,
+  RolesGuard,
+  TenantContextInterceptor,
+} from '@icms/auth';
 import { DatabaseModule } from '@icms/database';
 import { MessagingModule, OutboxModule, OutboxEvent, InboxEvent } from '@icms/messaging';
 import { RedisModule, IdempotencyInterceptor } from '@icms/redis';
@@ -33,6 +39,9 @@ import { AuditModule } from './audit/audit.module';
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    // Los permisos y roles se verifican SIEMPRE en el backend (RF-SEG-002).
+    { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: PermissionsGuard },
     { provide: APP_INTERCEPTOR, useClass: TenantContextInterceptor },
     { provide: APP_INTERCEPTOR, useClass: IdempotencyInterceptor },
   ],
