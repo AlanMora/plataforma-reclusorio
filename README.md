@@ -1,181 +1,134 @@
-# ICMS Platform
+# Plataforma de Gestión de Reclusorio
 
-Plataforma base **reutilizable** de microservicios construida con **NestJS + Nx**
-(monorepo con pnpm workspaces). Este repositorio es el andamiaje que otros
-proyectos clonan y adaptan: incluye el núcleo compartido (seguridad, logging,
-mensajería, observabilidad), diez servicios ejecutables y la infraestructura
-local en Docker.
+Sistema penitenciario construido sobre la plataforma base **ICMS** de
+microservicios (**NestJS + Nx**, monorepo pnpm) con frontend **Angular 22 +
+Tailwind CSS 4**. Backend F0–F9 completo y verificado E2E; frontend F10
+implementado (RF-UI, sesión de 30 min, revocación en tiempo real).
 
-> Estado: **andamiaje**. Cada servicio arranca, expone health/Swagger/metrics y
-> deja la estructura de módulos con límites claros. La lógica de negocio de cada
-> dominio se completa por proyecto (marcada con `TODO(proyecto)`). La **seguridad de
-> `auth`** (bcrypt, sesiones y refresh en Redis con rotación) ya está implementada.
+Fuentes de verdad del dominio: la **Especificación de Requerimientos
+Funcionales v1.0** y el **Modelo de Datos Consolidado** del equipo. Plan y
+trazabilidad: [`docs/PLAN-RECLUSORIO.md`](docs/PLAN-RECLUSORIO.md) y
+[`docs/MATRIZ-RF-RECLUSORIO.md`](docs/MATRIZ-RF-RECLUSORIO.md).
 
-## Arranque rápido
+## Arranque rápido (proyecto completo)
+
+Requisitos: Docker Desktop (≥ 8 GB si levantas todo), Node ≥ 20, pnpm.
 
 ```bash
-git clone https://github.com/AlanMora/icms-platform.git
-cd icms-platform
+# 0) Dependencias y configuración
+pnpm install
 cp .env.example .env
-pnpm docker:dev            # levanta infra + los 10 servicios (todo en Docker)
+
+# 1) BACKEND — infra + los 5 servicios que usa el reclusorio
+docker compose -f docker-compose.dev.yml up -d \
+  postgres-primary postgres-replica redis rabbitmq minio \
+  auth-service gateway-service reclusorio-service \
+  notification-service realtime-service
+
+#    Espera a que respondan (la primera vez compilan dentro del contenedor):
+#    curl localhost:3000/health  localhost:3001/health  localhost:3010/health
+#    En el primer arranque crea la BD del dominio si no existe:
+#    docker exec -e PGPASSWORD=icms icms-postgres-primary \
+#      psql -U icms -d icms -c "CREATE DATABASE reclusorio OWNER icms;"
+#    (esquema y las 284 semillas de catálogo se generan solos al arrancar)
+
+# 2) FRONTEND — proyecto Angular CLI independiente
+cd apps/reclusorio-web
+pnpm start                 # ng serve → http://localhost:4200
 ```
 
-Luego abre: **gateway** en http://localhost:3000, y el **Swagger** de cada servicio
-en http://localhost:3001/api/docs … http://localhost:3009. Detalle de las dos formas
-de arranque (Docker o híbrido) en [Puesta en marcha](#puesta-en-marcha).
+El dev server del front ya trae proxy (`proxy.conf.json`): `/api` → gateway
+(:3000) y `/socket.io` → realtime (:3009). No hay que configurar nada más.
+
+### Crear un usuario para entrar
+
+```bash
+# alta (endpoint público con Idempotency-Key)
+curl -X POST http://localhost:3000/api/v1/auth/register \
+  -H 'Content-Type: application/json' -H "Idempotency-Key: $(uuidgen)" \
+  -d '{"email":"admin@reclusorio.mx","password":"UnaClaveSegura#2026"}'
+
+# otorgar permisos (mientras no exista el cableado roles→permisos)
+docker exec -e PGPASSWORD=icms icms-postgres-primary psql -U icms -d icms_auth -c \
+  "UPDATE users SET permissions='personas:consultar,personas:crear,personas:modificar,elementos:consultar,elementos:crear,elementos:modificar,ingresos:consultar,ingresos:crear,movimientos:consultar,movimientos:crear,audiencias:consultar,audiencias:crear,audiencias:asociar,traslados:consultar,traslados:crear,traslados:asociar,incidencias:consultar,incidencias:crear,incidencias:asociar,archivos:consultar,archivos:crear,archivos:administrar,catalogos:administrar' WHERE email='admin@reclusorio.mx';"
+```
+
+Entra en **http://localhost:4200**. El menú lateral se construye con los
+permisos del JWT: si quitas un permiso, el módulo desaparece (RF-SEG-001).
+
+### Comandos útiles
+
+```bash
+pnpm docker:dev                      # TODO en Docker (11 servicios, pesado)
+pnpm infra:up && pnpm serve          # alternativa: infra Docker + servicios en host
+npx nx build reclusorio-web          # build de producción del front
+npx nx build|test <servicio>         # por servicio; pnpm lint para todo
+pnpm migration:generate -d apps/reclusorio-service/src/data-source.ts src/migrations/X
+```
+
+> Servicios en host (opción híbrida): exporta
+> `JWKS_URI=http://localhost:3001/.well-known/jwks.json` o los tokens RS256
+> se rechazan (en Docker ya viene en el compose).
 
 ## Arquitectura
 
 ```
-                    ┌───────────────────────────────────────────────┐
-   Cliente ──HTTP──▶│  gateway-service  (único punto público :3000)  │
-                    │  enruta · rate limit · JWT preliminar · CID    │
-                    └───────┬───────────────────────────────────────┘
-                            │ (proxy interno)
-   ┌────────────┬───────────┼────────────┬─────────────┬───────────────┐
-   ▼            ▼           ▼            ▼             ▼               ▼
- auth      configuration  core-domain  reporting   notification    integration
- :3001     :3002          :3003        :3004        :3005           :3006
-   │            │           │            │             │               │
-   ▼            ▼           ▼            ▼             ▼               ▼
- file        scheduler    realtime   ── eventos de dominio (RabbitMQ) ──
- :3007       :3008        :3009
+ Navegador ──▶ reclusorio-web (:4200, Angular 22)
+                 │  /api (proxy)                 │ /socket.io (proxy)
+                 ▼                               ▼
+        gateway-service (:3000)          realtime-service (:3009)
+        único punto público HTTP         WebSocket: session.revoked
+                 │
+   ┌─────────────┼──────────────────┐
+   ▼             ▼                  ▼
+ auth (:3001)  reclusorio (:3010)  notification (:3005)
+ sesiones 30m  TODO el dominio     bandeja del usuario
+ Redis+JWKS    BD `reclusorio`     BD `icms_notification`
 ```
 
-### Servicios
+| Pieza | Puerto | Responsabilidad |
+| --- | --- | --- |
+| `apps/reclusorio-web` | 4200 | Frontend Angular 22 + Tailwind 4 (proyecto Angular CLI completo, estilo `ng new`): login, layout privado, sidebar por permisos, aviso de expiración a 5 min, módulos de personas/actividades/elementos/incidencias/catálogos/notificaciones/cuenta. |
+| `gateway-service` | 3000 | Única entrada pública: enruta (incluye los prefijos del dominio → :3010), rate limit, JWT preliminar, correlationId. |
+| `auth-service` | 3001 | Login (argon2id), JWT RS256 + JWKS, sesión/refresh de 30 min renovables en Redis con rotación, cambio de contraseña, auditoría con IP. |
+| `reclusorio-service` | 3010 | TODO el dominio (BD `reclusorio`): personas, domicilios, elementos, ingresos/libertades, movimientos, audiencias, traslados, incidencias, archivos (MinIO + SHA-256 + exclusividad), 17 catálogos con semillas completas. |
+| `notification-service` | 3005 | Bandeja `user_notifications`: listar, buscar, paginar, marcar leída. |
+| `realtime-service` | 3009 | WebSocket (socket.io): consume `session.revoked` y lo emite a la sala `user:{id}` — el front cierra la sesión al instante (RF-SES-009). |
+| resto (`configuration`, `core-domain`, `reporting`, `integration`, `file`, `scheduler`) | 3002–3008 | Servicios de la plataforma base; no participan en el flujo del reclusorio hoy. |
 
-| Servicio                | Puerto | Responsabilidad                                                      |
-| ----------------------- | ------ | ------------------------------------------------------------------- |
-| `gateway-service`       | 3000   | Único punto público: enruta, rate limiting, JWT preliminar, CID, normaliza errores. Sin lógica de negocio. |
-| `auth-service`          | 3001   | Identidad, login, JWT, refresh, sesiones, revocación, recuperación, 2FA, auditoría. |
-| `configuration-service` | 3002   | Organización (instituciones/sucursales/usuarios operativos), permisos (roles), catálogos/parámetros/flags. |
-| `core-domain-service`   | 3003   | **Plantilla** del negocio (renómbrala por proyecto). Entidades, reglas, flujos, eventos. |
-| `reporting-service`     | 3004   | Consultas pesadas y documentos (CSV/Excel/PDF). Consume la **réplica de lectura**. |
-| `notification-service`  | 3005   | Email/SMS/push/internas, plantillas, reintentos, historial. Consume eventos. |
-| `integration-service`   | 3006   | Sistemas externos: webhooks, transformación, outbox, reintentos, conciliación. |
-| `file-service`          | 3007   | Archivos en MinIO/S3, metadatos, versiones, antivirus, URLs temporales. |
-| `scheduler-service`     | 3008   | Cron distribuido con lock Redis (exclusión mutua), historial, reintentos. |
-| `realtime-service`      | 3009   | WebSocket (socket.io) con adaptador Redis para escalado horizontal.  |
+Librerías compartidas en `libs/` (`@icms/*`): errores RFC 9457
+(`application/problem+json`), guards de permisos, TypeORM con réplica,
+mensajería RabbitMQ (outbox/inbox), idempotencia, paginación estándar.
+Swagger de cada servicio en `/api/docs`; rutas de negocio bajo `/api/v1/...`.
 
-### Librerías compartidas (`libs/`)
+## Convenciones del proyecto
 
-| Lib                 | Contenido                                                                 |
-| ------------------- | ------------------------------------------------------------------------- |
-| `@icms/common`      | Sobre de respuesta uniforme, filtro global de errores, DTOs base, bootstrap. |
-| `@icms/config`      | Carga tipada de env + feature flags.                                      |
-| `@icms/logging`     | Logger pino estructurado + middleware `correlationId`.                    |
-| `@icms/auth`        | `JwtStrategy`, guards (roles/permisos), decoradores `@CurrentUser`/`@Roles`. |
-| `@icms/database`    | TypeORM con **replicación** primary/replica + entidad base (soft-delete). |
-| `@icms/messaging`   | RabbitMQ (exchange topic + DLX) + `EventPublisher`.                        |
-| `@icms/observability` | Health checks (Terminus) + métricas Prometheus (`/metrics`).            |
-| `@icms/contracts`   | Contratos de eventos de dominio compartidos.                              |
-| `@icms/redis`       | Cliente Redis compartido (rate limiting, sesiones, locks, adaptador WS).  |
-
-### Infraestructura (`infra/docker-compose.yml`)
-
-`postgres-primary` + `postgres-replica` (streaming) · `redis` · `rabbitmq`
-(UI :15672) · `minio` (:9000, consola :9001) · `prometheus` (:9090) ·
-`grafana` (:3200) · `loki` + `promtail`.
-
-## Puesta en marcha
-
-Hay **dos formas** de ejecutar la plataforma. Elige una:
-
-### Opción A — Todo en Docker
-
-Un solo comando levanta infraestructura **y** servicios. No requiere Node/pnpm local.
-
-```bash
-# Desarrollo (hot-reload: editas en tu editor y el contenedor recompila solo)
-pnpm docker:dev          # docker compose -f docker-compose.dev.yml up --build
-# …o un subconjunto:
-docker compose -f docker-compose.dev.yml up gateway-service auth-service
-
-# Producción (imágenes compiladas y esbeltas por servicio)
-cp .env.docker.example .env.docker      # define tus secretos
-pnpm docker:prod:build                  # construye las 10 imágenes
-docker compose --env-file .env.docker -f docker-compose.prod.yml up -d
-```
-
-En ambos modos los puertos `3000–3009` quedan publicados en tu host, igual que abajo.
-
-> **Memoria (Docker Desktop):** el modo desarrollo corre 10 watchers de webpack.
-> Asigna **≥ 8 GB** a Docker Desktop (Settings → Resources → Memory) o levanta
-> solo el subconjunto de servicios que necesites. Si un servicio muere con
-> `Killed` en los logs, es falta de memoria, no un error del código.
-
-### Opción B — Infra en Docker + servicios en el host (ciclo de desarrollo más ligero)
-
-Requisitos: Node ≥ 20, pnpm, Docker.
-
-```bash
-# 1) Dependencias
-pnpm install
-
-# 2) Configuración
-cp .env.example .env
-
-# 3) Solo la infraestructura (Postgres, Redis, RabbitMQ, MinIO, observabilidad)
-pnpm infra:up
-
-# 4) Servicios (todos, o uno concreto) — corren en tu máquina
-pnpm serve                       # nx run-many -t serve
-npx nx serve auth-service        # un servicio
-
-# Build / lint de todo el monorepo
-pnpm build
-pnpm lint
-```
-
-> **¿Cuál usar?** *Opción A (dev)* si quieres todo containerizado sin instalar nada;
-> *Opción B* para el ciclo de edición más rápido y depuración directa. *Opción A (prod)*
-> es la que se despliega. Nota: en dev-Docker corren 10 watchers de webpack, así que
-> consume RAM — levanta solo los servicios que necesites.
-
-### Endpoints comunes (en cada servicio)
-
-- `GET /health` · `GET /health/ready` — liveness / readiness
-- `GET /metrics` — métricas Prometheus
-- `GET /api/docs` — Swagger (excepto realtime)
-
-Las rutas de negocio se versionan bajo `/api/v1/...` y se acceden **a través del
-gateway** (p. ej. `POST http://localhost:3000/api/v1/auth/login`).
-
-## Convenciones
-
-- **database-per-service**: cada servicio con estado usa su propia BD (`icms_*`).
-- **Eventos de dominio** vía RabbitMQ (`@icms/messaging`), routing keys en `@icms/contracts`.
-- **CorrelationId** (`x-correlation-id`) se propaga desde el gateway y aparece en todos los logs.
-- **Errores** normalizados al sobre `ApiResponse` en toda la plataforma.
-- **Seguridad (auth)**: contraseñas con bcrypt; sesiones y refresh tokens en Redis con
-  revocación instantánea y **rotación con detección de reuso**; rate limiting del gateway en Redis.
-
-## Renombrar la plantilla de dominio
-
-`core-domain-service` es una plantilla. Para tu proyecto:
-
-```bash
-pnpm rename:core loans-service   # renombra app, configs y referencias
-```
-
-Revisa el diff, ajusta el nombre de la BD (`icms_core`) si aplica y reconstruye.
-
-## Separar en repos independientes (opcional, a futuro)
-
-Este monorepo puede dividirse en un repo por microservicio + un núcleo compartido,
-cuando necesites despliegues o permisos independientes. Todo está automatizado en
-un script. Ver la guía: [`docs/SPLIT-A-REPOS.md`](docs/SPLIT-A-REPOS.md).
+- Validación en dos capas; **el backend es la autoridad** (RF-GEN-004).
+- Catálogos por UUID, nunca texto; usados → desactivar, jamás borrar.
+- `edad` SIEMPRE calculada, nunca persistida (RF-GEN-008).
+- Archivos: exactamente UNA referencia de entidad (CHECK + backend, RF-ARC-003).
+- Dedup de catálogos ignora espacios/mayúsculas/acentos (RF-CAT-006).
+- Permisos `modulo:accion` en claims del JWT; cada endpoint usa
+  `@RequirePermissions(...)`; el front solo decide qué MOSTRAR.
+- Commits en español con prefijo de fase; verificar E2E antes de push.
+- Decisiones pendientes del equipo (P1–P7): ver
+  [`docs/PLAN-RECLUSORIO.md`](docs/PLAN-RECLUSORIO.md) §4 — no se asumen.
 
 ## Estructura del repositorio
 
 ```
-apps/                     # 10 microservicios NestJS
+apps/
+  reclusorio-web/         # frontend Angular 22 (angular.json + package.json propios)
+  reclusorio-service/     # dominio completo del reclusorio (NestJS)
+  gateway-service/        # entrada pública
+  auth-service/           # identidad y sesión de 30 min
+  notification-service/   # bandeja de notificaciones
+  realtime-service/       # WebSocket de revocación
+  ...                     # resto de la plataforma base (3002–3008)
 libs/                     # núcleo compartido (@icms/*)
-infra/                    # docker-compose de infraestructura + configs
-tools/                    # utilidades (rename de plantilla, split a repos)
-docs/                     # guías (p.ej. SPLIT-A-REPOS.md)
-Dockerfile                # imagen de producción (multi-stage, parametrizada)
-Dockerfile.dev            # imagen de desarrollo (hot-reload)
-docker-compose.dev.yml    # dev: infra + 10 servicios con recarga en caliente
-docker-compose.prod.yml   # prod: infra + 10 imágenes compiladas
+infra/                    # docker-compose de infraestructura
+docs/                     # PLAN-RECLUSORIO.md · MATRIZ-RF-RECLUSORIO.md · guías
+docker-compose.dev.yml    # dev: infra + servicios con hot-reload
+docker-compose.prod.yml   # prod: imágenes compiladas
+CLAUDE.md                 # contexto del proyecto para nuevas sesiones
 ```
