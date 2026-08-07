@@ -1,0 +1,74 @@
+<div class="space-y-3">
+  <form *rwPermiso="'archivos:crear'" class="flex flex-wrap items-end gap-3" (ngSubmit)="subir()">
+    <div>
+      <label class="campo-etiqueta" [for]="'archivo-' + id()">Archivo</label>
+      <input
+        class="campo max-w-xs text-xs file:mr-3 file:rounded file:border-0 file:bg-neon/10 file:px-2 file:py-1 file:text-neon"
+        type="file"
+        [id]="'archivo-' + id()"
+        (change)="seleccionar($event)"
+      />
+    </div>
+    <div class="grow">
+      <label class="campo-etiqueta" for="descripcionArchivo">Descripción</label>
+      <input
+        class="campo"
+        id="descripcionArchivo"
+        name="descripcion"
+        maxlength="500"
+        [(ngModel)]="descripcion"
+        placeholder="Opcional"
+      />
+    </div>
+    <button class="btn-primario" type="submit" [disabled]="!seleccionado || subiendo()">
+      {{ subiendo() ? 'Subiendo…' : 'Subir archivo' }}
+    </button>
+  </form>
+
+  @if (error()) {
+    <p class="alerta-error">{{ error() }}</p>
+  }
+
+  @if (cargando()) {
+    <p class="etiqueta animate-pulse">Cargando archivos…</p>
+  } @else if (archivos().length === 0) {
+    <p class="py-6 text-center text-sm text-slate-600">Sin archivos para esta entidad.</p>
+  } @else {
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Tamaño</th>
+          <th>SHA-256</th>
+          <th>Fecha</th>
+          <th class="text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (a of archivos(); track a.idArchivo) {
+          <tr>
+            <td class="max-w-[220px] truncate" [title]="a.nombreOriginal">{{ a.nombreOriginal }}</td>
+            <td><span class="chip-neon">{{ a.tipoArchivo }}</span></td>
+            <td class="font-mono text-xs">{{ formatoBytes(a.tamanoBytes) }}</td>
+            <td class="max-w-[140px] truncate font-mono text-[10px] text-slate-500" [title]="a.hashSha256">
+              {{ a.hashSha256 }}
+            </td>
+            <td class="font-mono text-xs">{{ a.fechaRegistro | date: 'dd/MM/yy HH:mm' }}</td>
+            <td class="text-right">
+              <button class="btn-secundario btn-mini" type="button" (click)="descargar(a)">Descargar</button>
+              <button
+                *rwPermiso="'archivos:administrar'"
+                class="btn-peligro btn-mini ml-2"
+                type="button"
+                (click)="desactivar(a)"
+              >
+                Desactivar
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

@@ -1,0 +1,105 @@
+<div class="space-y-4">
+  <div class="flex justify-end">
+    <button *rwPermiso="'ingresos:crear'" class="btn-primario btn-mini" type="button" (click)="mostrarForm.set(!mostrarForm())">
+      {{ mostrarForm() ? 'Cancelar' : '+ Registrar ingreso / libertad' }}
+    </button>
+  </div>
+
+  @if (mostrarForm()) {
+    <form class="panel grid gap-4 p-4 md:grid-cols-3" (ngSubmit)="crear()">
+      <div>
+        <label class="campo-etiqueta obligatorio" for="ieTipo">Tipo</label>
+        <select class="campo" id="ieTipo" name="idTipoIngresoEgreso" required [(ngModel)]="forma.idTipoIngresoEgreso">
+          <option value="" disabled>Selecciona…</option>
+          @for (v of tipos(); track v.id) {
+            <option [value]="v.id">{{ v.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="campo-etiqueta obligatorio" for="ieFecha">Fecha y hora</label>
+        <input class="campo" id="ieFecha" name="fecha" type="datetime-local" required [(ngModel)]="forma.fecha" />
+      </div>
+      <div>
+        <label class="campo-etiqueta obligatorio" for="ieCentro">Centro penitenciario</label>
+        <select class="campo" id="ieCentro" name="idCentroPenitenciario" required [(ngModel)]="forma.idCentroPenitenciario">
+          <option value="" disabled>Selecciona…</option>
+          @for (v of centros(); track v.id) {
+            <option [value]="v.id">{{ v.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="campo-etiqueta" for="ieDelito">Delito</label>
+        <select class="campo" id="ieDelito" name="idDelito" [(ngModel)]="forma.idDelito">
+          <option value="">— Sin especificar —</option>
+          @for (v of delitos(); track v.id) {
+            <option [value]="v.id">{{ v.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="campo-etiqueta" for="ieUbicacion">Ubicación</label>
+        <input class="campo" id="ieUbicacion" name="ubicacion" maxlength="255" [(ngModel)]="forma.ubicacion" />
+      </div>
+      <div>
+        <label class="campo-etiqueta" for="ieAutoridad">Autoridad que pone a disposición</label>
+        <input class="campo" id="ieAutoridad" name="autoridad" maxlength="255" [(ngModel)]="forma.autoridad" />
+      </div>
+      @if (errorForm()) {
+        <p class="alerta-error md:col-span-3">{{ errorForm() }}</p>
+      }
+      <div class="flex justify-end md:col-span-3">
+        <button class="btn-primario" type="submit" [disabled]="guardando()">
+          {{ guardando() ? 'Guardando…' : 'Registrar' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (error()) {
+    <p class="alerta-error">{{ error() }}</p>
+  } @else if (cargando()) {
+    <p class="etiqueta animate-pulse">Cargando historial…</p>
+  } @else if (registros().length === 0) {
+    <p class="py-6 text-center text-sm text-slate-600">Sin ingresos ni libertades registrados.</p>
+  } @else {
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Centro</th>
+          <th>Delito</th>
+          <th>Ubicación</th>
+          <th>Autoridad</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of registros(); track r.idIngresoEgreso) {
+          <tr>
+            <td class="font-mono text-xs">{{ r.fecha | date: 'dd/MM/yy HH:mm' }}</td>
+            <td><span class="chip-neon">{{ nombreTipo(r.idTipoIngresoEgreso) }}</span></td>
+            <td>{{ nombreCentro(r.idCentroPenitenciario) }}</td>
+            <td class="max-w-[200px] truncate" [title]="nombreDelito(r.idDelito)">{{ nombreDelito(r.idDelito) }}</td>
+            <td>{{ r.ubicacion || '—' }}</td>
+            <td>{{ r.autoridad || '—' }}</td>
+            <td class="text-right">
+              <button class="btn-secundario btn-mini" type="button" (click)="alternarExpandido(r.idIngresoEgreso)">
+                {{ expandido() === r.idIngresoEgreso ? 'Ocultar' : 'Archivos' }}
+              </button>
+            </td>
+          </tr>
+          @if (expandido() === r.idIngresoEgreso) {
+            <tr>
+              <td colspan="7" class="bg-panel-2/40 px-4 py-4">
+                <rw-archivos-panel referencia="idIngresoEgreso" [id]="r.idIngresoEgreso" />
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  }
+</div>

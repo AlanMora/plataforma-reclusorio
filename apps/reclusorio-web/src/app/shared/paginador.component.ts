@@ -5,25 +5,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
   selector: 'rw-paginador',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    @if (totalPages() > 0) {
-      <div class="flex items-center justify-between gap-4 px-1 pt-3">
-        <span class="etiqueta">{{ total() }} registro(s) · página {{ page() }} / {{ totalPages() }}</span>
-        <div class="flex gap-2">
-          <button class="btn-secundario btn-mini" [disabled]="page() <= 1" (click)="cambiar.emit(page() - 1)">
-            ← Anterior
-          </button>
-          <button
-            class="btn-secundario btn-mini"
-            [disabled]="page() >= totalPages()"
-            (click)="cambiar.emit(page() + 1)"
-          >
-            Siguiente →
-          </button>
-        </div>
-      </div>
-    }
-  `,
+  templateUrl: './paginador.component.html',
 })
 export class PaginadorComponent {
   readonly page = input(1);

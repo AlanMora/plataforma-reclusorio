@@ -1,0 +1,187 @@
+<div class="space-y-4">
+  <div class="flex justify-end">
+    <button *rwPermiso="'audiencias:crear'" class="btn-primario btn-mini" type="button" (click)="mostrarForm.set(!mostrarForm())">
+      {{ mostrarForm() ? 'Cancelar' : '+ Registrar audiencia' }}
+    </button>
+  </div>
+
+  @if (mostrarForm()) {
+    <form class="panel grid gap-4 p-4 md:grid-cols-3" (ngSubmit)="crear()">
+      <div>
+        <label class="campo-etiqueta obligatorio" for="audFecha">Fecha y hora</label>
+        <input class="campo" id="audFecha" name="fecha" type="datetime-local" required [(ngModel)]="forma.fecha" />
+      </div>
+      <div>
+        <label class="campo-etiqueta" for="audCa">Carpeta administrativa (CA)</label>
+        <input class="campo" id="audCa" name="ca" maxlength="100" [(ngModel)]="forma.ca" />
+      </div>
+      <div>
+        <label class="campo-etiqueta" for="audCi">Carpeta de investigación (CI)</label>
+        <input class="campo" id="audCi" name="ci" maxlength="100" [(ngModel)]="forma.ci" />
+      </div>
+      <div>
+        <label class="campo-etiqueta obligatorio" for="audForma">Forma de ingreso</label>
+        <select class="campo" id="audForma" name="idFormaIngresoAudiencia" required [(ngModel)]="forma.idFormaIngresoAudiencia">
+          <option value="" disabled>Selecciona…</option>
+          @for (v of formasIngreso(); track v.id) {
+            <option [value]="v.id">{{ v.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="campo-etiqueta obligatorio" for="audJuzgado">Juzgado</label>
+        <select class="campo" id="audJuzgado" name="idJuzgado" required [(ngModel)]="forma.idJuzgado">
+          <option value="" disabled>Selecciona…</option>
+          @for (v of juzgados(); track v.id) {
+            <option [value]="v.id">{{ v.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="campo-etiqueta obligatorio" for="audJuez">Juez del juzgado</label>
+        <select class="campo" id="audJuez" name="idJuezJuzgado" required [(ngModel)]="forma.idJuezJuzgado">
+          <option value="" disabled>Selecciona…</option>
+          @for (v of jueces(); track v.id) {
+            <option [value]="v.id">{{ v.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="campo-etiqueta" for="audNombreJuez">Nombre del juez (texto)</label>
+        <input class="campo" id="audNombreJuez" name="nombreJuez" maxlength="255" [(ngModel)]="forma.nombreJuez" />
+      </div>
+      <div>
+        <label class="campo-etiqueta obligatorio" for="audTipo">Tipo de audiencia</label>
+        <select class="campo" id="audTipo" name="idTipoAudiencia" required [(ngModel)]="forma.idTipoAudiencia">
+          <option value="" disabled>Selecciona…</option>
+          @for (v of tipos(); track v.id) {
+            <option [value]="v.id">{{ v.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="campo-etiqueta obligatorio" for="audModalidad">Modalidad</label>
+        <select class="campo" id="audModalidad" name="idModalidadAudiencia" required [(ngModel)]="forma.idModalidadAudiencia">
+          <option value="" disabled>Selecciona…</option>
+          @for (v of modalidades(); track v.id) {
+            <option [value]="v.id">{{ v.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="campo-etiqueta" for="audResolucion">Resolución</label>
+        <select class="campo" id="audResolucion" name="idResolucionAudiencia" [(ngModel)]="forma.idResolucionAudiencia">
+          <option value="">— Sin resolución —</option>
+          @for (v of resoluciones(); track v.id) {
+            <option [value]="v.id">{{ v.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="campo-etiqueta obligatorio" for="audProxima">¿Habrá próxima audiencia?</label>
+        <select class="campo" id="audProxima" name="idProximaAudiencia" required [(ngModel)]="forma.idProximaAudiencia" (ngModelChange)="alCambiarProxima()">
+          <option value="" disabled>Selecciona…</option>
+          @for (v of proximas(); track v.id) {
+            <option [value]="v.id">{{ v.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="campo-etiqueta" for="audSiguiente">Fecha de la siguiente audiencia</label>
+        <input
+          class="campo"
+          id="audSiguiente"
+          name="fechaSiguienteAudiencia"
+          type="datetime-local"
+          [disabled]="proximaEsNo()"
+          [(ngModel)]="forma.fechaSiguienteAudiencia"
+        />
+        @if (proximaEsNo()) {
+          <p class="mt-1 text-[11px] text-slate-600">Debe permanecer vacía cuando la próxima audiencia es NO (RF-AUD-004).</p>
+        }
+      </div>
+      <div class="md:col-span-3">
+        <label class="campo-etiqueta" for="audObservaciones">Observaciones</label>
+        <textarea class="campo" id="audObservaciones" name="observaciones" rows="2" maxlength="2000" [(ngModel)]="forma.observaciones"></textarea>
+      </div>
+      @if (errorForm()) {
+        <p class="alerta-error md:col-span-3">{{ errorForm() }}</p>
+      }
+      <div class="flex justify-end md:col-span-3">
+        <button class="btn-primario" type="submit" [disabled]="guardando()">
+          {{ guardando() ? 'Guardando…' : 'Registrar audiencia' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (error()) {
+    <p class="alerta-error">{{ error() }}</p>
+  } @else if (cargando()) {
+    <p class="etiqueta animate-pulse">Cargando audiencias…</p>
+  } @else if (registros().length === 0) {
+    <p class="py-6 text-center text-sm text-slate-600">Sin audiencias registradas.</p>
+  } @else {
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Juzgado</th>
+          <th>Modalidad</th>
+          <th>Resolución</th>
+          <th>Próxima</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of registros(); track r.idAudiencia) {
+          <tr>
+            <td class="font-mono text-xs">{{ r.fecha | date: 'dd/MM/yy HH:mm' }}</td>
+            <td><span class="chip-neon">{{ nombre(mapaTipos, r.idTipoAudiencia) }}</span></td>
+            <td class="max-w-[180px] truncate">{{ nombre(mapaJuzgados, r.idJuzgado) }}</td>
+            <td>{{ nombre(mapaModalidades, r.idModalidadAudiencia) }}</td>
+            <td>{{ r.idResolucionAudiencia ? nombre(mapaResoluciones, r.idResolucionAudiencia) : '—' }}</td>
+            <td class="font-mono text-xs">
+              {{ nombre(mapaProximas, r.idProximaAudiencia) }}
+              @if (r.fechaSiguienteAudiencia) {
+                · {{ r.fechaSiguienteAudiencia | date: 'dd/MM/yy HH:mm' }}
+              }
+            </td>
+            <td class="text-right">
+              <button class="btn-secundario btn-mini" type="button" (click)="alternarExpandido(r.idAudiencia)">
+                {{ expandido() === r.idAudiencia ? 'Ocultar' : 'Detalle' }}
+              </button>
+            </td>
+          </tr>
+          @if (expandido() === r.idAudiencia) {
+            <tr>
+              <td colspan="7" class="bg-panel-2/40 px-4 py-4">
+                <div class="space-y-5">
+                  <div>
+                    <p class="etiqueta mb-2">Elementos participantes (RF-AUD-006)</p>
+                    @if (elementosAsociados().length === 0) {
+                      <p class="text-sm text-slate-600">Sin elementos asociados.</p>
+                    }
+                    <div class="flex flex-wrap gap-2">
+                      @for (e of elementosAsociados(); track e.idElemento) {
+                        <span class="chip-neon">{{ nombreDeElemento(e) }}</span>
+                      }
+                    </div>
+                    <div *rwPermiso="'audiencias:asociar'" class="mt-3">
+                      <rw-elemento-picker (elegido)="asociarElemento(r.idAudiencia, $event)" />
+                    </div>
+                  </div>
+                  <div>
+                    <p class="etiqueta mb-2">Expediente digital</p>
+                    <rw-archivos-panel referencia="idAudiencia" [id]="r.idAudiencia" />
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  }
+</div>

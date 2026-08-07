@@ -1,0 +1,107 @@
+<div class="mx-auto max-w-5xl space-y-5">
+  <div>
+    <p class="etiqueta">Cuenta</p>
+    <h2 class="text-2xl font-bold text-slate-100">{{ auth.email() }}</h2>
+  </div>
+
+  <div class="grid gap-5 lg:grid-cols-2">
+    <!-- Sesión -->
+    <div class="panel space-y-4 p-6">
+      <p class="etiqueta">Sesión vigente (RF-CUE-001)</p>
+      <div class="flex items-baseline gap-3">
+        <span class="font-mono text-4xl text-neon">{{ minutos() }}</span>
+        <span class="text-sm text-slate-500">minutos restantes de 30 (renovables)</span>
+      </div>
+      <p class="font-mono text-xs text-slate-600">sesión {{ auth.sid() || '—' }}</p>
+      <button class="btn-primario" type="button" [disabled]="session.extendiendo()" (click)="session.extender()">
+        {{ session.extendiendo() ? 'Extendiendo…' : 'Extender sesión 30 min' }}
+      </button>
+
+      <div class="border-t border-borde pt-4">
+        <p class="etiqueta mb-2">Permisos activos ({{ auth.permisos().length }})</p>
+        <div class="flex max-h-48 flex-wrap gap-1.5 overflow-y-auto">
+          @for (p of auth.permisos(); track p) {
+            <span class="chip-apagado">{{ p }}</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Cambio de contraseña -->
+    <div class="panel space-y-4 p-6">
+      <p class="etiqueta">Cambio de contraseña (RF-CUE-002)</p>
+      <form class="space-y-3" (ngSubmit)="cambiarPassword()">
+        <div>
+          <label class="campo-etiqueta obligatorio" for="passwordActual">Contraseña actual</label>
+          <input class="campo" id="passwordActual" name="currentPassword" type="password" required autocomplete="current-password" [(ngModel)]="passwords.currentPassword" />
+        </div>
+        <div>
+          <label class="campo-etiqueta obligatorio" for="passwordNueva">Nueva contraseña (mínimo 12)</label>
+          <input class="campo" id="passwordNueva" name="newPassword" type="password" minlength="12" required autocomplete="new-password" [(ngModel)]="passwords.newPassword" />
+        </div>
+        <div>
+          <label class="campo-etiqueta obligatorio" for="passwordConfirmacion">Confirmar nueva contraseña</label>
+          <input class="campo" id="passwordConfirmacion" name="confirmPassword" type="password" minlength="12" required autocomplete="new-password" [(ngModel)]="passwords.confirmPassword" />
+        </div>
+        @if (errorPassword()) {
+          <p class="alerta-error">{{ errorPassword() }}</p>
+        }
+        <p class="text-[11px] text-slate-600">
+          Al cambiarla se revocan TODAS tus sesiones y deberás iniciar de nuevo.
+        </p>
+        <button class="btn-primario w-full justify-center" type="submit" [disabled]="cambiando()">
+          {{ cambiando() ? 'Aplicando…' : 'Cambiar contraseña' }}
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Sesiones activas -->
+  <div class="panel space-y-3 p-6">
+    <div class="flex items-center justify-between">
+      <p class="etiqueta">Sesiones activas (auditoría con IP, DP-003)</p>
+      <button class="btn-peligro btn-mini" type="button" (click)="cerrarTodas()">Cerrar todas</button>
+    </div>
+    <table class="tabla">
+      <thead>
+        <tr><th>Sesión</th><th>IP</th><th>Agente</th><th>Inicio</th><th></th></tr>
+      </thead>
+      <tbody>
+        @for (s of sesiones(); track s.sessionId) {
+          <tr>
+            <td class="font-mono text-xs">
+              {{ s.sessionId.slice(0, 8) }}…
+              @if (s.sessionId === auth.sid()) {
+                <span class="chip-ok ml-2">actual</span>
+              }
+            </td>
+            <td class="font-mono text-xs">{{ s.ipAddress || '—' }}</td>
+            <td class="max-w-[280px] truncate text-xs" [title]="s.userAgent || ''">{{ s.userAgent || '—' }}</td>
+            <td class="font-mono text-xs">{{ s.createdAt | date: 'dd/MM/yy HH:mm' }}</td>
+            <td></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (usuario(); as u) {
+    <div class="panel p-6">
+      <p class="etiqueta mb-3">Datos de la cuenta</p>
+      <div class="grid gap-4 sm:grid-cols-3">
+        <div>
+          <p class="etiqueta">Correo</p>
+          <p class="text-sm text-slate-200">{{ u.email }}</p>
+        </div>
+        <div>
+          <p class="etiqueta">Estado</p>
+          <span [class]="u.isActive ? 'chip-ok' : 'chip-peligro'">{{ u.isActive ? 'activa' : 'inactiva' }}</span>
+        </div>
+        <div>
+          <p class="etiqueta">Roles</p>
+          <p class="text-sm text-slate-200">{{ u.roles.join(', ') || '—' }}</p>
+        </div>
+      </div>
+    </div>
+  }
+</div>

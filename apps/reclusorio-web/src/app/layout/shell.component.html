@@ -1,0 +1,105 @@
+<div class="flex min-h-screen">
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r border-borde bg-panel/95 backdrop-blur">
+    <div class="border-b border-borde px-5 py-5">
+      <p class="font-mono text-[10px] uppercase tracking-[0.3em] text-neon">Plataforma</p>
+      <h1 class="mt-1 text-lg font-bold leading-tight tracking-wide text-slate-100">
+        Gestión de<br />Reclusorio
+      </h1>
+      <p class="mt-2 font-mono text-[9px] uppercase tracking-[0.2em] text-slate-600">
+        RF v1.0 · consola operativa
+      </p>
+    </div>
+
+    <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+      @for (item of menuVisible(); track item.ruta) {
+        <a
+          class="nav-item"
+          [routerLink]="item.ruta"
+          routerLinkActive="activo"
+          [routerLinkActiveOptions]="{ exact: item.exacto ?? false }"
+        >
+          <span class="w-4 text-center text-neon/70">{{ item.icono }}</span>
+          <span>{{ item.etiqueta }}</span>
+          @if (item.ruta === '/notificaciones' && notificaciones.noLeidas() > 0) {
+            <span class="ml-auto rounded-full bg-neon/20 px-2 font-mono text-[10px] text-neon">
+              {{ notificaciones.noLeidas() }}
+            </span>
+          }
+        </a>
+      }
+    </nav>
+
+    <div class="border-t border-borde px-5 py-4">
+      <p class="truncate font-mono text-xs text-slate-400" [title]="auth.email()">{{ auth.email() }}</p>
+      <button class="btn-secundario btn-mini mt-3 w-full justify-center" (click)="auth.cerrarSesion()">
+        Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <!-- ===================== CONTENIDO ===================== -->
+  <div class="ml-60 flex min-h-screen flex-1 flex-col">
+    <header
+      class="sticky top-0 z-20 flex items-center justify-end gap-4 border-b border-borde bg-fondo/80 px-6 py-3 backdrop-blur"
+    >
+      <span class="etiqueta hidden sm:inline">sesión</span>
+      <span class="chip" [class]="claseSesion()">
+        ⏱ {{ cuentaRegresiva() }}
+      </span>
+      <a routerLink="/notificaciones" class="relative text-lg text-slate-400 hover:text-neon" title="Notificaciones">
+        ◎
+        @if (notificaciones.noLeidas() > 0) {
+          <span
+            class="absolute -right-2 -top-1 rounded-full bg-neon px-1.5 font-mono text-[9px] font-bold text-fondo"
+          >
+            {{ notificaciones.noLeidas() }}
+          </span>
+        }
+      </a>
+    </header>
+
+    <main class="flex-1 px-6 py-6">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+
+<!-- ============ AVISO DE EXPIRACIÓN A 5 MIN (RF-UI) ============ -->
+@if (session.avisoActivo()) {
+  <div class="panel panel-glow fixed bottom-6 right-6 z-50 w-80 border-alerta/50 p-5">
+    <p class="etiqueta text-alerta">Sesión por expirar</p>
+    <p class="mt-2 text-sm text-slate-300">
+      Tu sesión expira en
+      <span class="font-mono font-bold text-alerta">{{ cuentaRegresiva() }}</span>.
+      ¿Deseas extenderla 30 minutos?
+    </p>
+    <div class="mt-4 flex gap-2">
+      <button class="btn-primario grow justify-center" [disabled]="session.extendiendo()" (click)="session.extender()">
+        {{ session.extendiendo() ? 'Extendiendo…' : 'Extender sesión' }}
+      </button>
+      <button class="btn-secundario" (click)="auth.cerrarSesion()">Salir</button>
+    </div>
+  </div>
+}
+
+<!-- ===================== TOASTS ===================== -->
+<div class="fixed right-6 top-16 z-50 flex w-96 flex-col gap-2">
+  @for (t of toast.toasts(); track t.id) {
+    <div
+      class="panel flex items-start gap-3 p-4 text-sm"
+      [class]="t.tipo === 'ok' ? 'border-ok/50' : t.tipo === 'error' ? 'border-peligro/50' : ''"
+    >
+      <span
+        class="mt-0.5 font-mono text-xs"
+        [class.text-ok]="t.tipo === 'ok'"
+        [class.text-peligro]="t.tipo === 'error'"
+        [class.text-neon]="t.tipo === 'info'"
+      >
+        {{ t.tipo === 'ok' ? '✓' : t.tipo === 'error' ? '✕' : 'ℹ' }}
+      </span>
+      <p class="grow text-slate-200">{{ t.texto }}</p>
+      <button class="text-slate-500 hover:text-slate-200" (click)="toast.cerrar(t.id)">✕</button>
+    </div>
+  }
+</div>

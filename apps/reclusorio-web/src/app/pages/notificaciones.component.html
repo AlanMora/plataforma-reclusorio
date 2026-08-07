@@ -1,0 +1,54 @@
+<div class="mx-auto max-w-4xl space-y-5">
+  <div>
+    <p class="etiqueta">Bandeja</p>
+    <h2 class="text-2xl font-bold text-slate-100">Notificaciones</h2>
+  </div>
+
+  <form class="panel flex items-end gap-3 p-4" (ngSubmit)="buscar()">
+    <div class="grow">
+      <label class="campo-etiqueta" for="buscarNotif">Buscar en título y mensaje</label>
+      <input class="campo" id="buscarNotif" name="buscar" [(ngModel)]="texto" placeholder="Texto libre" />
+    </div>
+    <button class="btn-primario" type="submit" [disabled]="cargando()">Buscar</button>
+  </form>
+
+  @if (error()) {
+    <p class="alerta-error">{{ error() }}</p>
+  }
+
+  <div class="space-y-2">
+    @if (cargando()) {
+      <p class="etiqueta animate-pulse">Cargando bandeja…</p>
+    } @else if (pagina().items.length === 0) {
+      <div class="panel p-10 text-center text-slate-600">Bandeja vacía.</div>
+    }
+    @for (n of pagina().items; track n.id) {
+      <div
+        class="panel flex items-start gap-4 p-4"
+        [class.opacity-60]="n.leida"
+        [class]="!n.leida ? 'border-neon/30' : ''"
+      >
+        <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full" [class]="n.leida ? 'bg-slate-700' : 'bg-neon shadow-[0_0_8px_rgba(34,211,238,.8)]'"></span>
+        <div class="grow">
+          <p class="font-medium text-slate-100">{{ n.titulo }}</p>
+          <p class="mt-0.5 text-sm text-slate-400">{{ n.mensaje }}</p>
+          <p class="mt-1 font-mono text-[10px] uppercase tracking-widest text-slate-600">
+            {{ n.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+          </p>
+        </div>
+        @if (!n.leida) {
+          <button class="btn-secundario btn-mini shrink-0" type="button" (click)="marcarLeida(n)">
+            Marcar leída
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  <rw-paginador
+    [page]="pagina().page"
+    [totalPages]="pagina().totalPages"
+    [total]="pagina().total"
+    (cambiar)="cargar($event)"
+  />
+</div>

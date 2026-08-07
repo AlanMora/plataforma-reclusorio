@@ -1,0 +1,53 @@
+<div class="mx-auto max-w-6xl space-y-5">
+  <div class="flex items-end justify-between gap-4">
+    <div>
+      <p class="etiqueta">Módulo</p>
+      <h2 class="text-2xl font-bold text-slate-100">Incidencias</h2>
+      <p class="mt-1 text-sm text-slate-500">
+        Registro independiente: una incidencia puede existir sin personas asociadas (RF-INC-001/002).
+      </p>
+    </div>
+    <a *rwPermiso="'incidencias:crear'" class="btn-primario" routerLink="/incidencias/nueva">+ Registrar incidencia</a>
+  </div>
+
+  @if (error()) {
+    <p class="alerta-error">{{ error() }}</p>
+  }
+
+  <div class="panel overflow-x-auto p-2">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Centro</th>
+          <th>Descripción</th>
+          <th>IPH</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (cargando()) {
+          <tr><td colspan="5" class="py-8 text-center text-slate-500">Consultando incidencias…</td></tr>
+        } @else if (pagina().items.length === 0) {
+          <tr><td colspan="5" class="py-8 text-center text-slate-500">Sin incidencias registradas.</td></tr>
+        } @else {
+          @for (i of pagina().items; track i.idIncidencia) {
+            <tr class="cursor-pointer" [routerLink]="['/incidencias', i.idIncidencia]">
+              <td class="font-mono text-xs">{{ i.fecha | date: 'dd/MM/yy HH:mm' }}</td>
+              <td><span class="chip-alerta">{{ tipoDe(i.idTipoIncidencia) }}</span></td>
+              <td class="max-w-[200px] truncate">{{ centroDe(i.idCentroPenitenciario) }}</td>
+              <td class="max-w-[320px] truncate" [title]="i.descripcion">{{ i.descripcion }}</td>
+              <td class="font-mono text-xs">{{ i.iph || '—' }}</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+    <rw-paginador
+      [page]="pagina().page"
+      [totalPages]="pagina().totalPages"
+      [total]="pagina().total"
+      (cambiar)="cargar($event)"
+    />
+  </div>
+</div>

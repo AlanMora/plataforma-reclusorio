@@ -1,0 +1,118 @@
+<div class="mx-auto max-w-5xl space-y-5">
+  <a routerLink="/incidencias" class="etiqueta hover:text-neon">← Incidencias</a>
+
+  @if (error()) {
+    <p class="alerta-error">{{ error() }}</p>
+  } @else if (!incidencia()) {
+    <p class="etiqueta animate-pulse">Cargando incidencia…</p>
+  } @else {
+    <div class="panel panel-glow space-y-3 p-6">
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="chip-alerta">{{ nombreTipo() }}</span>
+        <span class="chip-neon">{{ nombreCentro() }}</span>
+        <span class="font-mono text-xs text-slate-500">{{ incidencia()!.fecha | date: 'dd/MM/yyyy HH:mm' }}</span>
+        @if (incidencia()!.iph) {
+          <span class="chip-apagado">IPH {{ incidencia()!.iph }}</span>
+        }
+      </div>
+      <p class="text-slate-200">{{ incidencia()!.descripcion }}</p>
+      @if (incidencia()!.primerRespondiente) {
+        <p class="text-sm text-slate-400">
+          <span class="etiqueta">Primer respondiente (no registrado):</span>
+          {{ incidencia()!.primerRespondiente }}
+        </p>
+      }
+      @if (incidencia()!.narrativa) {
+        <p class="whitespace-pre-line border-t border-borde pt-3 text-sm text-slate-400">{{ incidencia()!.narrativa }}</p>
+      }
+    </div>
+
+    <div class="grid gap-5 lg:grid-cols-2">
+      <!-- Personas asociadas -->
+      <div class="panel space-y-3 p-5">
+        <p class="etiqueta">Personas asociadas (RF-INC-003)</p>
+        @if (personasAsociadas().length === 0) {
+          <p class="text-sm text-slate-600">Sin personas asociadas — la incidencia es válida así.</p>
+        }
+        @for (p of personasAsociadas(); track p.idPersona) {
+          <a class="block rounded-lg border border-borde px-3 py-2 text-sm text-slate-200 hover:border-neon/40" [routerLink]="['/personas', p.idPersona]">
+            {{ nombreDePersona(p) }}
+            <span class="ml-2 font-mono text-xs text-slate-500">{{ p.curp }}</span>
+          </a>
+        }
+        <div *rwPermiso="'incidencias:asociar'" class="space-y-2 rounded-lg border border-borde bg-panel-2/60 p-3">
+          <p class="etiqueta">Asociar persona</p>
+          <div class="flex gap-2">
+            <input class="campo" name="buscarPersona" [(ngModel)]="textoPersona" placeholder="Nombre, alias o CURP" (keyup.enter)="buscarPersonas()" />
+            <button class="btn-secundario" type="button" (click)="buscarPersonas()">Buscar</button>
+          </div>
+          @for (p of candidatasPersonas(); track p.idPersona) {
+            <button
+              type="button"
+              class="flex w-full items-center justify-between rounded-lg border border-borde px-3 py-2 text-left text-sm hover:border-neon/50 hover:bg-neon/5"
+              (click)="asociarPersona(p)"
+            >
+              <span>{{ nombreDePersona(p) }}</span>
+              <span class="font-mono text-xs text-slate-500">{{ p.curp }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Autoridades + elementos -->
+      <div class="space-y-5">
+        <div class="panel space-y-3 p-5">
+          <p class="etiqueta">Autoridades de apoyo (RF-INC-004)</p>
+          @if (incidencia()!.autoridades.length === 0) {
+            <p class="text-sm text-slate-600">Sin autoridades asociadas.</p>
+          }
+          <div class="flex flex-wrap gap-2">
+            @for (id of incidencia()!.autoridades; track id) {
+              <span class="chip-neon">{{ nombreAutoridad(id) }}</span>
+            }
+          </div>
+          <div *rwPermiso="'incidencias:asociar'" class="flex gap-2">
+            <select class="campo" name="autoridadNueva" [(ngModel)]="autoridadSeleccionada">
+              <option value="" disabled>Selecciona autoridad…</option>
+              @for (a of autoridades(); track a.id) {
+                <option [value]="a.id">{{ a.nombre }}</option>
+              }
+            </select>
+            <button class="btn-primario btn-mini" type="button" [disabled]="!autoridadSeleccionada" (click)="asociarAutoridad()">
+              Asociar
+            </button>
+          </div>
+        </div>
+
+        <div class="panel space-y-3 p-5">
+          <p class="etiqueta">Elementos participantes (RF-INC-005/007)</p>
+          @if (elementosAsociados().length === 0) {
+            <p class="text-sm text-slate-600">Sin elementos asociados.</p>
+          }
+          <div class="flex flex-wrap gap-2">
+            @for (e of elementosAsociados(); track e.idElemento) {
+              <span [class]="e.primerRespondiente ? 'chip-ok' : 'chip-neon'">
+                {{ e.nombre }}
+                @if (e.primerRespondiente) {
+                  · 1er respondiente
+                }
+              </span>
+            }
+          </div>
+          <div *rwPermiso="'incidencias:asociar'">
+            <label class="mb-2 flex items-center gap-2 text-sm text-slate-400">
+              <input type="checkbox" class="accent-neon" name="esPrimerRespondiente" [(ngModel)]="marcarPrimerRespondiente" />
+              Marcar como primer respondiente al asociar
+            </label>
+            <rw-elemento-picker (elegido)="asociarElemento($event)" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel p-5">
+      <p class="etiqueta mb-3">Expediente digital de la incidencia (RF-ARC-004)</p>
+      <rw-archivos-panel referencia="idIncidencia" [id]="idIncidencia()" />
+    </div>
+  }
+</div>

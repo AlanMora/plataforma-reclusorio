@@ -1,0 +1,123 @@
+<div class="mx-auto max-w-6xl space-y-5">
+  <div>
+    <p class="etiqueta">Módulo</p>
+    <h2 class="text-2xl font-bold text-slate-100">Catálogos</h2>
+  </div>
+
+  <div class="grid gap-5 lg:grid-cols-[260px_1fr]">
+    <!-- Selector -->
+    <div class="space-y-4">
+      <div class="panel p-3">
+        <p class="etiqueta px-2 py-1">Administrables</p>
+        @for (c of administrables; track c.slug) {
+          <button
+            class="nav-item w-full text-left"
+            [class.activo]="slug() === c.slug"
+            type="button"
+            (click)="seleccionar(c.slug)"
+          >
+            {{ c.etiqueta }}
+          </button>
+        }
+      </div>
+      <div class="panel p-3">
+        <p class="etiqueta px-2 py-1">Fijos (solo lectura)</p>
+        @for (c of fijos; track c.slug) {
+          <button
+            class="nav-item w-full text-left"
+            [class.activo]="slug() === c.slug"
+            type="button"
+            (click)="seleccionar(c.slug)"
+          >
+            {{ c.etiqueta }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Valores -->
+    <div class="panel space-y-4 p-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h3 class="titulo">{{ etiquetaActual() }}</h3>
+        @if (!esFijo()) {
+          <label class="flex items-center gap-2 text-sm text-slate-400">
+            <input type="checkbox" class="accent-neon" [ngModel]="incluirInactivos()" (ngModelChange)="alternarInactivos($event)" name="incluirInactivos" />
+            Incluir inactivos
+          </label>
+        } @else {
+          <span class="chip-apagado">catálogo fijo · sin edición (RF-CAT-008)</span>
+        }
+      </div>
+
+      @if (!esFijo()) {
+        <form class="flex flex-wrap items-end gap-3 rounded-lg border border-borde p-3" (ngSubmit)="crear()">
+          <div class="grow">
+            <label class="campo-etiqueta obligatorio" for="nuevoNombre">Nuevo valor</label>
+            <input class="campo" id="nuevoNombre" name="nombre" maxlength="255" required [(ngModel)]="nuevo.nombre" />
+          </div>
+          <div class="grow">
+            <label class="campo-etiqueta" for="nuevaDescripcion">Descripción</label>
+            <input class="campo" id="nuevaDescripcion" name="descripcion" maxlength="500" [(ngModel)]="nuevo.descripcion" />
+          </div>
+          <button class="btn-primario" type="submit" [disabled]="guardando()">Agregar</button>
+        </form>
+      }
+
+      @if (error()) {
+        <p class="alerta-error">{{ error() }}</p>
+      }
+      @if (cargando()) {
+        <p class="etiqueta animate-pulse">Cargando valores…</p>
+      } @else {
+        <p class="etiqueta">{{ valores().length }} valor(es)</p>
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th>Estado</th>
+              @if (!esFijo()) {
+                <th class="text-right">Acciones</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (v of valores(); track v.id) {
+              <tr>
+                @if (enEdicion() === v.id) {
+                  <td>
+                    <input class="campo" name="nombreEdit" maxlength="255" [(ngModel)]="edicion.nombre" />
+                  </td>
+                  <td>
+                    <input class="campo" name="descripcionEdit" maxlength="500" [(ngModel)]="edicion.descripcion" />
+                  </td>
+                  <td></td>
+                  <td class="text-right">
+                    <button class="btn-primario btn-mini" type="button" [disabled]="guardando()" (click)="guardarCorreccion(v)">Guardar</button>
+                    <button class="btn-secundario btn-mini ml-2" type="button" (click)="enEdicion.set(null)">Cancelar</button>
+                  </td>
+                } @else {
+                  <td class="text-slate-100">{{ v.nombre }}</td>
+                  <td class="max-w-[280px] truncate" [title]="v.descripcion || ''">{{ v.descripcion || '—' }}</td>
+                  <td>
+                    <span [class]="v.activo ? 'chip-ok' : 'chip-apagado'">{{ v.activo ? 'activo' : 'inactivo' }}</span>
+                  </td>
+                  @if (!esFijo()) {
+                    <td class="text-right">
+                      <button class="btn-secundario btn-mini" type="button" (click)="iniciarCorreccion(v)">Corregir</button>
+                      @if (v.activo) {
+                        <button class="btn-peligro btn-mini ml-2" type="button" (click)="desactivar(v)">Desactivar</button>
+                      } @else {
+                        <button class="btn-primario btn-mini ml-2" type="button" (click)="reactivar(v)">Reactivar</button>
+                      }
+                    </td>
+                  }
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </div>
+</div>

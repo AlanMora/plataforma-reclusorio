@@ -17,70 +17,7 @@ export function nombreCompleto(p: Persona): string {
   standalone: true,
   imports: [RouterLink, FormsModule, PaginadorComponent, PermisoDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="mx-auto max-w-6xl space-y-5">
-      <div class="flex items-end justify-between gap-4">
-        <div>
-          <p class="etiqueta">Módulo</p>
-          <h2 class="text-2xl font-bold text-slate-100">Personas</h2>
-        </div>
-        <a *rwPermiso="'personas:crear'" class="btn-primario" routerLink="/personas/nueva">+ Nueva persona</a>
-      </div>
-
-      <form class="panel flex flex-wrap items-end gap-3 p-4" (ngSubmit)="buscar()">
-        <div class="grow">
-          <label class="campo-etiqueta" for="buscar">Nombre, apellidos o alias</label>
-          <input class="campo" id="buscar" name="buscar" maxlength="150" [(ngModel)]="textoBusqueda" placeholder="Texto libre" />
-        </div>
-        <div>
-          <label class="campo-etiqueta" for="curp">CURP exacta</label>
-          <input class="campo font-mono uppercase" id="curp" name="curp" maxlength="18" [(ngModel)]="curpBusqueda" />
-        </div>
-        <button class="btn-primario" type="submit" [disabled]="cargando()">Buscar</button>
-      </form>
-
-      @if (error()) {
-        <p class="alerta-error">{{ error() }}</p>
-      }
-
-      <div class="panel overflow-x-auto p-2">
-        <table class="tabla">
-          <thead>
-            <tr>
-              <th>Nombre completo</th>
-              <th>Alias</th>
-              <th>CURP</th>
-              <th>Edad</th>
-              <th>Teléfono</th>
-            </tr>
-          </thead>
-          <tbody>
-            @if (cargando()) {
-              <tr><td colspan="5" class="py-8 text-center text-slate-500">Consultando el padrón…</td></tr>
-            } @else if (pagina().items.length === 0) {
-              <tr><td colspan="5" class="py-8 text-center text-slate-500">Sin resultados con los criterios dados.</td></tr>
-            } @else {
-              @for (p of pagina().items; track p.idPersona) {
-                <tr class="cursor-pointer" [routerLink]="['/personas', p.idPersona]">
-                  <td class="font-medium text-slate-100">{{ nombreDe(p) }}</td>
-                  <td>{{ p.alias || '—' }}</td>
-                  <td class="font-mono text-xs">{{ p.curp || '—' }}</td>
-                  <td class="font-mono">{{ p.edad ?? '—' }}</td>
-                  <td class="font-mono text-xs">{{ p.numeroTelefono || '—' }}</td>
-                </tr>
-              }
-            }
-          </tbody>
-        </table>
-        <rw-paginador
-          [page]="pagina().page"
-          [totalPages]="pagina().totalPages"
-          [total]="pagina().total"
-          (cambiar)="irAPagina($event)"
-        />
-      </div>
-    </div>
-  `,
+  templateUrl: './personas-list.component.html',
 })
 export class PersonasListComponent implements OnInit {
   private readonly api = inject(ApiService);
