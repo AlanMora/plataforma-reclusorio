@@ -20,7 +20,7 @@ sobre una plataforma base reutilizable; el dominio vive en `apps/reclusorio-serv
   elementos, actividades (ingresos/movimientos/audiencias/traslados),
   incidencias, archivos (MinIO + SHA-256 + exclusividad), sesión de 30 min con
   revocación en tiempo real (WebSocket), bandeja de notificaciones, matriz RF.
-- **F10 frontend hecho**: `apps/reclusorio-web` — **Angular 19 + Tailwind CSS 4**
+- **F10 frontend hecho**: `apps/reclusorio-web` — **Angular 22 + Tailwind CSS 4**
   (P8 resuelta por el equipo). Login, layout privado, sidebar por permisos del
   JWT, aviso de expiración a 5 min con extensión, logout forzado por WebSocket
   (`session.revoked`), módulos personas/actividades/elementos/incidencias/
@@ -43,7 +43,7 @@ sobre una plataforma base reutilizable; el dominio vive en `apps/reclusorio-serv
 - `apps/gateway-service` (:3000) — única entrada pública; enruta también los
   prefijos del dominio (`/api/v1/personas|catalogos|elementos|incidencias|
   archivos|audiencias|traslados|ingresos-egresos|movimientos` → :3010).
-- `apps/reclusorio-web` (:4200) — frontend Angular 19 + Tailwind 4; consume
+- `apps/reclusorio-web` (:4200) — frontend Angular 22 + Tailwind 4; consume
   SOLO el gateway (HTTP) y el realtime (WebSocket).
 - Libs compartidas en `libs/` (@icms/*): errores RFC 9457, guards, outbox/inbox,
   idempotencia, paginación. Swagger por servicio en `/api/docs`; rutas `/api/v1`.
