@@ -24,8 +24,10 @@ sobre una plataforma base reutilizable; el dominio vive en `apps/reclusorio-serv
   (P8 resuelta por el equipo). Login, layout privado, sidebar por permisos del
   JWT, aviso de expiración a 5 min con extensión, logout forzado por WebSocket
   (`session.revoked`), módulos personas/actividades/elementos/incidencias/
-  catálogos/notificaciones/cuenta, errores problem+json. `npx nx serve
-  reclusorio-web` (:4200, proxy `/api`→gateway :3000 y `/socket.io`→:3009).
+  catálogos/notificaciones/cuenta, errores problem+json. Proyecto Angular CLI
+  completo (angular.json + package.json propios, estilo `ng new`): levantar con
+  `pnpm --filter reclusorio-web start` o `cd apps/reclusorio-web && pnpm start`
+  (:4200, proxy `/api`→gateway :3000 y `/socket.io`→:3009).
 - **Pendientes P1–P7** (decisiones del equipo, ver PLAN): listados faltantes de
   3 catálogos, valores ENUM Gender/MaritalStatus, baja de personas, bitácora de
   dominio, políticas de archivos y contraseñas.
