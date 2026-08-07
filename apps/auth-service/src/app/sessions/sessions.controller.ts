@@ -42,8 +42,9 @@ export class SessionsController {
   @Post('revoke-all')
   @HttpCode(200)
   @ApiOperation({ summary: 'Revocar todas las sesiones del usuario (cierre global)' })
-  async revokeAll(@CurrentUser() user: AuthenticatedUser) {
-    const revoked = await this.sessions.revokeAllForUser(user.id);
-    return { revoked };
+  async revokeAll(@CurrentUser() user: AuthenticatedUser, @Req() req: Request) {
+    // Publica session.revoked por cada sesión (RF-SES-009).
+    const sids = await this.auth.revokeAllForUser(user.id, 'revocacion-administrativa', req.ip);
+    return { revoked: sids.length };
   }
 }

@@ -66,15 +66,19 @@ export class SessionStore {
     }
   }
 
-  /** Revoca todas las sesiones de un usuario (p.ej. tras cambio de contraseña). */
-  async revokeAllForUser(userId: string): Promise<number> {
+  /**
+   * Revoca todas las sesiones de un usuario (p.ej. tras cambio de contraseña).
+   * Devuelve los ids revocados para que el llamador publique `session.revoked`
+   * por cada uno (RF-SES-009: el frontend debe enterarse en tiempo real).
+   */
+  async revokeAllForUser(userId: string): Promise<string[]> {
     const sids = await this.redis.smembers(this.userKey(userId));
-    if (sids.length === 0) return 0;
+    if (sids.length === 0) return [];
     const pipeline = this.redis.multi();
     for (const sid of sids) pipeline.del(this.key(sid));
     pipeline.del(this.userKey(userId));
     await pipeline.exec();
-    return sids.length;
+    return sids;
   }
 
   /** Segundos de vigencia restante de la sesión (RF-CUE-001). */

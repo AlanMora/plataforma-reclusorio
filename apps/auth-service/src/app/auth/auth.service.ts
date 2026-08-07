@@ -217,6 +217,30 @@ export class AuthService {
   }
 
   /**
+   * Revoca TODAS las sesiones del usuario y publica `session.revoked` por
+   * cada una (RF-SES-009): sin esto, el cierre global no expulsa en tiempo
+   * real a los navegadores conectados.
+   */
+  async revokeAllForUser(
+    userId: string,
+    motivo: 'logout' | 'revocacion-administrativa' | 'cambio-password',
+    ipAddress?: string,
+  ): Promise<string[]> {
+    const sids = await this.sessions.revokeAllForUser(userId);
+    for (const sessionId of sids) {
+      await this.events.publish(EventNames.SessionRevoked, { sessionId, userId, motivo });
+    }
+    await this.audit.record({
+      userId,
+      action: 'sesion.revocada',
+      outcome: motivo,
+      ipAddress,
+      metadata: { total: sids.length },
+    });
+    return sids;
+  }
+
+  /**
    * Cambio de contraseña (RF-CUE-002): exige la contraseña actual y la
    * confirmación; revoca todas las sesiones del usuario y audita el evento
    * (nunca la contraseña).
@@ -245,8 +269,8 @@ export class AuthService {
     }
     user.passwordHash = await argon2Hash(newPassword);
     await this.users.save(user);
-    // Cierre global: las sesiones previas dejan de ser válidas.
-    await this.sessions.revokeAllForUser(userId);
+    // Cierre global con notificación en tiempo real a cada sesión abierta.
+    await this.revokeAllForUser(userId, 'cambio-password', ipAddress);
     await this.audit.record({ userId, action: 'password.cambiado', outcome: 'exitoso', ipAddress });
   }
 

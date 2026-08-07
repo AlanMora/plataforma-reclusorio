@@ -25,7 +25,7 @@ restricción verificada en la base de datos.
 | RF-SES-001..002 | Sesión Redis TTL 30 min (`JWT_REFRESH_TTL=30m`), access 10m | E2E (`expiresInSeconds`=1800) |
 | RF-SES-005/008 | `POST /auth/refresh` rota y renueva vigencia 30 min | E2E (plataforma) |
 | RF-SES-006/007 | `POST /auth/logout` revoca en Redis; TTL expira solo | E2E |
-| RF-SES-009 / DP-009 | auth publica `session.revoked` → realtime emite a la sala `user:{id}` por WebSocket | E2E (log del consumidor) |
+| RF-SES-009 / DP-009 | auth publica `session.revoked` → realtime emite a la sala `user:{id}` por WebSocket; el cierre GLOBAL (revoke-all y cambio de contraseña) también publica un evento por sesión (`AuthService.revokeAllForUser`) | E2E navegador: revoke-all expulsa la sesión abierta sin recargar |
 | RF-CUE-001 | `GET /auth/session` (vigencia restante) + `GET /users/me` (datos y permisos) | E2E |
 | RF-CUE-002 | `POST /auth/change-password` (verifica actual, confirma, revoca sesiones) | E2E (401/204/login viejo 401) |
 | Auditoría §17 / DP-003 | `security_audit_logs`: login exitoso/fallido, logout, revocación, cambio de contraseña — con IP | E2E (filas verificadas) |
