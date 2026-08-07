@@ -1,4 +1,6 @@
-import { Controller, Get, Injectable, Module, Param, Query } from '@nestjs/common';
+import { Controller, Get, Injectable, Logger, Module, OnApplicationBootstrap, Param, Query } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { hash as argon2Hash } from '@node-rs/argon2';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -64,10 +66,72 @@ export class UsersController {
   }
 }
 
+/** Permisos completos del dominio reclusorio (los 23 de la matriz RF). */
+const PERMISOS_RECLUSORIO = [
+  'personas:consultar', 'personas:crear', 'personas:modificar',
+  'elementos:consultar', 'elementos:crear', 'elementos:modificar',
+  'ingresos:consultar', 'ingresos:crear',
+  'movimientos:consultar', 'movimientos:crear',
+  'audiencias:consultar', 'audiencias:crear', 'audiencias:asociar',
+  'traslados:consultar', 'traslados:crear', 'traslados:asociar',
+  'incidencias:consultar', 'incidencias:crear', 'incidencias:asociar',
+  'archivos:consultar', 'archivos:crear', 'archivos:administrar',
+  'catalogos:administrar',
+].join(',');
+
+/**
+ * Usuario semilla de DESARROLLO (opt-in explícito por env).
+ * Crea/actualiza al arrancar un usuario con todos los permisos del dominio
+ * para poder entrar al frontend sin pasos manuales. Nunca se activa solo:
+ * exige SEED_ADMIN_ENABLED=true y jamás debe habilitarse en producción.
+ */
+@Injectable()
+export class DevAdminSeeder implements OnApplicationBootstrap {
+  private readonly logger = new Logger(DevAdminSeeder.name);
+
+  constructor(
+    @InjectRepository(User) private readonly users: Repository<User>,
+    private readonly config: ConfigService,
+  ) {}
+
+  async onApplicationBootstrap(): Promise<void> {
+    if (this.config.get<string>('SEED_ADMIN_ENABLED') !== 'true') return;
+    const email = this.config.get<string>('SEED_ADMIN_EMAIL');
+    const password = this.config.get<string>('SEED_ADMIN_PASSWORD');
+    if (!email || !password) {
+      this.logger.warn('SEED_ADMIN_ENABLED=true pero faltan SEED_ADMIN_EMAIL/PASSWORD; se omite');
+      return;
+    }
+    const permissions = (this.config.get<string>('SEED_ADMIN_PERMISSIONS') ?? PERMISOS_RECLUSORIO)
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    const existente = await this.users.findOne({ where: { email } });
+    if (existente) {
+      existente.permissions = permissions;
+      existente.isActive = true;
+      await this.users.save(existente);
+      this.logger.log(`Usuario semilla "${email}" actualizado (${permissions.length} permisos)`);
+      return;
+    }
+    await this.users.save(
+      this.users.create({
+        email,
+        passwordHash: await argon2Hash(password),
+        isActive: true,
+        roles: ['admin'],
+        permissions,
+      }),
+    );
+    this.logger.log(`Usuario semilla "${email}" creado (${permissions.length} permisos)`);
+  }
+}
+
 @Module({
   imports: [DatabaseModule.forFeature([User])],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [UsersService, DevAdminSeeder],
   exports: [UsersService],
 })
 export class UsersModule {}

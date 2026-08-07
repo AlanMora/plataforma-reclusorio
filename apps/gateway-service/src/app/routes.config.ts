@@ -18,6 +18,8 @@ export interface UpstreamRoute {
 export const UPSTREAM_ROUTES: UpstreamRoute[] = [
   // auth: login/refresh/recuperación son públicos (no requieren token previo)
   { prefix: '/api/v1/auth', envKey: 'AUTH_SERVICE_URL', fallback: 'http://localhost:3001', protected: false },
+  // perfil y listado de usuarios viven en auth-service (GET /users/me para RF-CUE-001)
+  { prefix: '/api/v1/users', envKey: 'AUTH_SERVICE_URL', fallback: 'http://localhost:3001', protected: true },
   { prefix: '/api/v1/configuration', envKey: 'CONFIGURATION_SERVICE_URL', fallback: 'http://localhost:3002', protected: true },
   { prefix: '/api/v1/core', envKey: 'CORE_DOMAIN_SERVICE_URL', fallback: 'http://localhost:3003', protected: true },
   { prefix: '/api/v1/reporting', envKey: 'REPORTING_SERVICE_URL', fallback: 'http://localhost:3004', protected: true },

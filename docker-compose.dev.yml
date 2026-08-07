@@ -92,6 +92,10 @@ services:
     environment:
       <<: *service-env
       AUTH_PORT: '3001'
+      # Usuario semilla SOLO de desarrollo (todos los permisos del reclusorio)
+      SEED_ADMIN_ENABLED: 'true'
+      SEED_ADMIN_EMAIL: admin@reclusorio.mx
+      SEED_ADMIN_PASSWORD: 'Reclusorio#Dev2026'
 
   configuration-service:
     <<: *dev-service

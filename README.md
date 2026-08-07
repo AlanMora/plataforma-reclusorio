@@ -40,21 +40,23 @@ pnpm start                 # ng serve → http://localhost:4200
 El dev server del front ya trae proxy (`proxy.conf.json`): `/api` → gateway
 (:3000) y `/socket.io` → realtime (:3009). No hay que configurar nada más.
 
-### Crear un usuario para entrar
+### Usuario de desarrollo (sembrado automáticamente)
 
-```bash
-# alta (endpoint público con Idempotency-Key)
-curl -X POST http://localhost:3000/api/v1/auth/register \
-  -H 'Content-Type: application/json' -H "Idempotency-Key: $(uuidgen)" \
-  -d '{"email":"admin@reclusorio.mx","password":"UnaClaveSegura#2026"}'
+Con `SEED_ADMIN_ENABLED=true` (ya viene en `docker-compose.dev.yml` y en
+`.env.example`), el auth-service crea/actualiza al arrancar un usuario con
+los **23 permisos** del dominio:
 
-# otorgar permisos (mientras no exista el cableado roles→permisos)
-docker exec -e PGPASSWORD=icms icms-postgres-primary psql -U icms -d icms_auth -c \
-  "UPDATE users SET permissions='personas:consultar,personas:crear,personas:modificar,elementos:consultar,elementos:crear,elementos:modificar,ingresos:consultar,ingresos:crear,movimientos:consultar,movimientos:crear,audiencias:consultar,audiencias:crear,audiencias:asociar,traslados:consultar,traslados:crear,traslados:asociar,incidencias:consultar,incidencias:crear,incidencias:asociar,archivos:consultar,archivos:crear,archivos:administrar,catalogos:administrar' WHERE email='admin@reclusorio.mx';"
+```
+correo:     admin@reclusorio.mx
+contraseña: Reclusorio#Dev2026
 ```
 
 Entra en **http://localhost:4200**. El menú lateral se construye con los
 permisos del JWT: si quitas un permiso, el módulo desaparece (RF-SEG-001).
+El seeder es SOLO para desarrollo — jamás habilites `SEED_ADMIN_ENABLED`
+en producción. Para otros usuarios: `POST /api/v1/auth/register` (público,
+con `Idempotency-Key`) y otorga permisos con
+`UPDATE users SET permissions='...'` en la BD `icms_auth`.
 
 ### Comandos útiles
 

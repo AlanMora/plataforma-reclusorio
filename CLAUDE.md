@@ -51,6 +51,10 @@ sobre una plataforma base reutilizable; el dominio vive en `apps/reclusorio-serv
   `personas:crear`); cada endpoint usa `@RequirePermissions(...)`. Otorgar hoy:
   `UPDATE users SET permissions='...'` en `icms_auth` (cableado roles→permisos
   vía configuration-service aún no implementado).
+- Usuario semilla DEV (`DevAdminSeeder` en auth-service, opt-in por
+  `SEED_ADMIN_ENABLED=true`): `admin@reclusorio.mx` / `Reclusorio#Dev2026`
+  con los 23 permisos del dominio. Ya activo en docker-compose.dev.yml;
+  jamás en producción.
 
 ## Comandos
 
