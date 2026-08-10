@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { Logger as PinoLogger } from 'nestjs-pino';
 import helmet from 'helmet';
-import { AllExceptionsFilter } from '@icms/common';
+import { AllExceptionsFilter, fabricaErroresValidacion } from '@icms/common';
 import { AppModule } from './app/app.module';
 
 async function bootstrap() {
@@ -12,7 +12,9 @@ async function bootstrap() {
   app.useLogger(app.get(PinoLogger));
   app.use(helmet());
   app.enableCors();
-  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({ transform: true, whitelist: true, exceptionFactory: fabricaErroresValidacion }),
+  );
   app.useGlobalFilters(new AllExceptionsFilter());
 
   const port = Number(process.env.GATEWAY_PORT ?? 3000);

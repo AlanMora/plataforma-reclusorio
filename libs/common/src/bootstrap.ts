@@ -2,6 +2,7 @@ import { INestApplication, Logger, ValidationPipe, VersioningType } from '@nestj
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import { ResponseInterceptor } from './interceptors/response.interceptor';
+import { fabricaErroresValidacion } from './validation/mensajes-validacion';
 
 export interface BootstrapOptions {
   /** Nombre legible del servicio (usado en Swagger). */
@@ -39,6 +40,7 @@ export function configureApp(app: INestApplication, options: BootstrapOptions): 
       whitelist: true,
       forbidNonWhitelisted: true,
       transformOptions: { enableImplicitConversion: true },
+      exceptionFactory: fabricaErroresValidacion,
     }),
   );
 
