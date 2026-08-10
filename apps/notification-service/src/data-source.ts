@@ -9,6 +9,10 @@ export default new DataSource({
   username: process.env.POSTGRES_USER ?? 'icms',
   password: process.env.POSTGRES_PASSWORD ?? 'icms',
   database: process.env.POSTGRES_DB ?? 'icms_notification',
-  entities: ['apps/notification-service/src/**/*.entity.ts', 'libs/messaging/src/outbox/outbox.entities.ts'],
+  entities: [
+    'apps/notification-service/src/app/user-notification.entity.ts',
+    'apps/notification-service/src/app/delivery.entity.ts',
+    'libs/messaging/src/outbox/outbox.entities.ts',
+  ],
   migrations: ['apps/notification-service/src/migrations/*.ts'],
 });

@@ -22,6 +22,7 @@ import { AudienciasTrasladosModule } from './actividades/audiencias-traslados.mo
 import { IncidenciasModule } from './incidencias/incidencias.module';
 import { ArchivosModule } from './archivos/archivos.module';
 import { CatalogSeederService } from './seeds/seeder.service';
+import { Init1786043245489 } from '../migrations/1786043245489-Init';
 
 /**
  * Servicio de dominio de la Plataforma de Gestión de Reclusorio.
@@ -40,6 +41,9 @@ import { CatalogSeederService } from './seeds/seeder.service';
     DatabaseModule.forRoot({
       database: 'reclusorio',
       entities: [...ENTIDADES_RECLUSORIO, OutboxEvent, InboxEvent],
+      // Como clase importada para que webpack la incluya en el bundle; en
+      // producción se ejecuta al arrancar (en dev el esquema lo crea synchronize).
+      migrations: [Init1786043245489],
     }),
     OutboxModule.forRoot({ withRelay: true }),
     CatalogosModule,

@@ -11,8 +11,12 @@ export interface DatabaseModuleOptions {
   entities: EntityClassOrSchema[];
   /** Sincronizar el esquema automáticamente (sólo desarrollo). */
   synchronize?: boolean;
-  /** Rutas glob a las migraciones del servicio. En producción se corren al arrancar. */
-  migrations?: string[];
+  /**
+   * Migraciones del servicio como CLASES importadas (no globs): webpack solo
+   * empaqueta lo que se importa, así que las rutas de archivo no existen en la
+   * imagen de producción. En producción se ejecutan al arrancar.
+   */
+  migrations?: Array<new () => unknown>;
 }
 
 /**
@@ -55,9 +59,11 @@ export class DatabaseModule {
             synchronize:
               options.synchronize ?? config.get<string>('NODE_ENV') !== 'production',
             migrations: options.migrations ?? [],
-            // Las migraciones se corren con la CLI en el pipeline (no al arrancar,
-            // porque el bundle de webpack no incluye los archivos de migración).
-            migrationsRun: false,
+            // En producción las migraciones (clases empaquetadas) se ejecutan al
+            // arrancar el servicio; en desarrollo el esquema lo crea synchronize.
+            migrationsRun:
+              config.get<string>('NODE_ENV') === 'production' &&
+              (options.migrations?.length ?? 0) > 0,
             autoLoadEntities: true,
             // El log de queries es MUY ruidoso (el relay del outbox consulta cada
             // pocos segundos), así que es opt-in explícito: DB_LOGGING=true.

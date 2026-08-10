@@ -250,7 +250,7 @@ services:
     volumes:
       - web_certs:/etc/nginx/certs
     healthcheck:
-      test: ['CMD', 'sh', '-c', 'wget -q --no-check-certificate -O /dev/null https://localhost/ || exit 1']
+      test: ['CMD', 'sh', '-c', 'wget -q --no-check-certificate -O /dev/null https://127.0.0.1/ || exit 1']
       interval: 20s
       timeout: 5s
       retries: 5

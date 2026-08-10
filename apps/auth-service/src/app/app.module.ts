@@ -20,6 +20,7 @@ import { UsersModule } from './users/users.module';
 import { RecoveryModule } from './recovery/recovery.module';
 import { TwoFactorModule } from './twofa/twofa.module';
 import { AuditModule } from './audit/audit.module';
+import { Init1786404410447 } from '../migrations/1786404410447-Init';
 
 @Module({
   imports: [
@@ -29,7 +30,12 @@ import { AuditModule } from './audit/audit.module';
     SharedAuthModule,
     RedisModule,
     MessagingModule.forRoot(),
-    DatabaseModule.forRoot({ database: 'icms_auth', entities: [User, AuditLog, OutboxEvent, InboxEvent] }),
+    DatabaseModule.forRoot({
+      database: 'icms_auth',
+      entities: [User, AuditLog, OutboxEvent, InboxEvent],
+      // Clase importada para que webpack la empaquete; corre al arrancar en producción.
+      migrations: [Init1786404410447],
+    }),
     OutboxModule.forRoot({ withRelay: true }),
     AuthModule,
     UsersModule,

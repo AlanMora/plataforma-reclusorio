@@ -10,6 +10,7 @@ import { RedisModule, IdempotencyInterceptor } from '@icms/redis';
 import { NotificationDelivery } from './delivery.entity';
 import { UserNotification } from './user-notification.entity';
 import { NotificationsModule } from './notifications.module';
+import { Init1786404412159 } from '../migrations/1786404412159-Init';
 
 @Module({
   imports: [
@@ -19,7 +20,12 @@ import { NotificationsModule } from './notifications.module';
     SharedAuthModule,
     RedisModule,
     MessagingModule.forRoot(),
-    DatabaseModule.forRoot({ database: 'icms_notification', entities: [NotificationDelivery, UserNotification, OutboxEvent, InboxEvent] }),
+    DatabaseModule.forRoot({
+      database: 'icms_notification',
+      entities: [NotificationDelivery, UserNotification, OutboxEvent, InboxEvent],
+      // Clase importada para que webpack la empaquete; corre al arrancar en producción.
+      migrations: [Init1786404412159],
+    }),
     // Sin relay: este servicio consume eventos (usa Inbox para dedup), no publica.
     OutboxModule.forRoot({ withRelay: false }),
     NotificationsModule,
