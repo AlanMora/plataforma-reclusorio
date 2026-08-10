@@ -35,7 +35,9 @@ WORKDIR /app
 COPY --from=build /workspace/dist/apps/${SERVICE}/ ./
 
 # Instala únicamente dependencias de producción y ajusta permisos.
-RUN npm install --omit=dev --no-audit --no-fund \
+# `pg` se agrega a mano: TypeORM lo carga con require() dinámico, así que
+# webpack no lo ve y Nx no lo incluye en el package.json generado.
+RUN npm install --omit=dev --no-audit --no-fund pg@^8.13.1 \
     && npm cache clean --force \
     && chown -R node:node /app
 
