@@ -17,8 +17,9 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
-if grep -q 'change-me-in-production' .env; then
-  echo "❌ .env todavía tiene 'change-me-in-production' en JWT_SECRET. Cámbialo antes de desplegar."
+if grep -qE 'change-me-in-production|cambia-esto-por-un-secreto-fuerte|cambia-esta-contrasena' .env; then
+  echo "❌ .env todavía tiene secretos de ejemplo (cambia-esta-contrasena / JWT_SECRET de muestra)."
+  echo "   Cambia TODOS los valores marcados antes de desplegar."
   exit 1
 fi
 
