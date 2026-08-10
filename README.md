@@ -72,6 +72,43 @@ pnpm migration:generate -d apps/reclusorio-service/src/data-source.ts src/migrat
 > `JWKS_URI=http://localhost:3001/.well-known/jwks.json` o los tokens RS256
 > se rechazan (en Docker ya viene en el compose).
 
+## Despliegue a producción (Docker Swarm)
+
+Un solo comando en el servidor (requiere Docker con Swarm; lo inicializa solo
+si hace falta):
+
+```bash
+git clone <repo> && cd plataforma-reclusorio
+./scripts/deploy-swarm.sh
+```
+
+La primera corrida crea `.env` desde `.env.docker.example` y se detiene para
+que **cambies los secretos** (`JWT_SECRET`, `POSTGRES_PASSWORD`,
+`RABBITMQ_PASSWORD`, `S3_ACCESS_KEY/SECRET_KEY`); la segunda construye las
+imágenes (5 servicios + frontend) y despliega el stack `reclusorio`.
+
+Qué queda corriendo:
+
+- **`reclusorio-web`** (nginx) — ÚNICO servicio expuesto (80→443). Sirve la
+  SPA Angular y proxyea `/api` → gateway y `/socket.io` → realtime dentro de
+  la red overlay (mismo contrato que `proxy.conf.json` en dev). TLS con
+  certificado **autofirmado autogenerado** (sin dominio no hay Let's Encrypt);
+  con dominio/certificado real basta montarlo en `/etc/nginx/certs`.
+- Los 5 servicios del reclusorio + postgres (primario y réplica), Redis,
+  RabbitMQ y MinIO, sin puertos publicados al exterior.
+- Las BD (incluida `reclusorio`) se crean solas al inicializar postgres
+  (`infra/postgres/initdb`, entregado como `config` de Swarm); esquema y
+  semillas de catálogo se generan al arrancar el servicio.
+
+Después del primer despliegue: crear usuarios con `POST /api/v1/auth/register`
+y otorgar permisos en la BD `icms_auth` (jamás `SEED_ADMIN_ENABLED` en
+producción). Operación diaria: `docker stack ps reclusorio`,
+`docker service logs reclusorio_<servicio>`; re-desplegar = volver a correr el
+script (Swarm actualiza sin downtime con `order: start-first`).
+
+> Alternativa sin Swarm: `docker compose -f docker-compose.prod.yml up -d`
+> levanta lo mismo (más los servicios base de la plataforma) en un solo host.
+
 ## Arquitectura
 
 ```

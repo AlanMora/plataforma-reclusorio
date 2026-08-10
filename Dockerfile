@@ -13,8 +13,10 @@ ARG SERVICE
 RUN corepack enable
 WORKDIR /workspace
 
-# Cachea la instalación de dependencias.
+# Cachea la instalación de dependencias. El manifest del front también se
+# copia: es un importer del lockfile y sin él --frozen-lockfile falla.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/reclusorio-web/package.json apps/reclusorio-web/
 RUN pnpm install --frozen-lockfile
 
 # Compila el servicio solicitado.

@@ -1,0 +1,275 @@
+# =====================================================================
+# ICMS · Reclusorio — stack de PRODUCCIÓN para Docker Swarm
+#
+#   ./scripts/deploy-swarm.sh          # build + deploy en un paso
+#
+# o manualmente (las imágenes deben existir: compose build primero):
+#   set -a; source .env; set +a
+#   docker stack deploy -c docker-stack.yml reclusorio
+#
+# Notas Swarm:
+#  - `docker stack deploy` NO soporta build/include/depends_on-condition:
+#    las imágenes se construyen con docker-compose.prod.yml y aquí solo
+#    se referencian; el orden de arranque lo absorben healthchecks +
+#    restart_policy (los servicios reintentan hasta que la infra responda).
+#  - Único punto publicado al exterior: reclusorio-web (80/443). El resto
+#    vive en la red overlay interna.
+#  - Solo los 5 servicios que usa el reclusorio + su infra (el resto de la
+#    plataforma base no participa hoy; añadirlos = copiar un bloque).
+# =====================================================================
+
+x-service-env: &service-env
+  NODE_ENV: production
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+  JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-10m}
+  JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-30m}
+  JWKS_URI: http://auth-service:3001/.well-known/jwks.json
+  JWT_ISSUER: ${JWT_ISSUER:-icms-platform}
+  POSTGRES_HOST: postgres-primary
+  POSTGRES_PORT: '5432'
+  POSTGRES_REPLICA_HOST: postgres-replica
+  POSTGRES_REPLICA_PORT: '5432'
+  POSTGRES_USER: ${POSTGRES_USER:-icms}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-icms}
+  POSTGRES_DB: ${POSTGRES_DB:-icms}
+  REDIS_HOST: redis
+  REDIS_PORT: '6379'
+  RABBITMQ_URL: amqp://${RABBITMQ_USER:-icms}:${RABBITMQ_PASSWORD:-icms}@rabbitmq:5672
+  RABBITMQ_EXCHANGE: icms.events
+  S3_ENDPOINT: http://minio:9000
+  S3_REGION: us-east-1
+  S3_ACCESS_KEY: ${S3_ACCESS_KEY:-icmsminio}
+  S3_SECRET_KEY: ${S3_SECRET_KEY:-icmsminio123}
+  S3_BUCKET: ${S3_BUCKET:-icms-files}
+  S3_FORCE_PATH_STYLE: 'true'
+
+x-deploy: &deploy-default
+  replicas: 1
+  restart_policy:
+    condition: any
+    delay: 5s
+  update_config:
+    order: start-first
+
+services:
+  # ------------------------- infraestructura -------------------------
+  postgres-primary:
+    image: ${POSTGRES_IMAGE:-bitnami/postgresql:latest}
+    environment:
+      POSTGRESQL_REPLICATION_MODE: master
+      POSTGRESQL_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:-replicator}
+      POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-replicator}
+      POSTGRESQL_USERNAME: ${POSTGRES_USER:-icms}
+      POSTGRESQL_PASSWORD: ${POSTGRES_PASSWORD:-icms}
+      POSTGRESQL_DATABASE: ${POSTGRES_DB:-icms}
+      POSTGRESQL_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-icms}
+    configs:
+      # Crea las BD por servicio (incluida `reclusorio`) al inicializar.
+      - source: pg-init-databases
+        target: /docker-entrypoint-initdb.d/01-create-databases.sql
+    volumes:
+      - postgres_primary_data:/bitnami/postgresql
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', '${POSTGRES_USER:-icms}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [icms]
+    deploy: *deploy-default
+
+  postgres-replica:
+    image: ${POSTGRES_IMAGE:-bitnami/postgresql:latest}
+    environment:
+      POSTGRESQL_REPLICATION_MODE: slave
+      POSTGRESQL_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:-replicator}
+      POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-replicator}
+      POSTGRESQL_MASTER_HOST: postgres-primary
+      POSTGRESQL_MASTER_PORT_NUMBER: 5432
+      POSTGRESQL_USERNAME: ${POSTGRES_USER:-icms}
+      POSTGRESQL_PASSWORD: ${POSTGRES_PASSWORD:-icms}
+    volumes:
+      - postgres_replica_data:/bitnami/postgresql
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', '${POSTGRES_USER:-icms}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [icms]
+    deploy: *deploy-default
+
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [icms]
+    deploy: *deploy-default
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-icms}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-icms}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks: [icms]
+    deploy: *deploy-default
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-icmsminio}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-icmsminio123}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks: [icms]
+    deploy: *deploy-default
+
+  # Tarea one-shot: crea el bucket y termina (restart solo si falla).
+  minio-setup:
+    image: minio/mc:latest
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 ${S3_ACCESS_KEY:-icmsminio} ${S3_SECRET_KEY:-icmsminio123}; do sleep 3; done &&
+      mc mb --ignore-existing local/${S3_BUCKET:-icms-files} &&
+      echo 'bucket listo';
+      "
+    networks: [icms]
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  # --------------------------- backend -------------------------------
+  gateway-service:
+    image: icms/gateway-service:latest
+    environment:
+      <<: *service-env
+      GATEWAY_PORT: '3000'
+      RATE_LIMIT_TTL: '60'
+      RATE_LIMIT_MAX: '120'
+      AUTH_SERVICE_URL: http://auth-service:3001
+      NOTIFICATION_SERVICE_URL: http://notification-service:3005
+      REALTIME_SERVICE_URL: http://realtime-service:3009
+      RECLUSORIO_SERVICE_URL: http://reclusorio-service:3010
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks: [icms]
+    deploy: *deploy-default
+
+  auth-service:
+    image: icms/auth-service:latest
+    environment:
+      <<: *service-env
+      AUTH_PORT: '3001'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3001/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks: [icms]
+    deploy: *deploy-default
+
+  reclusorio-service:
+    image: icms/reclusorio-service:latest
+    environment:
+      <<: *service-env
+      RECLUSORIO_PORT: '3010'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3010/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks: [icms]
+    deploy: *deploy-default
+
+  notification-service:
+    image: icms/notification-service:latest
+    environment:
+      <<: *service-env
+      NOTIFICATION_PORT: '3005'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3005/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks: [icms]
+    deploy: *deploy-default
+
+  realtime-service:
+    image: icms/realtime-service:latest
+    environment:
+      <<: *service-env
+      REALTIME_PORT: '3009'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:3009/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks: [icms]
+    deploy: *deploy-default
+
+  # --------------------------- frontend ------------------------------
+  # ÚNICO servicio publicado al exterior. nginx sirve la SPA y proxyea
+  # /api → gateway y /socket.io → realtime dentro de la red overlay.
+  # TLS: autofirmado autogenerado (persistido en web_certs). Con dominio,
+  # montar certificados reales en /etc/nginx/certs sustituye al autofirmado.
+  reclusorio-web:
+    image: icms/reclusorio-web:latest
+    environment:
+      SERVER_NAME: ${SERVER_NAME:-reclusorio.local}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - web_certs:/etc/nginx/certs
+    healthcheck:
+      test: ['CMD', 'sh', '-c', 'wget -q --no-check-certificate -O /dev/null https://localhost/ || exit 1']
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks: [icms]
+    deploy: *deploy-default
+
+configs:
+  pg-init-databases:
+    file: ./infra/postgres/initdb/01-create-databases.sql
+
+networks:
+  icms:
+    driver: overlay
+
+volumes:
+  postgres_primary_data:
+  postgres_replica_data:
+  redis_data:
+  rabbitmq_data:
+  minio_data:
+  web_certs:

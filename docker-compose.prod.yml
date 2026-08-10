@@ -220,6 +220,22 @@ services:
       retries: 5
       start_period: 30s
 
+  # Frontend Angular servido por nginx (TLS + proxy /api y /socket.io).
+  # También es la imagen que usa docker-stack.yml (Swarm).
+  reclusorio-web:
+    restart: unless-stopped
+    networks: [icms]
+    build: { context: ., dockerfile: apps/reclusorio-web/Dockerfile }
+    image: icms/reclusorio-web:latest
+    ports: ['80:80', '443:443']
+    environment:
+      SERVER_NAME: ${SERVER_NAME:-reclusorio.local}
+    volumes:
+      - web_certs:/etc/nginx/certs
+    depends_on:
+      gateway-service:
+        condition: service_healthy
+
   realtime-service:
     <<: *prod-service
     build: { context: ., dockerfile: Dockerfile, args: { SERVICE: realtime-service } }
@@ -234,3 +250,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+volumes:
+  web_certs:
