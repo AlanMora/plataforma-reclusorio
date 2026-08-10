@@ -160,7 +160,7 @@ services:
 
   # --------------------------- backend -------------------------------
   gateway-service:
-    image: icms/gateway-service:latest
+    image: icms/gateway-service:${IMAGE_TAG:-latest}
     environment:
       <<: *service-env
       GATEWAY_PORT: '3000'
@@ -180,7 +180,7 @@ services:
     deploy: *deploy-default
 
   auth-service:
-    image: icms/auth-service:latest
+    image: icms/auth-service:${IMAGE_TAG:-latest}
     environment:
       <<: *service-env
       AUTH_PORT: '3001'
@@ -194,7 +194,7 @@ services:
     deploy: *deploy-default
 
   reclusorio-service:
-    image: icms/reclusorio-service:latest
+    image: icms/reclusorio-service:${IMAGE_TAG:-latest}
     environment:
       <<: *service-env
       RECLUSORIO_PORT: '3010'
@@ -208,7 +208,7 @@ services:
     deploy: *deploy-default
 
   notification-service:
-    image: icms/notification-service:latest
+    image: icms/notification-service:${IMAGE_TAG:-latest}
     environment:
       <<: *service-env
       NOTIFICATION_PORT: '3005'
@@ -222,7 +222,7 @@ services:
     deploy: *deploy-default
 
   realtime-service:
-    image: icms/realtime-service:latest
+    image: icms/realtime-service:${IMAGE_TAG:-latest}
     environment:
       <<: *service-env
       REALTIME_PORT: '3009'
@@ -241,7 +241,7 @@ services:
   # TLS: autofirmado autogenerado (persistido en web_certs). Con dominio,
   # montar certificados reales en /etc/nginx/certs sustituye al autofirmado.
   reclusorio-web:
-    image: icms/reclusorio-web:latest
+    image: icms/reclusorio-web:${IMAGE_TAG:-latest}
     environment:
       SERVER_NAME: ${SERVER_NAME:-reclusorio.local}
     ports:

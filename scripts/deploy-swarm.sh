@@ -27,10 +27,23 @@ fi
 set -a; source .env; set +a
 
 # ---- 2. Imágenes -----------------------------------------------------
-echo "🔨 Construyendo imágenes (5 servicios + frontend)..."
+# Se etiquetan con el SHA de git: si el tag no cambia, Swarm considera el
+# servicio "sin cambios" y NO reinicia los contenedores con la imagen nueva.
+IMAGE_TAG="$(git rev-parse --short HEAD)"
+export IMAGE_TAG
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  echo "⚠️  Hay cambios sin commit: el tag $IMAGE_TAG no los distingue."
+  echo "    Si redepliegas sin commitear, fuerza con: docker service update --force reclusorio_<servicio>"
+fi
+
+echo "🔨 Construyendo imágenes (5 servicios + frontend) [tag: $IMAGE_TAG]..."
 docker compose -f docker-compose.prod.yml build \
   gateway-service auth-service reclusorio-service \
   notification-service realtime-service reclusorio-web
+
+for svc in gateway-service auth-service reclusorio-service notification-service realtime-service reclusorio-web; do
+  docker tag "icms/$svc:latest" "icms/$svc:$IMAGE_TAG"
+done
 
 # ---- 3. Swarm --------------------------------------------------------
 if [[ "$(docker info --format '{{.Swarm.LocalNodeState}}')" != "active" ]]; then
