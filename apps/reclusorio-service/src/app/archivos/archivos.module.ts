@@ -144,6 +144,36 @@ export class ArchivosService {
   }
 
   /** RF-ARC-005: lista los archivos de una entidad permitida. */
+  /**
+   * Biblioteca de la persona (requerimiento 11/08/2026): TODOS los archivos
+   * activos asociados al expediente — los propios de la persona y los de sus
+   * ingresos/libertades, movimientos, audiencias y traslados — con la entidad
+   * de origen para organizarlos visualmente en el frontend.
+   */
+  bibliotecaDePersona(idPersona: string) {
+    return this.archivos.query(
+      `SELECT a.*,
+              CASE
+                WHEN a."idPersona" IS NOT NULL THEN 'persona'
+                WHEN a."idIngresoEgreso" IS NOT NULL THEN 'ingresos'
+                WHEN a."idMovimiento" IS NOT NULL THEN 'movimientos'
+                WHEN a."idAudiencia" IS NOT NULL THEN 'audiencias'
+                WHEN a."idTraslado" IS NOT NULL THEN 'traslados'
+                ELSE 'incidencias'
+              END AS origen
+       FROM archivos a
+       WHERE a.activo = true AND (
+         a."idPersona" = $1
+         OR a."idIngresoEgreso" IN (SELECT "idIngresoEgreso" FROM ingreso_egreso WHERE "idPersona" = $1)
+         OR a."idMovimiento" IN (SELECT "idMovimiento" FROM movimientos WHERE "idPersona" = $1)
+         OR a."idAudiencia" IN (SELECT "idAudiencia" FROM audiencias WHERE "idPersona" = $1)
+         OR a."idTraslado" IN (SELECT "idTraslado" FROM traslados WHERE "idPersona" = $1)
+       )
+       ORDER BY a."fechaRegistro" DESC`,
+      [idPersona],
+    );
+  }
+
   async porEntidad(referencia: string, id: string) {
     if (!REFERENCIAS.includes(referencia as Referencia)) {
       throw new EntityNotFoundException('Tipo de entidad de archivo', referencia);
@@ -193,6 +223,13 @@ export class ArchivosController {
   @ApiOperation({ summary: 'Subir archivo con UNA referencia de entidad (RF-ARC-001..004)' })
   subir(@UploadedFile() file: Express.Multer.File, @Body() dto: SubirArchivoDto) {
     return this.service.subir(file, dto);
+  }
+
+  @Get('biblioteca/:idPersona')
+  @RequirePermissions('archivos:consultar')
+  @ApiOperation({ summary: 'Biblioteca: todos los archivos del expediente de la persona (propios y de sus actividades)' })
+  biblioteca(@Param('idPersona') idPersona: string) {
+    return this.service.bibliotecaDePersona(idPersona);
   }
 
   @Get('de/:entidad/:id')

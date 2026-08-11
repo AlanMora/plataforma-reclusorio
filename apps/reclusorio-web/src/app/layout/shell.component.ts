@@ -19,12 +19,12 @@ interface ItemMenu {
 /** El menú se construye con los permisos del JWT (RF-SEG-001, RF-UI). */
 const MENU: ItemMenu[] = [
   { ruta: '/', etiqueta: 'Panel', icono: '◈', exacto: true },
-  { ruta: '/personas', etiqueta: 'Personas', icono: '◉', permiso: 'personas:consultar' },
-  { ruta: '/elementos', etiqueta: 'Elementos', icono: '⬡', permiso: 'elementos:consultar' },
-  { ruta: '/incidencias', etiqueta: 'Incidencias', icono: '▲', permiso: 'incidencias:consultar' },
-  { ruta: '/catalogos', etiqueta: 'Catálogos', icono: '≡', permiso: 'catalogos:administrar' },
   { ruta: '/penitenciarios', etiqueta: 'Penitenciarios', icono: '⌖' },
+  { ruta: '/personas', etiqueta: 'Personas', icono: '◉', permiso: 'personas:consultar' },
+  { ruta: '/incidencias', etiqueta: 'Incidencias', icono: '▲', permiso: 'incidencias:consultar' },
+  { ruta: '/elementos', etiqueta: 'Elementos', icono: '⬡', permiso: 'elementos:consultar' },
   { ruta: '/reportes', etiqueta: 'Reportes', icono: '▤', permiso: 'personas:consultar' },
+  { ruta: '/catalogos', etiqueta: 'Catálogos', icono: '≡', permiso: 'catalogos:administrar' },
   { ruta: '/notificaciones', etiqueta: 'Notificaciones', icono: '◎' },
   { ruta: '/cuenta', etiqueta: 'Mi cuenta', icono: '□' },
 ];

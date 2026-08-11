@@ -72,6 +72,18 @@
           [(ngModel)]="forma.autoridad"
         />
       </div>
+      <div class="md:col-span-3">
+        <label class="campo-etiqueta" for="ieArchivos"
+          >Archivos (opcional, se suben con el registro)</label
+        >
+        <input
+          class="campo max-w-md text-xs file:mr-3 file:rounded file:border-0 file:bg-neon/10 file:px-2 file:py-1 file:text-neon"
+          type="file"
+          id="ieArchivos"
+          multiple
+          (change)="seleccionarArchivosCaptura($event)"
+        />
+      </div>
       @if (errorForm()) {
         <p class="alerta-error md:col-span-3">{{ errorForm() }}</p>
       }

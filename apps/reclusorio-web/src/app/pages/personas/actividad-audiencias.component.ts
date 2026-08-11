@@ -109,17 +109,45 @@ export class ActividadAudienciasComponent implements OnInit {
     if (nuevo) void this.cargarElementos(nuevo);
   }
 
+  /** Archivos elegidos durante la captura (carga integrada, req. 11/08/2026). */
+  private archivosCaptura: File[] = [];
+
+  seleccionarArchivosCaptura(evento: Event): void {
+    this.archivosCaptura = Array.from((evento.target as HTMLInputElement).files ?? []);
+  }
+
+  /** Sube lo elegido al registro recién creado; un fallo no revierte la captura. */
+  private async subirArchivosCaptura(referencia: string, id: string): Promise<void> {
+    for (const archivo of this.archivosCaptura) {
+      const form = new FormData();
+      form.append('file', archivo);
+      form.append(referencia, id);
+      try {
+        await this.api.postForm('/api/v1/archivos', form);
+      } catch (err) {
+        this.toast.error(
+          `El registro se guardó, pero "${archivo.name}" no se pudo subir: ${mensajeDe(err)}`,
+        );
+      }
+    }
+    this.archivosCaptura = [];
+  }
+
   async crear(): Promise<void> {
     this.guardando.set(true);
     this.errorForm.set(null);
     try {
-      await this.api.post(`/api/v1/personas/${this.idPersona()}/audiencias`, {
-        ...this.forma,
-        fecha: new Date(this.forma['fecha']).toISOString(),
-        fechaSiguienteAudiencia: this.forma['fechaSiguienteAudiencia']
-          ? new Date(this.forma['fechaSiguienteAudiencia']).toISOString()
-          : '',
-      });
+      const creado = await this.api.post<Record<string, string>>(
+        `/api/v1/personas/${this.idPersona()}/audiencias`,
+        {
+          ...this.forma,
+          fecha: new Date(this.forma['fecha']).toISOString(),
+          fechaSiguienteAudiencia: this.forma['fechaSiguienteAudiencia']
+            ? new Date(this.forma['fechaSiguienteAudiencia']).toISOString()
+            : '',
+        },
+      );
+      await this.subirArchivosCaptura('idAudiencia', creado['idAudiencia']);
       this.toast.ok('Audiencia registrada.');
       this.mostrarForm.set(false);
       await this.cargar();

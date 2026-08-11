@@ -60,8 +60,8 @@ export class PenitenciariosComponent implements AfterViewInit, OnDestroy {
   readonly cargando = signal(true);
   readonly error = signal<string | null>(null);
   readonly seleccionado = signal<string | null>(null);
-  /** Panel flotante de centros dentro del mapa (colapsable). */
-  readonly panelAbierto = signal(true);
+  /** Panel flotante de centros dentro del mapa; inicia contraído para ver el mapa completo. */
+  readonly panelAbierto = signal(false);
   /** Población por centro; null si el usuario no puede consultar personas. */
   readonly poblacion = signal<Map<string, PersonaEnCentro[]> | null>(null);
 

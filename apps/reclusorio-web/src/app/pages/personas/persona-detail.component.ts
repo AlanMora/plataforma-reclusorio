@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
 import { ToastService } from '../../core/toast.service';
 import { PermisoDirective } from '../../core/permiso.directive';
-import { ArchivosPanelComponent } from '../../shared/archivos-panel.component';
+import { BibliotecaArchivosComponent } from '../../shared/biblioteca-archivos.component';
 import { PersonaFormComponent } from './persona-form.component';
 import { ActividadIngresosComponent } from './actividad-ingresos.component';
 import { ActividadMovimientosComponent } from './actividad-movimientos.component';
@@ -40,7 +40,7 @@ const PESTANAS: { clave: Pestana; etiqueta: string }[] = [
     RouterLink,
     FormsModule,
     PermisoDirective,
-    ArchivosPanelComponent,
+    BibliotecaArchivosComponent,
     PersonaFormComponent,
     ActividadIngresosComponent,
     ActividadMovimientosComponent,
