@@ -10,15 +10,33 @@
     <form class="flex flex-wrap items-end gap-3" (ngSubmit)="buscarCoincidencias()">
       <div>
         <label class="campo-etiqueta" for="numBusqueda">No. de elemento</label>
-        <input class="campo" id="numBusqueda" name="numeroElemento" maxlength="50" [(ngModel)]="criterios.numeroElemento" />
+        <input
+          class="campo"
+          id="numBusqueda"
+          name="numeroElemento"
+          maxlength="50"
+          [(ngModel)]="criterios.numeroElemento"
+        />
       </div>
       <div class="grow">
         <label class="campo-etiqueta" for="nombreBusqueda">Nombre completo</label>
-        <input class="campo" id="nombreBusqueda" name="nombre" maxlength="200" [(ngModel)]="criterios.nombre" />
+        <input
+          class="campo"
+          id="nombreBusqueda"
+          name="nombre"
+          maxlength="200"
+          [(ngModel)]="criterios.nombre"
+        />
       </div>
       <div class="grow">
         <label class="campo-etiqueta" for="adsBusqueda">Adscripción</label>
-        <input class="campo" id="adsBusqueda" name="adscripcion" maxlength="255" [(ngModel)]="criterios.adscripcion" />
+        <input
+          class="campo"
+          id="adsBusqueda"
+          name="adscripcion"
+          maxlength="255"
+          [(ngModel)]="criterios.adscripcion"
+        />
       </div>
       <button class="btn-primario" type="submit" [disabled]="buscando()">
         {{ buscando() ? 'Buscando…' : 'Buscar coincidencias' }}
@@ -31,11 +49,17 @@
     @if (busquedaHecha()) {
       @if (coincidencias().length > 0) {
         <p class="alerta-info">
-          {{ coincidencias().length }} coincidencia(s). Verifica antes de crear un registro nuevo (RF-ELE-002).
+          {{ coincidencias().length }} coincidencia(s). Verifica antes de crear un registro nuevo
+          (RF-ELE-002).
         </p>
         <table class="tabla">
           <thead>
-            <tr><th>Elemento</th><th>Número</th><th>Adscripción</th><th></th></tr>
+            <tr>
+              <th>Elemento</th>
+              <th>Número</th>
+              <th>Adscripción</th>
+              <th></th>
+            </tr>
           </thead>
           <tbody>
             @for (e of coincidencias(); track e.idElemento) {
@@ -44,7 +68,12 @@
                 <td class="font-mono text-xs">{{ e.numeroElemento || 's/n' }}</td>
                 <td>{{ e.adscripcion || '—' }}</td>
                 <td class="text-right">
-                  <button *rwPermiso="'elementos:modificar'" class="btn-secundario btn-mini" type="button" (click)="editar(e)">
+                  <button
+                    *rwPermiso="'elementos:modificar'"
+                    class="btn-secundario btn-mini"
+                    type="button"
+                    (click)="editar(e)"
+                  >
                     Editar
                   </button>
                 </td>
@@ -75,23 +104,56 @@
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="primerNombreElem">Nombre(s)</label>
-        <input class="campo" id="primerNombreElem" name="primerNombre" maxlength="100" required [(ngModel)]="forma.primerNombre" />
+        <input
+          class="campo"
+          id="primerNombreElem"
+          name="primerNombre"
+          maxlength="100"
+          required
+          [(ngModel)]="forma.primerNombre"
+        />
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="apellidoPaternoElem">Apellido paterno</label>
-        <input class="campo" id="apellidoPaternoElem" name="apellidoPaterno" maxlength="100" required [(ngModel)]="forma.apellidoPaterno" />
+        <input
+          class="campo"
+          id="apellidoPaternoElem"
+          name="apellidoPaterno"
+          maxlength="100"
+          required
+          [(ngModel)]="forma.apellidoPaterno"
+        />
       </div>
       <div>
         <label class="campo-etiqueta" for="apellidoMaternoElem">Apellido materno</label>
-        <input class="campo" id="apellidoMaternoElem" name="apellidoMaterno" maxlength="100" [(ngModel)]="forma.apellidoMaterno" />
+        <input
+          class="campo"
+          id="apellidoMaternoElem"
+          name="apellidoMaterno"
+          maxlength="100"
+          [(ngModel)]="forma.apellidoMaterno"
+        />
       </div>
       <div>
         <label class="campo-etiqueta" for="numeroElemento">No. de elemento</label>
-        <input class="campo font-mono" id="numeroElemento" name="numeroElemento" maxlength="50" placeholder="Admite letras y ceros" [(ngModel)]="forma.numeroElemento" />
+        <input
+          class="campo font-mono"
+          id="numeroElemento"
+          name="numeroElemento"
+          maxlength="50"
+          placeholder="Admite letras y ceros"
+          [(ngModel)]="forma.numeroElemento"
+        />
       </div>
       <div>
         <label class="campo-etiqueta" for="adscripcion">Adscripción</label>
-        <input class="campo" id="adscripcion" name="adscripcion" maxlength="255" [(ngModel)]="forma.adscripcion" />
+        <input
+          class="campo"
+          id="adscripcion"
+          name="adscripcion"
+          maxlength="255"
+          [(ngModel)]="forma.adscripcion"
+        />
       </div>
       @if (errorForm()) {
         <p class="alerta-error md:col-span-3">{{ errorForm() }}</p>
@@ -99,7 +161,13 @@
       <div class="flex justify-end gap-2 md:col-span-3">
         <button class="btn-secundario" type="button" (click)="cancelarForm()">Cancelar</button>
         <button class="btn-primario" type="submit" [disabled]="guardando()">
-          {{ guardando() ? 'Guardando…' : elementoEnEdicion() ? 'Guardar cambios' : 'Registrar elemento' }}
+          {{
+            guardando()
+              ? 'Guardando…'
+              : elementoEnEdicion()
+                ? 'Guardar cambios'
+                : 'Registrar elemento'
+          }}
         </button>
       </div>
     </form>
@@ -109,11 +177,19 @@
   <div class="panel overflow-x-auto p-2">
     <table class="tabla">
       <thead>
-        <tr><th>Grado</th><th>Elemento</th><th>Número</th><th>Adscripción</th><th></th></tr>
+        <tr>
+          <th>Grado</th>
+          <th>Elemento</th>
+          <th>Número</th>
+          <th>Adscripción</th>
+          <th></th>
+        </tr>
       </thead>
       <tbody>
         @if (pagina().items.length === 0) {
-          <tr><td colspan="5" class="py-8 text-center text-slate-500">Padrón vacío.</td></tr>
+          <tr>
+            <td colspan="5" class="py-8 text-center text-slate-500">Padrón vacío.</td>
+          </tr>
         }
         @for (e of pagina().items; track e.idElemento) {
           <tr>
@@ -124,11 +200,23 @@
             <td class="font-mono text-xs">{{ e.numeroElemento || 's/n' }}</td>
             <td>{{ e.adscripcion || '—' }}</td>
             <td class="text-right">
-              <button *rwPermiso="'elementos:modificar'" class="btn-secundario btn-mini" type="button" (click)="editar(e)">
+              <button
+                *rwPermiso="'elementos:modificar'"
+                class="btn-secundario btn-mini"
+                type="button"
+                (click)="editar(e)"
+              >
                 Editar
               </button>
             </td>
           </tr>
+        }
+        @if (pagina().items.length > 0) {
+          @for (r of relleno(); track $index) {
+            <tr aria-hidden="true">
+              <td colspan="5" class="select-none text-transparent">·</td>
+            </tr>
+          }
         }
       </tbody>
     </table>

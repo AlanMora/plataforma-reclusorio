@@ -61,6 +61,13 @@
             </tr>
           }
         }
+        @if (pagina().items.length > 0) {
+          @for (r of relleno(); track $index) {
+            <tr aria-hidden="true">
+              <td colspan="6" class="select-none text-transparent">·</td>
+            </tr>
+          }
+        }
       </tbody>
     </table>
     <rw-paginador

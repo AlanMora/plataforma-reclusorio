@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import {
+  computed,
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
 import { ToastService } from '../../core/toast.service';
@@ -24,7 +31,18 @@ export class ElementosComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
 
-  readonly pagina = signal<Paginado<Elemento>>({ items: [], total: 0, page: 1, limit: 10, totalPages: 0 });
+  readonly pagina = signal<Paginado<Elemento>>({
+    items: [],
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+  });
+
+  /** Filas fantasma para que la tabla SIEMPRE mida 10 filas por página. */
+  readonly relleno = computed(() =>
+    Array.from({ length: Math.max(0, 10 - this.pagina().items.length) }),
+  );
   readonly coincidencias = signal<Elemento[]>([]);
   readonly busquedaHecha = signal(false);
   readonly buscando = signal(false);
@@ -35,7 +53,14 @@ export class ElementosComponent implements OnInit {
   readonly errorForm = signal<string | null>(null);
 
   criterios: Record<string, string> = { numeroElemento: '', nombre: '', adscripcion: '' };
-  forma: Record<string, string> = { grado: '', primerNombre: '', apellidoPaterno: '', apellidoMaterno: '', numeroElemento: '', adscripcion: '' };
+  forma: Record<string, string> = {
+    grado: '',
+    primerNombre: '',
+    apellidoPaterno: '',
+    apellidoMaterno: '',
+    numeroElemento: '',
+    adscripcion: '',
+  };
 
   nombreDe = nombreElemento;
 
@@ -80,7 +105,14 @@ export class ElementosComponent implements OnInit {
     this.mostrarAlta.set(false);
     this.elementoEnEdicion.set(null);
     this.errorForm.set(null);
-    this.forma = { grado: '', primerNombre: '', apellidoPaterno: '', apellidoMaterno: '', numeroElemento: '', adscripcion: '' };
+    this.forma = {
+      grado: '',
+      primerNombre: '',
+      apellidoPaterno: '',
+      apellidoMaterno: '',
+      numeroElemento: '',
+      adscripcion: '',
+    };
   }
 
   async guardar(): Promise<void> {
@@ -108,7 +140,9 @@ export class ElementosComponent implements OnInit {
 
   async cargarPadron(page: number): Promise<void> {
     try {
-      this.pagina.set(await this.api.get<Paginado<Elemento>>('/api/v1/elementos', { page, limit: 10 }));
+      this.pagina.set(
+        await this.api.get<Paginado<Elemento>>('/api/v1/elementos', { page, limit: 10 }),
+      );
     } catch (err) {
       this.toast.error(mensajeDe(err));
     }

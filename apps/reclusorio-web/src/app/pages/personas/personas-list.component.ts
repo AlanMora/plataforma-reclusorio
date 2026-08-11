@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import {
+  computed,
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
@@ -29,6 +36,11 @@ export class PersonasListComponent implements OnInit {
     limit: 10,
     totalPages: 0,
   });
+
+  /** Filas fantasma para que la tabla SIEMPRE mida 10 filas por página. */
+  readonly relleno = computed(() =>
+    Array.from({ length: Math.max(0, 10 - this.pagina().items.length) }),
+  );
   readonly cargando = signal(false);
   readonly error = signal<string | null>(null);
   textoBusqueda = '';
