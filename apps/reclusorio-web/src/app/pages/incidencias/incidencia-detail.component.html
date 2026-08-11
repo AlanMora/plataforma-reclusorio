@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-5xl space-y-5">
+<div class="mx-auto max-w-6xl space-y-5">
   <a routerLink="/incidencias" class="etiqueta hover:text-neon">← Incidencias</a>
 
   @if (error()) {
@@ -10,7 +10,9 @@
       <div class="flex flex-wrap items-center gap-3">
         <span class="chip-alerta">{{ nombreTipo() }}</span>
         <span class="chip-neon">{{ nombreCentro() }}</span>
-        <span class="font-mono text-xs text-slate-500">{{ incidencia()!.fecha | date: 'dd/MM/yyyy HH:mm' }}</span>
+        <span class="font-mono text-xs text-slate-500">{{
+          incidencia()!.fecha | date: 'dd/MM/yyyy HH:mm'
+        }}</span>
         @if (incidencia()!.iph) {
           <span class="chip-apagado">IPH {{ incidencia()!.iph }}</span>
         }
@@ -23,7 +25,9 @@
         </p>
       }
       @if (incidencia()!.narrativa) {
-        <p class="whitespace-pre-line border-t border-borde pt-3 text-sm text-slate-400">{{ incidencia()!.narrativa }}</p>
+        <p class="whitespace-pre-line border-t border-borde pt-3 text-sm text-slate-400">
+          {{ incidencia()!.narrativa }}
+        </p>
       }
     </div>
 
@@ -32,18 +36,32 @@
       <div class="panel space-y-3 p-5">
         <p class="etiqueta">Personas asociadas (RF-INC-003)</p>
         @if (personasAsociadas().length === 0) {
-          <p class="text-sm text-slate-600">Sin personas asociadas — la incidencia es válida así.</p>
+          <p class="text-sm text-slate-600">
+            Sin personas asociadas — la incidencia es válida así.
+          </p>
         }
         @for (p of personasAsociadas(); track p.idPersona) {
-          <a class="block rounded-lg border border-borde px-3 py-2 text-sm text-slate-200 hover:border-neon/40" [routerLink]="['/personas', p.idPersona]">
+          <a
+            class="block rounded-lg border border-borde px-3 py-2 text-sm text-slate-200 hover:border-neon/40"
+            [routerLink]="['/personas', p.idPersona]"
+          >
             {{ nombreDePersona(p) }}
             <span class="ml-2 font-mono text-xs text-slate-500">{{ p.curp }}</span>
           </a>
         }
-        <div *rwPermiso="'incidencias:asociar'" class="space-y-2 rounded-lg border border-borde bg-panel-2/60 p-3">
+        <div
+          *rwPermiso="'incidencias:asociar'"
+          class="space-y-2 rounded-lg border border-borde bg-panel-2/60 p-3"
+        >
           <p class="etiqueta">Asociar persona</p>
           <div class="flex gap-2">
-            <input class="campo" name="buscarPersona" [(ngModel)]="textoPersona" placeholder="Nombre, alias o CURP" (keyup.enter)="buscarPersonas()" />
+            <input
+              class="campo"
+              name="buscarPersona"
+              [(ngModel)]="textoPersona"
+              placeholder="Nombre, alias o CURP"
+              (keyup.enter)="buscarPersonas()"
+            />
             <button class="btn-secundario" type="button" (click)="buscarPersonas()">Buscar</button>
           </div>
           @for (p of candidatasPersonas(); track p.idPersona) {
@@ -78,7 +96,12 @@
                 <option [value]="a.id">{{ a.nombre }}</option>
               }
             </select>
-            <button class="btn-primario btn-mini" type="button" [disabled]="!autoridadSeleccionada" (click)="asociarAutoridad()">
+            <button
+              class="btn-primario btn-mini"
+              type="button"
+              [disabled]="!autoridadSeleccionada"
+              (click)="asociarAutoridad()"
+            >
               Asociar
             </button>
           </div>
@@ -101,7 +124,12 @@
           </div>
           <div *rwPermiso="'incidencias:asociar'">
             <label class="mb-2 flex items-center gap-2 text-sm text-slate-400">
-              <input type="checkbox" class="accent-neon" name="esPrimerRespondiente" [(ngModel)]="marcarPrimerRespondiente" />
+              <input
+                type="checkbox"
+                class="accent-neon"
+                name="esPrimerRespondiente"
+                [(ngModel)]="marcarPrimerRespondiente"
+              />
               Marcar como primer respondiente al asociar
             </label>
             <rw-elemento-picker (elegido)="asociarElemento($event)" />

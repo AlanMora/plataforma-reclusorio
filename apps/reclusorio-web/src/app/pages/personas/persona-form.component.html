@@ -61,11 +61,9 @@
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="fechaNacimiento">Fecha de nacimiento</label>
-        <input
-          class="campo"
-          id="fechaNacimiento"
+        <rw-selector-fecha
+          idCampo="fechaNacimiento"
           name="fechaNacimiento"
-          type="date"
           required
           [(ngModel)]="modelo.fechaNacimiento"
         />

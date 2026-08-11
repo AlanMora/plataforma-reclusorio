@@ -16,7 +16,14 @@ import { mensajeDe } from '../../core/problem';
 @Component({
   selector: 'rw-incidencia-detail',
   standalone: true,
-  imports: [DatePipe, RouterLink, FormsModule, PermisoDirective, ArchivosPanelComponent, ElementoPickerComponent],
+  imports: [
+    DatePipe,
+    RouterLink,
+    FormsModule,
+    PermisoDirective,
+    ArchivosPanelComponent,
+    ElementoPickerComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './incidencia-detail.component.html',
 })
@@ -30,7 +37,9 @@ export class IncidenciaDetailComponent {
   readonly incidencia = signal<IncidenciaDetalle | null>(null);
   readonly error = signal<string | null>(null);
   readonly personasAsociadas = signal<Persona[]>([]);
-  readonly elementosAsociados = signal<{ idElemento: string; nombre: string; primerRespondiente: boolean }[]>([]);
+  readonly elementosAsociados = signal<
+    { idElemento: string; nombre: string; primerRespondiente: boolean }[]
+  >([]);
   readonly candidatasPersonas = signal<Persona[]>([]);
   readonly autoridades = signal<ValorCatalogo[]>([]);
 
@@ -92,7 +101,9 @@ export class IncidenciaDetailComponent {
 
   async asociarPersona(p: Persona): Promise<void> {
     try {
-      await this.api.post(`/api/v1/incidencias/${this.idIncidencia()}/personas`, { idPersona: p.idPersona });
+      await this.api.post(`/api/v1/incidencias/${this.idIncidencia()}/personas`, {
+        idPersona: p.idPersona,
+      });
       this.toast.ok('Persona asociada a la incidencia.');
       this.candidatasPersonas.set([]);
       this.textoPersona = '';
@@ -153,13 +164,21 @@ export class IncidenciaDetailComponent {
       const elementos = await Promise.all(
         detalle.elementos.map(async (e) => {
           const dato = await this.api.get<Elemento>(`/api/v1/elementos/${e.idElemento}`);
-          return { idElemento: e.idElemento, nombre: nombreElemento(dato), primerRespondiente: e.primerRespondiente };
+          return {
+            idElemento: e.idElemento,
+            nombre: nombreElemento(dato),
+            primerRespondiente: e.primerRespondiente,
+          };
         }),
       );
       this.elementosAsociados.set(elementos);
     } catch {
       this.elementosAsociados.set(
-        detalle.elementos.map((e) => ({ idElemento: e.idElemento, nombre: e.idElemento.slice(0, 8), primerRespondiente: e.primerRespondiente })),
+        detalle.elementos.map((e) => ({
+          idElemento: e.idElemento,
+          nombre: e.idElemento.slice(0, 8),
+          primerRespondiente: e.primerRespondiente,
+        })),
       );
     }
   }

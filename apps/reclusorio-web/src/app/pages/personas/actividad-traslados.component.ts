@@ -6,6 +6,7 @@ import { CatalogosService } from '../../core/catalogos.service';
 import { ToastService } from '../../core/toast.service';
 import { PermisoDirective } from '../../core/permiso.directive';
 import { ArchivosPanelComponent } from '../../shared/archivos-panel.component';
+import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
 import { ElementoPickerComponent, nombreElemento } from '../../shared/elemento-picker.component';
 import { Elemento, Traslado, ValorCatalogo } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
@@ -14,7 +15,14 @@ import { mensajeDe } from '../../core/problem';
 @Component({
   selector: 'rw-actividad-traslados',
   standalone: true,
-  imports: [DatePipe, FormsModule, PermisoDirective, ArchivosPanelComponent, ElementoPickerComponent],
+  imports: [
+    DatePipe,
+    FormsModule,
+    PermisoDirective,
+    ArchivosPanelComponent,
+    ElementoPickerComponent,
+    SelectorFechaComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './actividad-traslados.component.html',
 })
@@ -132,7 +140,9 @@ export class ActividadTrasladosComponent implements OnInit {
   private async cargar(): Promise<void> {
     this.cargando.set(true);
     try {
-      this.registros.set(await this.api.get<Traslado[]>(`/api/v1/personas/${this.idPersona()}/traslados`));
+      this.registros.set(
+        await this.api.get<Traslado[]>(`/api/v1/personas/${this.idPersona()}/traslados`),
+      );
     } catch (err) {
       this.error.set(mensajeDe(err));
     } finally {

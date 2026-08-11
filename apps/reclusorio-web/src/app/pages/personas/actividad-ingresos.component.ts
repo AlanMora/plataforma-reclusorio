@@ -6,6 +6,7 @@ import { CatalogosService } from '../../core/catalogos.service';
 import { ToastService } from '../../core/toast.service';
 import { PermisoDirective } from '../../core/permiso.directive';
 import { ArchivosPanelComponent } from '../../shared/archivos-panel.component';
+import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
 import { IngresoEgreso, ValorCatalogo } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
 
@@ -13,7 +14,13 @@ import { mensajeDe } from '../../core/problem';
 @Component({
   selector: 'rw-actividad-ingresos',
   standalone: true,
-  imports: [DatePipe, FormsModule, PermisoDirective, ArchivosPanelComponent],
+  imports: [
+    DatePipe,
+    FormsModule,
+    PermisoDirective,
+    ArchivosPanelComponent,
+    SelectorFechaComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './actividad-ingresos.component.html',
 })
@@ -39,7 +46,14 @@ export class ActividadIngresosComponent implements OnInit {
   private mapaCentros = new Map<string, string>();
   private mapaDelitos = new Map<string, string>();
 
-  forma: Record<string, string> = { idTipoIngresoEgreso: '', fecha: '', idCentroPenitenciario: '', idDelito: '', ubicacion: '', autoridad: '' };
+  forma: Record<string, string> = {
+    idTipoIngresoEgreso: '',
+    fecha: '',
+    idCentroPenitenciario: '',
+    idDelito: '',
+    ubicacion: '',
+    autoridad: '',
+  };
 
   ngOnInit(): void {
     void this.cargarCatalogos();
@@ -70,7 +84,14 @@ export class ActividadIngresosComponent implements OnInit {
       });
       this.toast.ok('Ingreso/libertad registrado.');
       this.mostrarForm.set(false);
-      this.forma = { idTipoIngresoEgreso: '', fecha: '', idCentroPenitenciario: '', idDelito: '', ubicacion: '', autoridad: '' };
+      this.forma = {
+        idTipoIngresoEgreso: '',
+        fecha: '',
+        idCentroPenitenciario: '',
+        idDelito: '',
+        ubicacion: '',
+        autoridad: '',
+      };
       await this.cargar();
     } catch (err) {
       this.errorForm.set(mensajeDe(err));
@@ -101,7 +122,9 @@ export class ActividadIngresosComponent implements OnInit {
     this.cargando.set(true);
     try {
       this.registros.set(
-        await this.api.get<IngresoEgreso[]>(`/api/v1/personas/${this.idPersona()}/ingresos-egresos`),
+        await this.api.get<IngresoEgreso[]>(
+          `/api/v1/personas/${this.idPersona()}/ingresos-egresos`,
+        ),
       );
     } catch (err) {
       this.error.set(mensajeDe(err));

@@ -22,6 +22,7 @@ import {
   OCUPACIONES_DUMMY,
 } from '../../core/persona-opciones-dummy';
 import { SelectBuscableComponent } from '../../shared/select-buscable.component';
+import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
 
 /**
  * Alta y modificación de personas (RF-PER-003/005).
@@ -33,7 +34,7 @@ import { SelectBuscableComponent } from '../../shared/select-buscable.component'
 @Component({
   selector: 'rw-persona-form',
   standalone: true,
-  imports: [FormsModule, SelectBuscableComponent],
+  imports: [FormsModule, SelectBuscableComponent, SelectorFechaComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './persona-form.component.html',
 })

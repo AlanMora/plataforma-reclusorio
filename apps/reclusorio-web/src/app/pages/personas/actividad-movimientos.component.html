@@ -1,6 +1,11 @@
 <div class="space-y-4">
   <div class="flex justify-end">
-    <button *rwPermiso="'movimientos:crear'" class="btn-primario btn-mini" type="button" (click)="mostrarForm.set(!mostrarForm())">
+    <button
+      *rwPermiso="'movimientos:crear'"
+      class="btn-primario btn-mini"
+      type="button"
+      (click)="mostrarForm.set(!mostrarForm())"
+    >
       {{ mostrarForm() ? 'Cancelar' : '+ Registrar movimiento' }}
     </button>
   </div>
@@ -9,7 +14,13 @@
     <form class="panel grid gap-4 p-4 md:grid-cols-3" (ngSubmit)="crear()">
       <div>
         <label class="campo-etiqueta obligatorio" for="movTipo">Tipo de movimiento</label>
-        <select class="campo" id="movTipo" name="idTipoMovimiento" required [(ngModel)]="forma.idTipoMovimiento">
+        <select
+          class="campo"
+          id="movTipo"
+          name="idTipoMovimiento"
+          required
+          [(ngModel)]="forma.idTipoMovimiento"
+        >
           <option value="" disabled>Selecciona…</option>
           @for (v of tipos(); track v.id) {
             <option [value]="v.id">{{ v.nombre }}</option>
@@ -18,7 +29,13 @@
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="movMotivo">Motivo</label>
-        <select class="campo" id="movMotivo" name="idMotivoMovimiento" required [(ngModel)]="forma.idMotivoMovimiento">
+        <select
+          class="campo"
+          id="movMotivo"
+          name="idMotivoMovimiento"
+          required
+          [(ngModel)]="forma.idMotivoMovimiento"
+        >
           <option value="" disabled>Selecciona…</option>
           @for (v of motivos(); track v.id) {
             <option [value]="v.id">{{ v.nombre }}</option>
@@ -27,11 +44,23 @@
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="movFecha">Fecha y hora</label>
-        <input class="campo" id="movFecha" name="fecha" type="datetime-local" required [(ngModel)]="forma.fecha" />
+        <rw-selector-fecha
+          idCampo="movFecha"
+          name="fecha"
+          [conHora]="true"
+          required
+          [(ngModel)]="forma.fecha"
+        />
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="movOrigen">Centro de origen</label>
-        <select class="campo" id="movOrigen" name="idCentroOrigen" required [(ngModel)]="forma.idCentroOrigen">
+        <select
+          class="campo"
+          id="movOrigen"
+          name="idCentroOrigen"
+          required
+          [(ngModel)]="forma.idCentroOrigen"
+        >
           <option value="" disabled>Selecciona…</option>
           @for (v of centros(); track v.id) {
             <option [value]="v.id">{{ v.nombre }}</option>
@@ -40,7 +69,13 @@
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="movDestino">Centro de destino</label>
-        <select class="campo" id="movDestino" name="idCentroDestino" required [(ngModel)]="forma.idCentroDestino">
+        <select
+          class="campo"
+          id="movDestino"
+          name="idCentroDestino"
+          required
+          [(ngModel)]="forma.idCentroDestino"
+        >
           <option value="" disabled>Selecciona…</option>
           @for (v of centros(); track v.id) {
             <option [value]="v.id">{{ v.nombre }}</option>
@@ -49,7 +84,13 @@
       </div>
       <div>
         <label class="campo-etiqueta" for="movUbicacion">Ubicación</label>
-        <input class="campo" id="movUbicacion" name="ubicacion" maxlength="255" [(ngModel)]="forma.ubicacion" />
+        <input
+          class="campo"
+          id="movUbicacion"
+          name="ubicacion"
+          maxlength="255"
+          [(ngModel)]="forma.ubicacion"
+        />
       </div>
       @if (errorForm()) {
         <p class="alerta-error md:col-span-3">{{ errorForm() }}</p>
@@ -84,7 +125,9 @@
         @for (r of registros(); track r.idMovimiento) {
           <tr>
             <td class="font-mono text-xs">{{ r.fecha | date: 'dd/MM/yy HH:mm' }}</td>
-            <td><span class="chip-neon">{{ nombre(mapaTipos, r.idTipoMovimiento) }}</span></td>
+            <td>
+              <span class="chip-neon">{{ nombre(mapaTipos, r.idTipoMovimiento) }}</span>
+            </td>
             <td>{{ nombre(mapaMotivos, r.idMotivoMovimiento) }}</td>
             <td class="text-xs">
               {{ nombre(mapaCentros, r.idCentroOrigen) }}
@@ -93,7 +136,11 @@
             </td>
             <td>{{ r.ubicacion || '—' }}</td>
             <td class="text-right">
-              <button class="btn-secundario btn-mini" type="button" (click)="alternarExpandido(r.idMovimiento)">
+              <button
+                class="btn-secundario btn-mini"
+                type="button"
+                (click)="alternarExpandido(r.idMovimiento)"
+              >
                 {{ expandido() === r.idMovimiento ? 'Ocultar' : 'Archivos' }}
               </button>
             </td>

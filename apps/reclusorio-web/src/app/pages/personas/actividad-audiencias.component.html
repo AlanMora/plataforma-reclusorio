@@ -1,6 +1,11 @@
 <div class="space-y-4">
   <div class="flex justify-end">
-    <button *rwPermiso="'audiencias:crear'" class="btn-primario btn-mini" type="button" (click)="mostrarForm.set(!mostrarForm())">
+    <button
+      *rwPermiso="'audiencias:crear'"
+      class="btn-primario btn-mini"
+      type="button"
+      (click)="mostrarForm.set(!mostrarForm())"
+    >
       {{ mostrarForm() ? 'Cancelar' : '+ Registrar audiencia' }}
     </button>
   </div>
@@ -9,7 +14,13 @@
     <form class="panel grid gap-4 p-4 md:grid-cols-3" (ngSubmit)="crear()">
       <div>
         <label class="campo-etiqueta obligatorio" for="audFecha">Fecha y hora</label>
-        <input class="campo" id="audFecha" name="fecha" type="datetime-local" required [(ngModel)]="forma.fecha" />
+        <rw-selector-fecha
+          idCampo="audFecha"
+          name="fecha"
+          [conHora]="true"
+          required
+          [(ngModel)]="forma.fecha"
+        />
       </div>
       <div>
         <label class="campo-etiqueta" for="audCa">Carpeta administrativa (CA)</label>
@@ -21,7 +32,13 @@
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="audForma">Forma de ingreso</label>
-        <select class="campo" id="audForma" name="idFormaIngresoAudiencia" required [(ngModel)]="forma.idFormaIngresoAudiencia">
+        <select
+          class="campo"
+          id="audForma"
+          name="idFormaIngresoAudiencia"
+          required
+          [(ngModel)]="forma.idFormaIngresoAudiencia"
+        >
           <option value="" disabled>Selecciona…</option>
           @for (v of formasIngreso(); track v.id) {
             <option [value]="v.id">{{ v.nombre }}</option>
@@ -30,7 +47,13 @@
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="audJuzgado">Juzgado</label>
-        <select class="campo" id="audJuzgado" name="idJuzgado" required [(ngModel)]="forma.idJuzgado">
+        <select
+          class="campo"
+          id="audJuzgado"
+          name="idJuzgado"
+          required
+          [(ngModel)]="forma.idJuzgado"
+        >
           <option value="" disabled>Selecciona…</option>
           @for (v of juzgados(); track v.id) {
             <option [value]="v.id">{{ v.nombre }}</option>
@@ -39,7 +62,13 @@
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="audJuez">Juez del juzgado</label>
-        <select class="campo" id="audJuez" name="idJuezJuzgado" required [(ngModel)]="forma.idJuezJuzgado">
+        <select
+          class="campo"
+          id="audJuez"
+          name="idJuezJuzgado"
+          required
+          [(ngModel)]="forma.idJuezJuzgado"
+        >
           <option value="" disabled>Selecciona…</option>
           @for (v of jueces(); track v.id) {
             <option [value]="v.id">{{ v.nombre }}</option>
@@ -48,11 +77,23 @@
       </div>
       <div>
         <label class="campo-etiqueta" for="audNombreJuez">Nombre del juez (texto)</label>
-        <input class="campo" id="audNombreJuez" name="nombreJuez" maxlength="255" [(ngModel)]="forma.nombreJuez" />
+        <input
+          class="campo"
+          id="audNombreJuez"
+          name="nombreJuez"
+          maxlength="255"
+          [(ngModel)]="forma.nombreJuez"
+        />
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="audTipo">Tipo de audiencia</label>
-        <select class="campo" id="audTipo" name="idTipoAudiencia" required [(ngModel)]="forma.idTipoAudiencia">
+        <select
+          class="campo"
+          id="audTipo"
+          name="idTipoAudiencia"
+          required
+          [(ngModel)]="forma.idTipoAudiencia"
+        >
           <option value="" disabled>Selecciona…</option>
           @for (v of tipos(); track v.id) {
             <option [value]="v.id">{{ v.nombre }}</option>
@@ -61,7 +102,13 @@
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="audModalidad">Modalidad</label>
-        <select class="campo" id="audModalidad" name="idModalidadAudiencia" required [(ngModel)]="forma.idModalidadAudiencia">
+        <select
+          class="campo"
+          id="audModalidad"
+          name="idModalidadAudiencia"
+          required
+          [(ngModel)]="forma.idModalidadAudiencia"
+        >
           <option value="" disabled>Selecciona…</option>
           @for (v of modalidades(); track v.id) {
             <option [value]="v.id">{{ v.nombre }}</option>
@@ -70,7 +117,12 @@
       </div>
       <div>
         <label class="campo-etiqueta" for="audResolucion">Resolución</label>
-        <select class="campo" id="audResolucion" name="idResolucionAudiencia" [(ngModel)]="forma.idResolucionAudiencia">
+        <select
+          class="campo"
+          id="audResolucion"
+          name="idResolucionAudiencia"
+          [(ngModel)]="forma.idResolucionAudiencia"
+        >
           <option value="">— Sin resolución —</option>
           @for (v of resoluciones(); track v.id) {
             <option [value]="v.id">{{ v.nombre }}</option>
@@ -79,7 +131,14 @@
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="audProxima">¿Habrá próxima audiencia?</label>
-        <select class="campo" id="audProxima" name="idProximaAudiencia" required [(ngModel)]="forma.idProximaAudiencia" (ngModelChange)="alCambiarProxima()">
+        <select
+          class="campo"
+          id="audProxima"
+          name="idProximaAudiencia"
+          required
+          [(ngModel)]="forma.idProximaAudiencia"
+          (ngModelChange)="alCambiarProxima()"
+        >
           <option value="" disabled>Selecciona…</option>
           @for (v of proximas(); track v.id) {
             <option [value]="v.id">{{ v.nombre }}</option>
@@ -88,21 +147,29 @@
       </div>
       <div>
         <label class="campo-etiqueta" for="audSiguiente">Fecha de la siguiente audiencia</label>
-        <input
-          class="campo"
-          id="audSiguiente"
+        <rw-selector-fecha
+          idCampo="audSiguiente"
           name="fechaSiguienteAudiencia"
-          type="datetime-local"
+          [conHora]="true"
           [disabled]="proximaEsNo()"
           [(ngModel)]="forma.fechaSiguienteAudiencia"
         />
         @if (proximaEsNo()) {
-          <p class="mt-1 text-[11px] text-slate-600">Debe permanecer vacía cuando la próxima audiencia es NO (RF-AUD-004).</p>
+          <p class="mt-1 text-[11px] text-slate-600">
+            Debe permanecer vacía cuando la próxima audiencia es NO (RF-AUD-004).
+          </p>
         }
       </div>
       <div class="md:col-span-3">
         <label class="campo-etiqueta" for="audObservaciones">Observaciones</label>
-        <textarea class="campo" id="audObservaciones" name="observaciones" rows="2" maxlength="2000" [(ngModel)]="forma.observaciones"></textarea>
+        <textarea
+          class="campo"
+          id="audObservaciones"
+          name="observaciones"
+          rows="2"
+          maxlength="2000"
+          [(ngModel)]="forma.observaciones"
+        ></textarea>
       </div>
       @if (errorForm()) {
         <p class="alerta-error md:col-span-3">{{ errorForm() }}</p>
@@ -138,10 +205,16 @@
         @for (r of registros(); track r.idAudiencia) {
           <tr>
             <td class="font-mono text-xs">{{ r.fecha | date: 'dd/MM/yy HH:mm' }}</td>
-            <td><span class="chip-neon">{{ nombre(mapaTipos, r.idTipoAudiencia) }}</span></td>
+            <td>
+              <span class="chip-neon">{{ nombre(mapaTipos, r.idTipoAudiencia) }}</span>
+            </td>
             <td class="max-w-[180px] truncate">{{ nombre(mapaJuzgados, r.idJuzgado) }}</td>
             <td>{{ nombre(mapaModalidades, r.idModalidadAudiencia) }}</td>
-            <td>{{ r.idResolucionAudiencia ? nombre(mapaResoluciones, r.idResolucionAudiencia) : '—' }}</td>
+            <td>
+              {{
+                r.idResolucionAudiencia ? nombre(mapaResoluciones, r.idResolucionAudiencia) : '—'
+              }}
+            </td>
             <td class="font-mono text-xs">
               {{ nombre(mapaProximas, r.idProximaAudiencia) }}
               @if (r.fechaSiguienteAudiencia) {
@@ -149,7 +222,11 @@
               }
             </td>
             <td class="text-right">
-              <button class="btn-secundario btn-mini" type="button" (click)="alternarExpandido(r.idAudiencia)">
+              <button
+                class="btn-secundario btn-mini"
+                type="button"
+                (click)="alternarExpandido(r.idAudiencia)"
+              >
                 {{ expandido() === r.idAudiencia ? 'Ocultar' : 'Detalle' }}
               </button>
             </td>

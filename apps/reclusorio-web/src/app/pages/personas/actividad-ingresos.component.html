@@ -1,6 +1,11 @@
 <div class="space-y-4">
   <div class="flex justify-end">
-    <button *rwPermiso="'ingresos:crear'" class="btn-primario btn-mini" type="button" (click)="mostrarForm.set(!mostrarForm())">
+    <button
+      *rwPermiso="'ingresos:crear'"
+      class="btn-primario btn-mini"
+      type="button"
+      (click)="mostrarForm.set(!mostrarForm())"
+    >
       {{ mostrarForm() ? 'Cancelar' : '+ Registrar ingreso / libertad' }}
     </button>
   </div>
@@ -9,7 +14,13 @@
     <form class="panel grid gap-4 p-4 md:grid-cols-3" (ngSubmit)="crear()">
       <div>
         <label class="campo-etiqueta obligatorio" for="ieTipo">Tipo</label>
-        <select class="campo" id="ieTipo" name="idTipoIngresoEgreso" required [(ngModel)]="forma.idTipoIngresoEgreso">
+        <select
+          class="campo"
+          id="ieTipo"
+          name="idTipoIngresoEgreso"
+          required
+          [(ngModel)]="forma.idTipoIngresoEgreso"
+        >
           <option value="" disabled>Selecciona…</option>
           @for (v of tipos(); track v.id) {
             <option [value]="v.id">{{ v.nombre }}</option>
@@ -18,11 +29,23 @@
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="ieFecha">Fecha y hora</label>
-        <input class="campo" id="ieFecha" name="fecha" type="datetime-local" required [(ngModel)]="forma.fecha" />
+        <rw-selector-fecha
+          idCampo="ieFecha"
+          name="fecha"
+          [conHora]="true"
+          required
+          [(ngModel)]="forma.fecha"
+        />
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="ieCentro">Centro penitenciario</label>
-        <select class="campo" id="ieCentro" name="idCentroPenitenciario" required [(ngModel)]="forma.idCentroPenitenciario">
+        <select
+          class="campo"
+          id="ieCentro"
+          name="idCentroPenitenciario"
+          required
+          [(ngModel)]="forma.idCentroPenitenciario"
+        >
           <option value="" disabled>Selecciona…</option>
           @for (v of centros(); track v.id) {
             <option [value]="v.id">{{ v.nombre }}</option>
@@ -40,11 +63,23 @@
       </div>
       <div>
         <label class="campo-etiqueta" for="ieUbicacion">Ubicación</label>
-        <input class="campo" id="ieUbicacion" name="ubicacion" maxlength="255" [(ngModel)]="forma.ubicacion" />
+        <input
+          class="campo"
+          id="ieUbicacion"
+          name="ubicacion"
+          maxlength="255"
+          [(ngModel)]="forma.ubicacion"
+        />
       </div>
       <div>
         <label class="campo-etiqueta" for="ieAutoridad">Autoridad que pone a disposición</label>
-        <input class="campo" id="ieAutoridad" name="autoridad" maxlength="255" [(ngModel)]="forma.autoridad" />
+        <input
+          class="campo"
+          id="ieAutoridad"
+          name="autoridad"
+          maxlength="255"
+          [(ngModel)]="forma.autoridad"
+        />
       </div>
       @if (errorForm()) {
         <p class="alerta-error md:col-span-3">{{ errorForm() }}</p>
@@ -80,13 +115,21 @@
         @for (r of registros(); track r.idIngresoEgreso) {
           <tr>
             <td class="font-mono text-xs">{{ r.fecha | date: 'dd/MM/yy HH:mm' }}</td>
-            <td><span class="chip-neon">{{ nombreTipo(r.idTipoIngresoEgreso) }}</span></td>
+            <td>
+              <span class="chip-neon">{{ nombreTipo(r.idTipoIngresoEgreso) }}</span>
+            </td>
             <td>{{ nombreCentro(r.idCentroPenitenciario) }}</td>
-            <td class="max-w-[200px] truncate" [title]="nombreDelito(r.idDelito)">{{ nombreDelito(r.idDelito) }}</td>
+            <td class="max-w-[200px] truncate" [title]="nombreDelito(r.idDelito)">
+              {{ nombreDelito(r.idDelito) }}
+            </td>
             <td>{{ r.ubicacion || '—' }}</td>
             <td>{{ r.autoridad || '—' }}</td>
             <td class="text-right">
-              <button class="btn-secundario btn-mini" type="button" (click)="alternarExpandido(r.idIngresoEgreso)">
+              <button
+                class="btn-secundario btn-mini"
+                type="button"
+                (click)="alternarExpandido(r.idIngresoEgreso)"
+              >
                 {{ expandido() === r.idIngresoEgreso ? 'Ocultar' : 'Archivos' }}
               </button>
             </td>

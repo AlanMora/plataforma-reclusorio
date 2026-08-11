@@ -52,9 +52,16 @@ export class SessionStore {
     return (await this.redis.exists(this.key(sid))) === 1;
   }
 
-  /** Rota el refresh token de una sesión existente (mantiene el TTL restante). */
-  async rotate(sid: string, refreshTokenHash: string): Promise<void> {
-    await this.redis.hset(this.key(sid), 'refreshTokenHash', refreshTokenHash);
+  /**
+   * Rota el refresh token de una sesión existente y RENUEVA su vigencia
+   * (RF-SES-008: cada refresh reinicia la ventana de 30 minutos).
+   */
+  async rotate(sid: string, refreshTokenHash: string, ttlSeconds: number): Promise<void> {
+    await this.redis
+      .multi()
+      .hset(this.key(sid), 'refreshTokenHash', refreshTokenHash)
+      .expire(this.key(sid), ttlSeconds)
+      .exec();
   }
 
   /** Revoca (elimina) una sesión concreta. */

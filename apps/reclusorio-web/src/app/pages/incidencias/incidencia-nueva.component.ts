@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
 import { ApiService } from '../../core/api.service';
 import { CatalogosService } from '../../core/catalogos.service';
 import { ToastService } from '../../core/toast.service';
@@ -11,7 +12,7 @@ import { mensajeDe } from '../../core/problem';
 @Component({
   selector: 'rw-incidencia-nueva',
   standalone: true,
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, SelectorFechaComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './incidencia-nueva.component.html',
 })
@@ -37,8 +38,14 @@ export class IncidenciaNuevaComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    void this.catalogos.valores('centros').then((v) => this.centros.set(v)).catch(() => undefined);
-    void this.catalogos.valores('tipo_incidencia').then((v) => this.tipos.set(v)).catch(() => undefined);
+    void this.catalogos
+      .valores('centros')
+      .then((v) => this.centros.set(v))
+      .catch(() => undefined);
+    void this.catalogos
+      .valores('tipo_incidencia')
+      .then((v) => this.tipos.set(v))
+      .catch(() => undefined);
   }
 
   async crear(): Promise<void> {

@@ -22,7 +22,13 @@ export function nombreCompleto(p: Persona): string {
 export class PersonasListComponent implements OnInit {
   private readonly api = inject(ApiService);
 
-  readonly pagina = signal<Paginado<Persona>>({ items: [], total: 0, page: 1, limit: 20, totalPages: 0 });
+  readonly pagina = signal<Paginado<Persona>>({
+    items: [],
+    total: 0,
+    page: 1,
+    limit: 20,
+    totalPages: 0,
+  });
   readonly cargando = signal(false);
   readonly error = signal<string | null>(null);
   textoBusqueda = '';

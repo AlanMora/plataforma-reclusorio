@@ -149,7 +149,7 @@ export class AuthService {
 
     const refreshTokenHash = hashToken(refreshToken);
     if (existingSid) {
-      await this.sessions.rotate(sessionId, refreshTokenHash);
+      await this.sessions.rotate(sessionId, refreshTokenHash, ttlToSeconds(refreshTtl));
     } else {
       await this.sessions.create(
         sessionId,

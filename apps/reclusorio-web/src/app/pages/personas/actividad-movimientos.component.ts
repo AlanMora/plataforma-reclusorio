@@ -6,6 +6,7 @@ import { CatalogosService } from '../../core/catalogos.service';
 import { ToastService } from '../../core/toast.service';
 import { PermisoDirective } from '../../core/permiso.directive';
 import { ArchivosPanelComponent } from '../../shared/archivos-panel.component';
+import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
 import { Movimiento, ValorCatalogo } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
 
@@ -13,7 +14,13 @@ import { mensajeDe } from '../../core/problem';
 @Component({
   selector: 'rw-actividad-movimientos',
   standalone: true,
-  imports: [DatePipe, FormsModule, PermisoDirective, ArchivosPanelComponent],
+  imports: [
+    DatePipe,
+    FormsModule,
+    PermisoDirective,
+    ArchivosPanelComponent,
+    SelectorFechaComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './actividad-movimientos.component.html',
 })
@@ -39,7 +46,14 @@ export class ActividadMovimientosComponent implements OnInit {
   mapaMotivos = new Map<string, string>();
   mapaCentros = new Map<string, string>();
 
-  forma: Record<string, string> = { idTipoMovimiento: '', idMotivoMovimiento: '', fecha: '', idCentroOrigen: '', idCentroDestino: '', ubicacion: '' };
+  forma: Record<string, string> = {
+    idTipoMovimiento: '',
+    idMotivoMovimiento: '',
+    fecha: '',
+    idCentroOrigen: '',
+    idCentroDestino: '',
+    ubicacion: '',
+  };
 
   ngOnInit(): void {
     void this.cargarCatalogos();
@@ -64,7 +78,14 @@ export class ActividadMovimientosComponent implements OnInit {
       });
       this.toast.ok('Movimiento registrado.');
       this.mostrarForm.set(false);
-      this.forma = { idTipoMovimiento: '', idMotivoMovimiento: '', fecha: '', idCentroOrigen: '', idCentroDestino: '', ubicacion: '' };
+      this.forma = {
+        idTipoMovimiento: '',
+        idMotivoMovimiento: '',
+        fecha: '',
+        idCentroOrigen: '',
+        idCentroDestino: '',
+        ubicacion: '',
+      };
       await this.cargar();
     } catch (err) {
       this.errorForm.set(mensajeDe(err));

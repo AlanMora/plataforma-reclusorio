@@ -6,6 +6,7 @@ import { CatalogosService } from '../../core/catalogos.service';
 import { ToastService } from '../../core/toast.service';
 import { PermisoDirective } from '../../core/permiso.directive';
 import { ArchivosPanelComponent } from '../../shared/archivos-panel.component';
+import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
 import { ElementoPickerComponent, nombreElemento } from '../../shared/elemento-picker.component';
 import { Audiencia, Elemento, ValorCatalogo } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
@@ -18,7 +19,14 @@ import { mensajeDe } from '../../core/problem';
 @Component({
   selector: 'rw-actividad-audiencias',
   standalone: true,
-  imports: [DatePipe, FormsModule, PermisoDirective, ArchivosPanelComponent, ElementoPickerComponent],
+  imports: [
+    DatePipe,
+    FormsModule,
+    PermisoDirective,
+    ArchivosPanelComponent,
+    ElementoPickerComponent,
+    SelectorFechaComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './actividad-audiencias.component.html',
 })
@@ -141,15 +149,16 @@ export class ActividadAudienciasComponent implements OnInit {
 
   private async cargarCatalogos(): Promise<void> {
     try {
-      const [formas, juzgados, jueces, tipos, modalidades, resoluciones, proximas] = await Promise.all([
-        this.catalogos.valores('forma_ingreso_audiencia'),
-        this.catalogos.valores('juzgados'),
-        this.catalogos.valores('juez_juzgados'),
-        this.catalogos.valores('tipo_audiencia'),
-        this.catalogos.valores('modalidad_audiencia'),
-        this.catalogos.valores('resolucion_audiencia'),
-        this.catalogos.valores('proxima_audiencia'),
-      ]);
+      const [formas, juzgados, jueces, tipos, modalidades, resoluciones, proximas] =
+        await Promise.all([
+          this.catalogos.valores('forma_ingreso_audiencia'),
+          this.catalogos.valores('juzgados'),
+          this.catalogos.valores('juez_juzgados'),
+          this.catalogos.valores('tipo_audiencia'),
+          this.catalogos.valores('modalidad_audiencia'),
+          this.catalogos.valores('resolucion_audiencia'),
+          this.catalogos.valores('proxima_audiencia'),
+        ]);
       this.formasIngreso.set(formas);
       this.juzgados.set(juzgados);
       this.jueces.set(jueces);
@@ -170,7 +179,9 @@ export class ActividadAudienciasComponent implements OnInit {
   private async cargar(): Promise<void> {
     this.cargando.set(true);
     try {
-      this.registros.set(await this.api.get<Audiencia[]>(`/api/v1/personas/${this.idPersona()}/audiencias`));
+      this.registros.set(
+        await this.api.get<Audiencia[]>(`/api/v1/personas/${this.idPersona()}/audiencias`),
+      );
     } catch (err) {
       this.error.set(mensajeDe(err));
     } finally {
