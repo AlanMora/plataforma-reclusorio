@@ -18,7 +18,9 @@ const CENTRO_JALISCO: L.LatLngTuple = [20.6, -103.35];
 
 /**
  * Módulo Penitenciarios: mapa general (Leaflet en blanco y negro) con un
- * punto por cada centro penitenciario del catálogo que tenga coordenadas.
+ * punto por cada centro penitenciario del catálogo que tenga coordenadas,
+ * el estado de Jalisco resaltado con su límite oficial (OSM) y el listado
+ * de centros como panel flotante sobre el propio mapa.
  * Las coordenadas se administran desde Catálogos → Centros penitenciarios.
  */
 @Component({
@@ -36,6 +38,8 @@ export class PenitenciariosComponent implements AfterViewInit, OnDestroy {
   readonly cargando = signal(true);
   readonly error = signal<string | null>(null);
   readonly seleccionado = signal<string | null>(null);
+  /** Panel flotante de centros dentro del mapa (colapsable). */
+  readonly panelAbierto = signal(true);
 
   readonly conUbicacion = computed(() =>
     this.centros().filter((c) => c.latitud != null && c.longitud != null),
@@ -52,7 +56,10 @@ export class PenitenciariosComponent implements AfterViewInit, OnDestroy {
       center: CENTRO_JALISCO,
       zoom: 8,
       attributionControl: true,
+      // El panel flotante vive en la esquina superior izquierda.
+      zoomControl: false,
     });
+    L.control.zoom({ position: 'topright' }).addTo(this.mapa);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap',
@@ -60,6 +67,7 @@ export class PenitenciariosComponent implements AfterViewInit, OnDestroy {
     }).addTo(this.mapa);
     setTimeout(() => this.mapa?.invalidateSize(), 0);
     void this.cargar();
+    void this.dibujarLimiteJalisco();
   }
 
   ngOnDestroy(): void {
@@ -91,6 +99,35 @@ export class PenitenciariosComponent implements AfterViewInit, OnDestroy {
       this.error.set(mensajeDe(err));
     } finally {
       this.cargando.set(false);
+    }
+  }
+
+  /**
+   * Resalta el estado de Jalisco con su límite administrativo oficial
+   * (polígono simplificado de OSM vía Nominatim). Es decorativo: si la
+   * consulta falla, el mapa sigue funcionando sin el borde.
+   */
+  private async dibujarLimiteJalisco(): Promise<void> {
+    try {
+      const url =
+        'https://nominatim.openstreetmap.org/search?state=Jalisco&country=M%C3%A9xico' +
+        '&format=jsonv2&limit=1&polygon_geojson=1&polygon_threshold=0.005';
+      const res = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!res.ok) return;
+      const [dato] = (await res.json()) as Array<{ geojson?: GeoJSON.GeoJsonObject }>;
+      if (!dato?.geojson || !this.mapa) return;
+      L.geoJSON(dato.geojson, {
+        style: {
+          color: '#22d3ee',
+          weight: 2,
+          opacity: 0.75,
+          fillColor: '#22d3ee',
+          fillOpacity: 0.035,
+        },
+        interactive: false,
+      }).addTo(this.mapa);
+    } catch {
+      // Sin borde: el resto del módulo no depende de esta consulta.
     }
   }
 
