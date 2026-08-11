@@ -24,7 +24,7 @@ export class ElementosComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
 
-  readonly pagina = signal<Paginado<Elemento>>({ items: [], total: 0, page: 1, limit: 20, totalPages: 0 });
+  readonly pagina = signal<Paginado<Elemento>>({ items: [], total: 0, page: 1, limit: 10, totalPages: 0 });
   readonly coincidencias = signal<Elemento[]>([]);
   readonly busquedaHecha = signal(false);
   readonly buscando = signal(false);
@@ -108,7 +108,7 @@ export class ElementosComponent implements OnInit {
 
   async cargarPadron(page: number): Promise<void> {
     try {
-      this.pagina.set(await this.api.get<Paginado<Elemento>>('/api/v1/elementos', { page, limit: 20 }));
+      this.pagina.set(await this.api.get<Paginado<Elemento>>('/api/v1/elementos', { page, limit: 10 }));
     } catch (err) {
       this.toast.error(mensajeDe(err));
     }

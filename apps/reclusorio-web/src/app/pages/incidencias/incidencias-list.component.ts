@@ -25,7 +25,7 @@ export class IncidenciasListComponent implements OnInit {
     items: [],
     total: 0,
     page: 1,
-    limit: 20,
+    limit: 10,
     totalPages: 0,
   });
   readonly cargando = signal(false);
@@ -56,7 +56,7 @@ export class IncidenciasListComponent implements OnInit {
     this.error.set(null);
     try {
       this.pagina.set(
-        await this.api.get<Paginado<Incidencia>>('/api/v1/incidencias', { page, limit: 20 }),
+        await this.api.get<Paginado<Incidencia>>('/api/v1/incidencias', { page, limit: 10 }),
       );
     } catch (err) {
       this.error.set(mensajeDe(err));

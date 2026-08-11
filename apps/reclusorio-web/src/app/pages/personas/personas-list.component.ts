@@ -26,7 +26,7 @@ export class PersonasListComponent implements OnInit {
     items: [],
     total: 0,
     page: 1,
-    limit: 20,
+    limit: 10,
     totalPages: 0,
   });
   readonly cargando = signal(false);
@@ -57,7 +57,7 @@ export class PersonasListComponent implements OnInit {
           buscar: this.textoBusqueda.trim() || undefined,
           curp: this.curpBusqueda.trim() || undefined,
           page,
-          limit: 20,
+          limit: 10,
         }),
       );
     } catch (err) {
