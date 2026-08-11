@@ -21,6 +21,7 @@ import { IngresosMovimientosModule } from './actividades/ingresos-movimientos.mo
 import { AudienciasTrasladosModule } from './actividades/audiencias-traslados.module';
 import { IncidenciasModule } from './incidencias/incidencias.module';
 import { ArchivosModule } from './archivos/archivos.module';
+import { ReportesModule } from './reportes/reportes.module';
 import { CatalogSeederService } from './seeds/seeder.service';
 import { Init1786043245489 } from '../migrations/1786043245489-Init';
 
@@ -52,6 +53,7 @@ import { Init1786043245489 } from '../migrations/1786043245489-Init';
     IngresosMovimientosModule,
     AudienciasTrasladosModule,
     IncidenciasModule,
+    ReportesModule,
     ArchivosModule,
   ],
   providers: [

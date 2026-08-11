@@ -84,6 +84,13 @@ export const appRoutes: Route[] = [
           import('./pages/catalogos/catalogos.component').then((m) => m.CatalogosComponent),
       },
       {
+        path: 'reportes',
+        canActivate: [permisoGuard],
+        data: { permiso: 'personas:consultar' },
+        loadComponent: () =>
+          import('./pages/reportes/reportes.component').then((m) => m.ReportesComponent),
+      },
+      {
         path: 'penitenciarios',
         loadComponent: () =>
           import('./pages/penitenciarios/penitenciarios.component').then(

@@ -1,0 +1,125 @@
+<div class="mx-auto max-w-6xl space-y-5">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="etiqueta">Módulo</p>
+      <h2 class="text-2xl font-bold text-slate-100">Reporte de actividades</h2>
+      <p class="mt-1 max-w-xl text-sm text-slate-500">
+        Consolidado de ingresos/libertades, movimientos, audiencias, traslados e incidencias en el
+        periodo elegido, con su estado de validación. El CSV exportado incluye todos los detalles.
+      </p>
+    </div>
+    @if (consultado()) {
+      <div class="flex items-center gap-2">
+        <span class="chip-neon">{{ resumen().total }} registro(s)</span>
+        <span class="chip-alerta">{{ resumen().PENDIENTE }} pendientes</span>
+        <span class="chip-ok">{{ resumen().CONFIRMADO }} confirmados</span>
+        <span class="chip-peligro">{{ resumen().DESCARTADO }} descartados</span>
+      </div>
+    }
+  </div>
+
+  <!-- Filtros -->
+  <form class="panel grid gap-4 p-5 md:grid-cols-[1fr_1fr_1fr_auto]" (ngSubmit)="generar()">
+    <div>
+      <label class="campo-etiqueta obligatorio" for="repDesde">Desde</label>
+      <rw-selector-fecha idCampo="repDesde" name="desde" [conHora]="true" [(ngModel)]="desde" />
+    </div>
+    <div>
+      <label class="campo-etiqueta obligatorio" for="repHasta">Hasta (exclusivo)</label>
+      <rw-selector-fecha idCampo="repHasta" name="hasta" [conHora]="true" [(ngModel)]="hasta" />
+    </div>
+    <div>
+      <label class="campo-etiqueta" for="repModulo">Módulo</label>
+      <rw-select-buscable
+        idCampo="repModulo"
+        name="modulo"
+        placeholder="— Todos los módulos —"
+        [opciones]="modulos"
+        [(ngModel)]="modulo"
+      />
+    </div>
+    <div class="flex items-end gap-2">
+      <button
+        class="btn-secundario"
+        type="button"
+        title="00:00 de hoy a 00:00 de mañana"
+        (click)="hoy()"
+      >
+        Hoy
+      </button>
+      <button class="btn-primario" type="submit" [disabled]="cargando()">
+        {{ cargando() ? 'Generando…' : 'Generar' }}
+      </button>
+    </div>
+  </form>
+
+  @if (error()) {
+    <p class="alerta-error">{{ error() }}</p>
+  }
+
+  @if (consultado() && !cargando()) {
+    <div class="panel space-y-4 p-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <p class="etiqueta">Actividades del periodo</p>
+        <button
+          class="btn-primario btn-mini"
+          type="button"
+          [disabled]="filas().length === 0"
+          (click)="exportarCsv()"
+        >
+          ⇩ Exportar CSV
+        </button>
+      </div>
+
+      @if (filas().length === 0) {
+        <p class="py-8 text-center text-sm text-slate-600">
+          Sin actividades registradas en el periodo seleccionado.
+        </p>
+      } @else {
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Módulo</th>
+              <th>Persona</th>
+              <th>Detalle</th>
+              <th>Revisión</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (f of filas(); track f.modulo + f.id) {
+              <tr>
+                <td class="whitespace-nowrap font-mono text-xs">
+                  {{ f.fecha | date: 'dd/MM/yy HH:mm' }}
+                </td>
+                <td>
+                  <span class="chip-neon">{{ etiquetaModulo(f.modulo) }}</span>
+                </td>
+                <td class="max-w-[180px] truncate" [title]="f.persona || ''">
+                  {{ f.persona || '—' }}
+                </td>
+                <td class="max-w-[420px]">
+                  <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-slate-400">
+                    @for (d of detalleDe(f); track d.clave) {
+                      <span class="max-w-[260px] truncate" [title]="d.clave + ': ' + d.valor">
+                        <span class="font-mono text-[9px] uppercase tracking-wider text-slate-600">
+                          {{ d.clave }}
+                        </span>
+                        {{ d.valor }}
+                      </span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <span [class]="claseEstado(f.estadoRevision)">
+                    {{ f.estadoRevision.toLowerCase() }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  }
+</div>

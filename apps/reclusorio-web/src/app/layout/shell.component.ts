@@ -24,6 +24,7 @@ const MENU: ItemMenu[] = [
   { ruta: '/incidencias', etiqueta: 'Incidencias', icono: '▲', permiso: 'incidencias:consultar' },
   { ruta: '/catalogos', etiqueta: 'Catálogos', icono: '≡', permiso: 'catalogos:administrar' },
   { ruta: '/penitenciarios', etiqueta: 'Penitenciarios', icono: '⌖' },
+  { ruta: '/reportes', etiqueta: 'Reportes', icono: '▤', permiso: 'personas:consultar' },
   { ruta: '/notificaciones', etiqueta: 'Notificaciones', icono: '◎' },
   { ruta: '/cuenta', etiqueta: 'Mi cuenta', icono: '□' },
 ];

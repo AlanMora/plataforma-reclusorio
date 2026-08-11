@@ -37,6 +37,7 @@ export const UPSTREAM_ROUTES: UpstreamRoute[] = [
   { prefix: '/api/v1/traslados', envKey: 'RECLUSORIO_SERVICE_URL', fallback: 'http://localhost:3010', protected: true },
   { prefix: '/api/v1/ingresos-egresos', envKey: 'RECLUSORIO_SERVICE_URL', fallback: 'http://localhost:3010', protected: true },
   { prefix: '/api/v1/movimientos', envKey: 'RECLUSORIO_SERVICE_URL', fallback: 'http://localhost:3010', protected: true },
+  { prefix: '/api/v1/reportes', envKey: 'RECLUSORIO_SERVICE_URL', fallback: 'http://localhost:3010', protected: true },
 ];
 
 export function resolveTarget(route: UpstreamRoute, config: ConfigService): string {
