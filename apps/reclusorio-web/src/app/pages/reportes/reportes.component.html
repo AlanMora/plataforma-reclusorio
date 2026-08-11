@@ -19,7 +19,11 @@
   </div>
 
   <!-- Filtros -->
-  <form class="panel grid gap-4 p-5 md:grid-cols-[1fr_1fr_1fr_auto]" (ngSubmit)="generar()">
+  <!-- z-20: los desplegables (calendarios y módulo) deben quedar SOBRE el panel de resultados. -->
+  <form
+    class="panel relative z-20 grid gap-4 p-5 md:grid-cols-[1fr_1fr_1fr_auto]"
+    (ngSubmit)="generar()"
+  >
     <div>
       <label class="campo-etiqueta obligatorio" for="repDesde">Desde</label>
       <rw-selector-fecha idCampo="repDesde" name="desde" [conHora]="true" [(ngModel)]="desde" />
