@@ -157,49 +157,34 @@
                 </div>
                 <div>
                   <label class="campo-etiqueta" for="domPais">País</label>
-                  <select
-                    class="campo"
-                    id="domPais"
+                  <rw-select-buscable
+                    idCampo="domPais"
                     name="pais"
+                    [opciones]="paisesOpciones()"
                     [(ngModel)]="domicilio.pais"
                     (ngModelChange)="alCambiarPais()"
-                  >
-                    <option value="">— Seleccione —</option>
-                    @for (p of paisesOpciones(); track p) {
-                      <option [value]="p">{{ p }}</option>
-                    }
-                  </select>
+                  />
                 </div>
                 <div>
                   <label class="campo-etiqueta" for="domEstado">Estado</label>
-                  <select
-                    class="campo"
-                    id="domEstado"
+                  <rw-select-buscable
+                    idCampo="domEstado"
                     name="estado"
+                    [opciones]="estadosOpciones()"
                     [disabled]="!domicilio.pais"
                     [(ngModel)]="domicilio.estado"
                     (ngModelChange)="alCambiarEstado()"
-                  >
-                    <option value="">— Seleccione —</option>
-                    @for (e of estadosOpciones(); track e) {
-                      <option [value]="e">{{ e }}</option>
-                    }
-                  </select>
+                  />
                 </div>
                 <div>
                   <label class="campo-etiqueta" for="domMunicipio">Municipio</label>
-                  <select
-                    class="campo"
-                    id="domMunicipio"
+                  <rw-select-buscable
+                    idCampo="domMunicipio"
                     name="municipio"
+                    [opciones]="municipiosOpciones()"
                     [disabled]="!domicilio.estado"
                     [(ngModel)]="domicilio.municipio"
-                  >
-                    <option value="">— Seleccione —</option>
-                    @for (m of municipiosOpciones(); track m) {
-                      <option [value]="m">{{ m }}</option>
-                    }
-                  </select>
+                  />
                 </div>
                 @if (errorDomicilio()) {
                   <p class="alerta-error md:col-span-3">{{ errorDomicilio() }}</p>

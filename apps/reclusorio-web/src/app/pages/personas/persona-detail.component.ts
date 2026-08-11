@@ -18,6 +18,7 @@ import {
   DomicilioGeocodificado,
   MapaDomicilioComponent,
 } from '../../shared/mapa-domicilio.component';
+import { SelectBuscableComponent } from '../../shared/select-buscable.component';
 import {
   PAISES_DUMMY,
   canonizar,
@@ -73,6 +74,7 @@ const PESTANAS: { clave: Pestana; etiqueta: string }[] = [
     ActividadAudienciasComponent,
     ActividadTrasladosComponent,
     MapaDomicilioComponent,
+    SelectBuscableComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './persona-detail.component.html',

@@ -67,68 +67,57 @@
     </div>
     <div>
       <label class="campo-etiqueta" for="genero">Género</label>
-      <select class="campo" id="genero" name="genero" [(ngModel)]="modelo.genero">
-        <option value="">— Seleccione —</option>
-        @for (g of generosOpciones(); track g) {
-          <option [value]="g">{{ g }}</option>
-        }
-      </select>
+      <rw-select-buscable
+        idCampo="genero"
+        name="genero"
+        [opciones]="generosOpciones()"
+        [(ngModel)]="modelo.genero"
+      />
     </div>
     <div>
       <label class="campo-etiqueta" for="estadoCivil">Estado civil</label>
-      <select class="campo" id="estadoCivil" name="estadoCivil" [(ngModel)]="modelo.estadoCivil">
-        <option value="">— Seleccione —</option>
-        @for (e of estadosCivilesOpciones(); track e) {
-          <option [value]="e">{{ e }}</option>
-        }
-      </select>
+      <rw-select-buscable
+        idCampo="estadoCivil"
+        name="estadoCivil"
+        [opciones]="estadosCivilesOpciones()"
+        [(ngModel)]="modelo.estadoCivil"
+      />
     </div>
     <div>
       <label class="campo-etiqueta" for="nivelEducativo">Nivel educativo</label>
-      <select
-        class="campo"
-        id="nivelEducativo"
+      <rw-select-buscable
+        idCampo="nivelEducativo"
         name="nivelEducativo"
+        [opciones]="nivelesEducativosOpciones()"
         [(ngModel)]="modelo.nivelEducativo"
-      >
-        <option value="">— Seleccione —</option>
-        @for (n of nivelesEducativosOpciones(); track n) {
-          <option [value]="n">{{ n }}</option>
-        }
-      </select>
+      />
     </div>
     <div>
       <label class="campo-etiqueta" for="ocupacion">Ocupación</label>
-      <input
-        class="campo"
-        id="ocupacion"
+      <rw-select-buscable
+        idCampo="ocupacion"
         name="ocupacion"
-        maxlength="50"
+        [opciones]="ocupacionesOpciones()"
         [(ngModel)]="modelo.ocupacion"
       />
     </div>
     <div>
       <label class="campo-etiqueta" for="nacionalidad">Nacionalidad</label>
-      <select class="campo" id="nacionalidad" name="nacionalidad" [(ngModel)]="modelo.nacionalidad">
-        <option value="">— Seleccione —</option>
-        @for (n of nacionalidadesOpciones(); track n) {
-          <option [value]="n">{{ n }}</option>
-        }
-      </select>
+      <rw-select-buscable
+        idCampo="nacionalidad"
+        name="nacionalidad"
+        [opciones]="nacionalidadesOpciones()"
+        [(ngModel)]="modelo.nacionalidad"
+      />
     </div>
     <div>
       <label class="campo-etiqueta" for="estadoNacimiento">Estado de nacimiento</label>
-      <select
-        class="campo"
-        id="estadoNacimiento"
+      <rw-select-buscable
+        idCampo="estadoNacimiento"
         name="estadoNacimiento"
+        [opciones]="estadosNacimientoOpciones()"
         [(ngModel)]="modelo.estadoNacimiento"
-      >
-        <option value="">— Seleccione —</option>
-        @for (e of estadosNacimientoOpciones(); track e) {
-          <option [value]="e">{{ e }}</option>
-        }
-      </select>
+      />
     </div>
     <div>
       <label class="campo-etiqueta" for="numeroTelefono">Teléfono</label>

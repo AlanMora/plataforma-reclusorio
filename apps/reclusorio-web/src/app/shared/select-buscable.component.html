@@ -1,0 +1,59 @@
+<div class="relative">
+  <button
+    class="campo flex items-center justify-between gap-2 text-left"
+    type="button"
+    [id]="idCampo()"
+    [disabled]="deshabilitado()"
+    (click)="alternar()"
+  >
+    <span class="truncate" [class.text-slate-600]="!valor()">{{ valor() || placeholder() }}</span>
+    <span class="shrink-0 text-[9px] text-slate-500">▼</span>
+  </button>
+
+  @if (abierto()) {
+    <div
+      class="absolute left-0 right-0 top-full z-[1100] mt-1 overflow-hidden rounded-lg border border-borde bg-panel-2 shadow-xl shadow-black/50"
+    >
+      <div class="border-b border-borde p-2">
+        <input
+          #campoBusqueda
+          class="campo"
+          type="text"
+          placeholder="Buscar…"
+          autocomplete="off"
+          [value]="filtro()"
+          (input)="filtro.set(campoBusqueda.value)"
+          (keydown.enter)="elegirPrimera($event)"
+          (keydown.escape)="cerrar()"
+        />
+      </div>
+      <ul class="max-h-56 overflow-y-auto">
+        <li>
+          <button
+            class="block w-full px-3 py-2 text-left text-xs text-slate-500 hover:bg-neon/10 hover:text-neon"
+            type="button"
+            (click)="elegir('')"
+          >
+            {{ placeholder() }}
+          </button>
+        </li>
+        @for (o of filtradas(); track o) {
+          <li>
+            <button
+              class="block w-full px-3 py-2 text-left text-xs hover:bg-neon/10 hover:text-neon"
+              [class.text-neon]="o === valor()"
+              [class.text-slate-300]="o !== valor()"
+              type="button"
+              (click)="elegir(o)"
+            >
+              {{ o }}
+            </button>
+          </li>
+        }
+        @if (filtradas().length === 0) {
+          <li class="px-3 py-2 text-xs text-slate-600">Sin coincidencias.</li>
+        }
+      </ul>
+    </div>
+  }
+</div>

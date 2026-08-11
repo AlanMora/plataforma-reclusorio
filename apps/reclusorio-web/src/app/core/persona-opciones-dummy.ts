@@ -33,6 +33,28 @@ export const NIVELES_EDUCATIVOS_DUMMY = [
   'Doctorado',
 ];
 
+export const OCUPACIONES_DUMMY = [
+  'Empleado(a)',
+  'Comerciante',
+  'Obrero(a)',
+  'Agricultor(a)',
+  'Albañil',
+  'Carpintero(a)',
+  'Electricista',
+  'Plomero(a)',
+  'Mecánico(a)',
+  'Chofer / transportista',
+  'Cocinero(a)',
+  'Mesero(a)',
+  'Personal de seguridad',
+  'Técnico(a)',
+  'Profesionista',
+  'Estudiante',
+  'Labores del hogar',
+  'Desempleado(a)',
+  'Otra',
+];
+
 export const NACIONALIDADES_DUMMY = [
   'Mexicana',
   'Estadounidense',

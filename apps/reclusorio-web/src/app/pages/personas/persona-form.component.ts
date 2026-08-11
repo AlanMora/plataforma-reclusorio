@@ -19,7 +19,9 @@ import {
   GENEROS_DUMMY,
   NACIONALIDADES_DUMMY,
   NIVELES_EDUCATIVOS_DUMMY,
+  OCUPACIONES_DUMMY,
 } from '../../core/persona-opciones-dummy';
+import { SelectBuscableComponent } from '../../shared/select-buscable.component';
 
 /**
  * Alta y modificación de personas (RF-PER-003/005).
@@ -31,7 +33,7 @@ import {
 @Component({
   selector: 'rw-persona-form',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, SelectBuscableComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './persona-form.component.html',
 })
@@ -76,6 +78,10 @@ export class PersonaFormComponent implements OnInit {
 
   nivelesEducativosOpciones(): string[] {
     return conValorActual(NIVELES_EDUCATIVOS_DUMMY, this.modelo['nivelEducativo']);
+  }
+
+  ocupacionesOpciones(): string[] {
+    return conValorActual(OCUPACIONES_DUMMY, this.modelo['ocupacion']);
   }
 
   nacionalidadesOpciones(): string[] {
