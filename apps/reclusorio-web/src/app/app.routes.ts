@@ -18,7 +18,8 @@ export const appRoutes: Route[] = [
       {
         path: '',
         pathMatch: 'full',
-        loadComponent: () => import('./pages/dashboard.component').then((m) => m.DashboardComponent),
+        loadComponent: () =>
+          import('./pages/dashboard.component').then((m) => m.DashboardComponent),
       },
       {
         path: 'personas',
@@ -53,21 +54,27 @@ export const appRoutes: Route[] = [
         canActivate: [permisoGuard],
         data: { permiso: 'incidencias:consultar' },
         loadComponent: () =>
-          import('./pages/incidencias/incidencias-list.component').then((m) => m.IncidenciasListComponent),
+          import('./pages/incidencias/incidencias-list.component').then(
+            (m) => m.IncidenciasListComponent,
+          ),
       },
       {
         path: 'incidencias/nueva',
         canActivate: [permisoGuard],
         data: { permiso: 'incidencias:crear' },
         loadComponent: () =>
-          import('./pages/incidencias/incidencia-nueva.component').then((m) => m.IncidenciaNuevaComponent),
+          import('./pages/incidencias/incidencia-nueva.component').then(
+            (m) => m.IncidenciaNuevaComponent,
+          ),
       },
       {
         path: 'incidencias/:idIncidencia',
         canActivate: [permisoGuard],
         data: { permiso: 'incidencias:consultar' },
         loadComponent: () =>
-          import('./pages/incidencias/incidencia-detail.component').then((m) => m.IncidenciaDetailComponent),
+          import('./pages/incidencias/incidencia-detail.component').then(
+            (m) => m.IncidenciaDetailComponent,
+          ),
       },
       {
         path: 'catalogos',
@@ -75,6 +82,13 @@ export const appRoutes: Route[] = [
         data: { permiso: 'catalogos:administrar' },
         loadComponent: () =>
           import('./pages/catalogos/catalogos.component').then((m) => m.CatalogosComponent),
+      },
+      {
+        path: 'penitenciarios',
+        loadComponent: () =>
+          import('./pages/penitenciarios/penitenciarios.component').then(
+            (m) => m.PenitenciariosComponent,
+          ),
       },
       {
         path: 'notificaciones',

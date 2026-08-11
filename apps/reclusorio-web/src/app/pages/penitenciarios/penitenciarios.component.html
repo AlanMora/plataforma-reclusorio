@@ -1,0 +1,69 @@
+<div class="mx-auto max-w-6xl space-y-5">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="etiqueta">Módulo</p>
+      <h2 class="text-2xl font-bold text-slate-100">Penitenciarios</h2>
+      <p class="mt-1 max-w-xl text-sm text-slate-500">
+        Ubicación geográfica de los centros penitenciarios del catálogo. Las coordenadas se
+        administran en Catálogos → Centros penitenciarios.
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="chip-ok">{{ conUbicacion().length }} con ubicación</span>
+      @if (sinUbicacion().length > 0) {
+        <span class="chip-alerta">{{ sinUbicacion().length }} sin ubicación</span>
+      }
+    </div>
+  </div>
+
+  @if (error()) {
+    <p class="alerta-error">{{ error() }}</p>
+  }
+
+  <div class="grid gap-5 lg:grid-cols-[320px_1fr]">
+    <!-- Listado de centros -->
+    <div class="panel flex max-h-[70vh] flex-col p-3">
+      <div class="flex items-center justify-between px-2 py-1">
+        <p class="etiqueta">Centros ({{ centros().length }})</p>
+        <button class="btn-secundario btn-mini" type="button" (click)="verTodos()">
+          Ver todos
+        </button>
+      </div>
+      <div class="grow space-y-1 overflow-y-auto">
+        @if (cargando()) {
+          <p class="etiqueta animate-pulse px-2 py-3">Cargando centros…</p>
+        }
+        @for (c of conUbicacion(); track c.id) {
+          <button
+            class="nav-item w-full text-left"
+            [class.activo]="seleccionado() === c.id"
+            type="button"
+            (click)="enfocar(c)"
+          >
+            <span class="w-4 shrink-0 text-center text-neon/70">📍</span>
+            <span class="min-w-0">
+              <span class="block truncate text-xs">{{ c.nombre }}</span>
+              <span class="block font-mono text-[9px] text-slate-600">
+                {{ c.latitud }}, {{ c.longitud }}
+              </span>
+            </span>
+          </button>
+        }
+        @if (sinUbicacion().length > 0) {
+          <p class="etiqueta px-2 pb-1 pt-3">Sin ubicación registrada</p>
+          @for (c of sinUbicacion(); track c.id) {
+            <div class="nav-item w-full cursor-default opacity-60">
+              <span class="w-4 shrink-0 text-center text-slate-600">◌</span>
+              <span class="block min-w-0 truncate text-xs">{{ c.nombre }}</span>
+            </div>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- Mapa general -->
+    <div class="panel overflow-hidden p-0">
+      <div #contenedor class="mapa-bn h-[70vh] w-full"></div>
+    </div>
+  </div>
+</div>

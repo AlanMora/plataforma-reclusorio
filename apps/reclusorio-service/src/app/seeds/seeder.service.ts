@@ -27,6 +27,7 @@ import {
   SEED_AUTORIDAD,
   SEED_CATALOGOS_FIJOS,
   SEED_CENTROS,
+  SEED_CENTROS_COORDENADAS,
   SEED_DELITOS,
   SEED_DESTINO_TRASLADO,
   SEED_JUEZ_JUZGADOS,
@@ -88,10 +89,34 @@ export class CatalogSeederService implements OnApplicationBootstrap {
     for (const { entidad, tabla } of FIJOS) {
       insertados += await this.sembrar(entidad, SEED_CATALOGOS_FIJOS[tabla], true);
     }
+    insertados += await this.sembrarCoordenadasCentros();
 
     if (insertados > 0) {
       this.logger.log(`Catálogos sembrados: ${insertados} valores nuevos`);
     }
+  }
+
+  /**
+   * Coordenadas iniciales de los centros penitenciarios: solo se asignan a
+   * centros SIN coordenadas, para no pisar los ajustes hechos desde el mapa.
+   */
+  private async sembrarCoordenadasCentros(): Promise<number> {
+    const repo = this.dataSource.getRepository(Centro);
+    const centros = await repo.find();
+    const coordenadas = new Map(
+      Object.entries(SEED_CENTROS_COORDENADAS).map(([nombre, c]) => [this.normalizar(nombre), c]),
+    );
+    let count = 0;
+    for (const centro of centros) {
+      if (centro.latitud != null && centro.longitud != null) continue;
+      const coord = coordenadas.get(this.normalizar(centro.nombre));
+      if (!coord) continue;
+      centro.latitud = coord[0];
+      centro.longitud = coord[1];
+      await repo.save(centro);
+      count++;
+    }
+    return count;
   }
 
   /** Inserta los valores faltantes; con `conOrden` asigna la posición (catálogos fijos). */

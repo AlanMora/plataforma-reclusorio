@@ -200,12 +200,7 @@ export interface IncidenciaDetalle extends Incidencia {
 }
 
 export type ReferenciaArchivo =
-  | 'idPersona'
-  | 'idIngresoEgreso'
-  | 'idMovimiento'
-  | 'idAudiencia'
-  | 'idTraslado'
-  | 'idIncidencia';
+  'idPersona' | 'idIngresoEgreso' | 'idMovimiento' | 'idAudiencia' | 'idTraslado' | 'idIncidencia';
 
 export interface Archivo {
   idArchivo: string;
@@ -227,6 +222,9 @@ export interface ValorCatalogo {
   nombre: string;
   descripcion?: string;
   activo: boolean;
+  /** Solo centros penitenciarios (módulo de mapa, P9). */
+  latitud?: number | null;
+  longitud?: number | null;
 }
 
 export interface Notificacion {

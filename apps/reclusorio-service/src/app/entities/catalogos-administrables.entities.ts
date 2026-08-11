@@ -58,6 +58,14 @@ export class Centro extends CatalogoAdministrableBase {
   @PrimaryColumn('uuid')
   idCentro!: string;
 
+  // Ubicación geográfica del centro penitenciario para el módulo de mapa
+  // (decisión del equipo 2026-08-11, registrada como P9 en el PLAN).
+  @Column({ type: 'double precision', nullable: true })
+  latitud?: number;
+
+  @Column({ type: 'double precision', nullable: true })
+  longitud?: number;
+
   @BeforeInsert()
   asignarId(): void {
     if (!this.idCentro) this.idCentro = uuidv7();

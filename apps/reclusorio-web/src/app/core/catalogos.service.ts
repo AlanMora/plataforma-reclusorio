@@ -93,7 +93,10 @@ export class CatalogosService {
       .then((filas) => filas.map((f) => normalizar(slug, f)));
   }
 
-  crear(slug: string, dto: { nombre: string; descripcion?: string }): Promise<ValorCatalogo> {
+  crear(
+    slug: string,
+    dto: { nombre: string; descripcion?: string; latitud?: number; longitud?: number },
+  ): Promise<ValorCatalogo> {
     this.invalidar(slug);
     return this.api
       .post<Record<string, unknown>>(`/api/v1/catalogos/${slug}`, dto)
@@ -103,7 +106,7 @@ export class CatalogosService {
   corregir(
     slug: string,
     id: string,
-    dto: { nombre?: string; descripcion?: string },
+    dto: { nombre?: string; descripcion?: string; latitud?: number; longitud?: number },
   ): Promise<ValorCatalogo> {
     this.invalidar(slug);
     return this.api
@@ -137,5 +140,7 @@ function normalizar(slug: string, fila: Record<string, unknown>): ValorCatalogo 
     nombre: String(fila['nombre'] ?? ''),
     descripcion: (fila['descripcion'] as string | undefined) ?? undefined,
     activo: (fila['activo'] as boolean | undefined) ?? true,
+    latitud: (fila['latitud'] as number | null | undefined) ?? null,
+    longitud: (fila['longitud'] as number | null | undefined) ?? null,
   };
 }

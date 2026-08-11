@@ -12,7 +12,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, ObjectType } from 'typeorm';
-import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { DatabaseModule } from '@icms/database';
 import { BusinessRuleException, EntityNotFoundException } from '@icms/common';
@@ -69,11 +69,17 @@ const FIJOS: Record<string, { entidad: ObjectType<object>; pk: string }> = {
 class CrearValorDto {
   @IsString() @MaxLength(255) nombre!: string;
   @IsOptional() @IsString() @MaxLength(500) descripcion?: string;
+  /** Solo para `centros` (módulo de mapa, P9): coordenadas del penitenciario. */
+  @IsOptional() @IsNumber() @Min(-90) @Max(90) latitud?: number;
+  @IsOptional() @IsNumber() @Min(-180) @Max(180) longitud?: number;
 }
 
 class CorregirValorDto {
   @IsOptional() @IsString() @MaxLength(255) nombre?: string;
   @IsOptional() @IsString() @MaxLength(500) descripcion?: string;
+  /** Solo para `centros` (módulo de mapa, P9): coordenadas del penitenciario. */
+  @IsOptional() @IsNumber() @Min(-90) @Max(90) latitud?: number;
+  @IsOptional() @IsNumber() @Min(-180) @Max(180) longitud?: number;
 }
 
 class ListarQuery {
@@ -133,7 +139,17 @@ export class CatalogosService {
     const { entidad } = this.admin(catalogo);
     const repo = this.dataSource.getRepository(entidad);
     await this.rechazarDuplicado(catalogo, dto.nombre);
-    return repo.save(repo.create({ nombre: dto.nombre.trim(), descripcion: dto.descripcion, activo: true }));
+    const fila: Record<string, unknown> = {
+      nombre: dto.nombre.trim(),
+      descripcion: dto.descripcion,
+      activo: true,
+    };
+    // Coordenadas: solo el catálogo de centros penitenciarios las tiene (P9).
+    if (catalogo === 'centros') {
+      if (dto.latitud !== undefined) fila['latitud'] = dto.latitud;
+      if (dto.longitud !== undefined) fila['longitud'] = dto.longitud;
+    }
+    return repo.save(repo.create(fila));
   }
 
   /** RF-CAT-003: corrige nombre/descripción conservando el mismo UUID. */
@@ -147,6 +163,10 @@ export class CatalogosService {
       valor['nombre'] = dto.nombre.trim();
     }
     if (dto.descripcion !== undefined) valor['descripcion'] = dto.descripcion;
+    if (catalogo === 'centros') {
+      if (dto.latitud !== undefined) valor['latitud'] = dto.latitud;
+      if (dto.longitud !== undefined) valor['longitud'] = dto.longitud;
+    }
     return repo.save(valor);
   }
 

@@ -41,7 +41,13 @@
         <h3 class="titulo">{{ etiquetaActual() }}</h3>
         @if (!esFijo()) {
           <label class="flex items-center gap-2 text-sm text-slate-400">
-            <input type="checkbox" class="accent-neon" [ngModel]="incluirInactivos()" (ngModelChange)="alternarInactivos($event)" name="incluirInactivos" />
+            <input
+              type="checkbox"
+              class="accent-neon"
+              [ngModel]="incluirInactivos()"
+              (ngModelChange)="alternarInactivos($event)"
+              name="incluirInactivos"
+            />
             Incluir inactivos
           </label>
         } @else {
@@ -50,14 +56,30 @@
       </div>
 
       @if (!esFijo()) {
-        <form class="flex flex-wrap items-end gap-3 rounded-lg border border-borde p-3" (ngSubmit)="crear()">
+        <form
+          class="flex flex-wrap items-end gap-3 rounded-lg border border-borde p-3"
+          (ngSubmit)="crear()"
+        >
           <div class="grow">
             <label class="campo-etiqueta obligatorio" for="nuevoNombre">Nuevo valor</label>
-            <input class="campo" id="nuevoNombre" name="nombre" maxlength="255" required [(ngModel)]="nuevo.nombre" />
+            <input
+              class="campo"
+              id="nuevoNombre"
+              name="nombre"
+              maxlength="255"
+              required
+              [(ngModel)]="nuevo.nombre"
+            />
           </div>
           <div class="grow">
             <label class="campo-etiqueta" for="nuevaDescripcion">Descripción</label>
-            <input class="campo" id="nuevaDescripcion" name="descripcion" maxlength="500" [(ngModel)]="nuevo.descripcion" />
+            <input
+              class="campo"
+              id="nuevaDescripcion"
+              name="descripcion"
+              maxlength="500"
+              [(ngModel)]="nuevo.descripcion"
+            />
           </div>
           <button class="btn-primario" type="submit" [disabled]="guardando()">Agregar</button>
         </form>
@@ -86,34 +108,116 @@
               <tr>
                 @if (enEdicion() === v.id) {
                   <td>
-                    <input class="campo" name="nombreEdit" maxlength="255" [(ngModel)]="edicion.nombre" />
+                    <input
+                      class="campo"
+                      name="nombreEdit"
+                      maxlength="255"
+                      [(ngModel)]="edicion.nombre"
+                    />
                   </td>
                   <td>
-                    <input class="campo" name="descripcionEdit" maxlength="500" [(ngModel)]="edicion.descripcion" />
+                    <input
+                      class="campo"
+                      name="descripcionEdit"
+                      maxlength="500"
+                      [(ngModel)]="edicion.descripcion"
+                    />
                   </td>
                   <td></td>
                   <td class="text-right">
-                    <button class="btn-primario btn-mini" type="button" [disabled]="guardando()" (click)="guardarCorreccion(v)">Guardar</button>
-                    <button class="btn-secundario btn-mini ml-2" type="button" (click)="enEdicion.set(null)">Cancelar</button>
+                    <button
+                      class="btn-primario btn-mini"
+                      type="button"
+                      [disabled]="guardando()"
+                      (click)="guardarCorreccion(v)"
+                    >
+                      Guardar
+                    </button>
+                    <button
+                      class="btn-secundario btn-mini ml-2"
+                      type="button"
+                      (click)="enEdicion.set(null)"
+                    >
+                      Cancelar
+                    </button>
                   </td>
                 } @else {
-                  <td class="text-slate-100">{{ v.nombre }}</td>
-                  <td class="max-w-[280px] truncate" [title]="v.descripcion || ''">{{ v.descripcion || '—' }}</td>
+                  <td class="text-slate-100">
+                    {{ v.nombre }}
+                    @if (esCentros() && v.latitud != null && v.longitud != null) {
+                      <span class="mt-1 block font-mono text-[10px] text-slate-500"
+                        >📍 {{ v.latitud }}, {{ v.longitud }}</span
+                      >
+                    } @else if (esCentros()) {
+                      <span
+                        class="mt-1 block font-mono text-[10px] uppercase tracking-widest text-alerta/70"
+                        >sin ubicación</span
+                      >
+                    }
+                  </td>
+                  <td class="max-w-[280px] truncate" [title]="v.descripcion || ''">
+                    {{ v.descripcion || '—' }}
+                  </td>
                   <td>
-                    <span [class]="v.activo ? 'chip-ok' : 'chip-apagado'">{{ v.activo ? 'activo' : 'inactivo' }}</span>
+                    <span [class]="v.activo ? 'chip-ok' : 'chip-apagado'">{{
+                      v.activo ? 'activo' : 'inactivo'
+                    }}</span>
                   </td>
                   @if (!esFijo()) {
                     <td class="text-right">
-                      <button class="btn-secundario btn-mini" type="button" (click)="iniciarCorreccion(v)">Corregir</button>
+                      <button
+                        class="btn-secundario btn-mini"
+                        type="button"
+                        (click)="iniciarCorreccion(v)"
+                      >
+                        Corregir
+                      </button>
                       @if (v.activo) {
-                        <button class="btn-peligro btn-mini ml-2" type="button" (click)="desactivar(v)">Desactivar</button>
+                        <button
+                          class="btn-peligro btn-mini ml-2"
+                          type="button"
+                          (click)="desactivar(v)"
+                        >
+                          Desactivar
+                        </button>
                       } @else {
-                        <button class="btn-primario btn-mini ml-2" type="button" (click)="reactivar(v)">Reactivar</button>
+                        <button
+                          class="btn-primario btn-mini ml-2"
+                          type="button"
+                          (click)="reactivar(v)"
+                        >
+                          Reactivar
+                        </button>
                       }
                     </td>
                   }
                 }
               </tr>
+              @if (enEdicion() === v.id && esCentros()) {
+                <tr>
+                  <td colspan="4" class="!border-b-0 pb-4">
+                    <div class="rounded-lg border border-borde bg-panel-2/40 p-4">
+                      <p class="etiqueta mb-2">Ubicación del centro penitenciario</p>
+                      <rw-mapa-domicilio
+                        [lat]="edicion.latitud"
+                        [lng]="edicion.longitud"
+                        (domicilio)="alUbicarCentro($event)"
+                      />
+                      @if (edicion.latitud !== null && edicion.longitud !== null) {
+                        <p
+                          class="mt-2 font-mono text-[10px] uppercase tracking-widest text-slate-500"
+                        >
+                          Coordenadas a guardar: {{ edicion.latitud }}, {{ edicion.longitud }}
+                        </p>
+                      } @else {
+                        <p class="mt-2 text-[11px] text-slate-600">
+                          Busque la dirección o haga clic en el mapa para fijar la ubicación.
+                        </p>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
             }
           </tbody>
         </table>
