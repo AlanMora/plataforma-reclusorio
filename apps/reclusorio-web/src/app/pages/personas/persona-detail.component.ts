@@ -14,38 +14,11 @@ import { ActividadTrasladosComponent } from './actividad-traslados.component';
 import { nombreCompleto } from './personas-list.component';
 import { Domicilio, Persona, PersonaDetalle } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
-import {
-  DomicilioGeocodificado,
-  MapaDomicilioComponent,
-} from '../../shared/mapa-domicilio.component';
-import { SelectBuscableComponent } from '../../shared/select-buscable.component';
-import {
-  PAISES_DUMMY,
-  canonizar,
-  conValorActual,
-  estadosDe,
-  municipiosDe,
-} from '../../core/ubicaciones-dummy';
+import { MapaDomicilioComponent } from '../../shared/mapa-domicilio.component';
+import { DomicilioFormComponent } from '../../shared/domicilio-form.component';
 
 type Pestana =
   'datos' | 'domicilios' | 'ingresos' | 'movimientos' | 'audiencias' | 'traslados' | 'archivos';
-
-/** Formulario vacío de domicilio; lat/lon se fijan desde el mapa. */
-function nuevoDomicilio() {
-  return {
-    calle: '',
-    numeroExterior: '',
-    numeroInterior: '',
-    cruce1: '',
-    cruce2: '',
-    colonia: '',
-    municipio: '',
-    estado: '',
-    pais: '',
-    latitud: null as number | null,
-    longitud: null as number | null,
-  };
-}
 
 const PESTANAS: { clave: Pestana; etiqueta: string }[] = [
   { clave: 'datos', etiqueta: 'Datos generales' },
@@ -74,7 +47,7 @@ const PESTANAS: { clave: Pestana; etiqueta: string }[] = [
     ActividadAudienciasComponent,
     ActividadTrasladosComponent,
     MapaDomicilioComponent,
-    SelectBuscableComponent,
+    DomicilioFormComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './persona-detail.component.html',
@@ -96,12 +69,8 @@ export class PersonaDetailComponent {
 
   readonly pestanas = PESTANAS;
 
-  domicilio = nuevoDomicilio();
-
   /** Domicilio guardado cuyo mapa (solo lectura) está desplegado. */
   readonly mapaAbierto = signal<string | null>(null);
-
-  readonly paises = PAISES_DUMMY.map((p) => p.nombre);
 
   constructor() {
     effect(() => {
@@ -146,63 +115,18 @@ export class PersonaDetailComponent {
     this.persona.update((actual) => (actual ? { ...actual, ...actualizada } : actual));
   }
 
-  /** Opciones del select de estado: catálogo del país + valor actual si no está. */
-  estadosOpciones(): string[] {
-    return conValorActual(
-      estadosDe(this.domicilio.pais).map((e) => e.nombre),
-      this.domicilio.estado,
-    );
-  }
-
-  /** Opciones del select de municipio: catálogo del estado + valor actual si no está. */
-  municipiosOpciones(): string[] {
-    return conValorActual(
-      municipiosDe(this.domicilio.pais, this.domicilio.estado),
-      this.domicilio.municipio,
-    );
-  }
-
-  paisesOpciones(): string[] {
-    return conValorActual(this.paises, this.domicilio.pais);
-  }
-
-  alCambiarPais(): void {
-    this.domicilio.estado = '';
-    this.domicilio.municipio = '';
-  }
-
-  alCambiarEstado(): void {
-    this.domicilio.municipio = '';
-  }
-
-  /** El mapa geocodificó una dirección: llena los campos y guarda lat/lon. */
-  alUbicar(dom: DomicilioGeocodificado): void {
-    const d = this.domicilio;
-    if (dom.calle) d.calle = dom.calle;
-    if (dom.numeroExterior) d.numeroExterior = dom.numeroExterior;
-    if (dom.colonia) d.colonia = dom.colonia;
-    if (dom.pais) d.pais = canonizar(dom.pais, this.paises);
-    if (dom.estado)
-      d.estado = canonizar(
-        dom.estado,
-        estadosDe(d.pais).map((e) => e.nombre),
-      );
-    if (dom.municipio) d.municipio = canonizar(dom.municipio, municipiosDe(d.pais, d.estado));
-    d.latitud = dom.latitud;
-    d.longitud = dom.longitud;
-  }
-
-  async agregarDomicilio(): Promise<void> {
+  /** Alta de domicilio desde el expediente usando el formulario compartido. */
+  async agregarDomicilio(formulario: DomicilioFormComponent): Promise<void> {
     this.guardandoDomicilio.set(true);
     this.errorDomicilio.set(null);
     try {
       await this.api.post<Domicilio>(
         `/api/v1/personas/${this.idPersona()}/domicilios`,
-        this.domicilio,
+        formulario.domicilio,
       );
       this.toast.ok('Domicilio agregado.');
       this.mostrarFormDomicilio.set(false);
-      this.domicilio = nuevoDomicilio();
+      formulario.reiniciar();
       await this.cargar(this.idPersona());
     } catch (err) {
       this.errorDomicilio.set(mensajeDe(err));

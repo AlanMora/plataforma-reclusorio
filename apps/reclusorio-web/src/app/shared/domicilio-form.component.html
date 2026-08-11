@@ -1,0 +1,97 @@
+<div class="grid gap-x-5 gap-y-4 md:grid-cols-3">
+  <div class="md:col-span-3">
+    <rw-mapa-domicilio (domicilio)="alUbicar($event)" />
+    @if (domicilio.latitud !== null && domicilio.longitud !== null) {
+      <p class="mt-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">
+        Coordenadas capturadas: {{ domicilio.latitud | number: '1.5-6' }},
+        {{ domicilio.longitud | number: '1.5-6' }}
+      </p>
+    }
+  </div>
+  <div>
+    <label class="campo-etiqueta obligatorio" for="domCalle">Calle</label>
+    <input class="campo" id="domCalle" name="calle" maxlength="150" [(ngModel)]="domicilio.calle" />
+  </div>
+  <div>
+    <label class="campo-etiqueta" for="domNumExt">No. exterior</label>
+    <input
+      class="campo"
+      id="domNumExt"
+      name="numeroExterior"
+      maxlength="30"
+      placeholder="12-A, S/N…"
+      [(ngModel)]="domicilio.numeroExterior"
+    />
+  </div>
+  <div>
+    <label class="campo-etiqueta" for="domNumInt">No. interior</label>
+    <input
+      class="campo"
+      id="domNumInt"
+      name="numeroInterior"
+      maxlength="30"
+      [(ngModel)]="domicilio.numeroInterior"
+    />
+  </div>
+  <div>
+    <label class="campo-etiqueta" for="domCruce1">Cruce 1</label>
+    <input
+      class="campo"
+      id="domCruce1"
+      name="cruce1"
+      maxlength="150"
+      [(ngModel)]="domicilio.cruce1"
+    />
+  </div>
+  <div>
+    <label class="campo-etiqueta" for="domCruce2">Cruce 2</label>
+    <input
+      class="campo"
+      id="domCruce2"
+      name="cruce2"
+      maxlength="150"
+      [(ngModel)]="domicilio.cruce2"
+    />
+  </div>
+  <div>
+    <label class="campo-etiqueta" for="domColonia">Colonia</label>
+    <input
+      class="campo"
+      id="domColonia"
+      name="colonia"
+      maxlength="150"
+      [(ngModel)]="domicilio.colonia"
+    />
+  </div>
+  <div>
+    <label class="campo-etiqueta" for="domPais">País</label>
+    <rw-select-buscable
+      idCampo="domPais"
+      name="pais"
+      [opciones]="paisesOpciones()"
+      [(ngModel)]="domicilio.pais"
+      (ngModelChange)="alCambiarPais()"
+    />
+  </div>
+  <div>
+    <label class="campo-etiqueta" for="domEstado">Estado</label>
+    <rw-select-buscable
+      idCampo="domEstado"
+      name="estado"
+      [opciones]="estadosOpciones()"
+      [disabled]="!domicilio.pais"
+      [(ngModel)]="domicilio.estado"
+      (ngModelChange)="alCambiarEstado()"
+    />
+  </div>
+  <div>
+    <label class="campo-etiqueta" for="domMunicipio">Municipio</label>
+    <rw-select-buscable
+      idCampo="domMunicipio"
+      name="municipio"
+      [opciones]="municipiosOpciones()"
+      [disabled]="!domicilio.estado"
+      [(ngModel)]="domicilio.municipio"
+    />
+  </div>
+</div>

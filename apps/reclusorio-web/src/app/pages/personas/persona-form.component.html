@@ -179,6 +179,25 @@
     </div>
   </section>
 
+  <!-- ===== 04 · Domicilio (solo en alta, integrado al registro) ===== -->
+  @if (modo() === 'crear') {
+    <section>
+      <header class="mb-4 flex items-center gap-3">
+        <span class="font-mono text-[11px] font-bold text-neon">04</span>
+        <div class="min-w-0">
+          <h3 class="text-sm font-semibold tracking-wide text-slate-200">
+            Domicilio <span class="font-normal text-slate-500">(opcional)</span>
+          </h3>
+          <p class="text-xs text-slate-500">
+            Busque la dirección en el mapa o capture los campos; se guarda junto con la persona.
+          </p>
+        </div>
+        <span class="ml-2 h-px grow bg-borde" aria-hidden="true"></span>
+      </header>
+      <rw-domicilio-form #formDomicilio />
+    </section>
+  }
+
   <!-- ===== Acciones ===== -->
   <div class="flex flex-wrap items-center gap-3 border-t border-borde pt-5">
     <p class="mr-auto text-[11px] text-slate-600">

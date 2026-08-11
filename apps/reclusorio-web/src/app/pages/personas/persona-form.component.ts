@@ -6,6 +6,7 @@ import {
   OnInit,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
@@ -23,6 +24,7 @@ import {
 } from '../../core/persona-opciones-dummy';
 import { SelectBuscableComponent } from '../../shared/select-buscable.component';
 import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
+import { DomicilioFormComponent } from '../../shared/domicilio-form.component';
 
 /**
  * Alta y modificación de personas (RF-PER-003/005).
@@ -34,7 +36,7 @@ import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
 @Component({
   selector: 'rw-persona-form',
   standalone: true,
-  imports: [FormsModule, SelectBuscableComponent, SelectorFechaComponent],
+  imports: [FormsModule, SelectBuscableComponent, SelectorFechaComponent, DomicilioFormComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './persona-form.component.html',
 })
@@ -48,6 +50,9 @@ export class PersonaFormComponent implements OnInit {
 
   readonly guardando = signal(false);
   readonly error = signal<string | null>(null);
+
+  /** Sección de domicilio integrada al alta (solo modo crear). */
+  private readonly formDomicilio = viewChild<DomicilioFormComponent>('formDomicilio');
 
   modelo: Record<string, string> = {
     primerNombre: '',
@@ -126,6 +131,7 @@ export class PersonaFormComponent implements OnInit {
         // El alta exige Idempotency-Key (patrón de la plataforma).
         persona = await this.api.post<Persona>('/api/v1/personas', cuerpo, { idempotente: true });
         this.toast.ok('Persona registrada en el padrón.');
+        await this.guardarDomicilioIntegrado(persona.idPersona);
       } else {
         const id = this.inicial()?.idPersona ?? '';
         persona = await this.api.patch<Persona>(`/api/v1/personas/${id}`, cuerpo);
@@ -137,6 +143,24 @@ export class PersonaFormComponent implements OnInit {
       this.error.set(p.errors?.length ? p.errors.join('\n') : mensajeDe(err));
     } finally {
       this.guardando.set(false);
+    }
+  }
+
+  /**
+   * Domicilio capturado durante el registro (integrado, sin pasos
+   * posteriores). Si falla, la persona YA quedó registrada: se avisa y el
+   * domicilio puede agregarse después desde el expediente.
+   */
+  private async guardarDomicilioIntegrado(idPersona: string): Promise<void> {
+    const formulario = this.formDomicilio();
+    if (!formulario?.capturado()) return;
+    try {
+      await this.api.post(`/api/v1/personas/${idPersona}/domicilios`, formulario.domicilio);
+      this.toast.ok('Domicilio registrado junto con la persona.');
+    } catch (err) {
+      this.toast.error(
+        `La persona se registró, pero el domicilio no se pudo guardar: ${mensajeDe(err)}`,
+      );
     }
   }
 }
