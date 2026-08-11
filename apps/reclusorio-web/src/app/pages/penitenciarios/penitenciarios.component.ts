@@ -115,12 +115,11 @@ export class PenitenciariosComponent implements AfterViewInit, OnDestroy {
     return this.poblacion()?.get(idCentro)?.length ?? 0;
   }
 
-  /** Centra el mapa en un centro y abre su ficha. */
+  /** Centra el mapa en un centro y abre su ficha flotante. */
   enfocar(centro: ValorCatalogo): void {
     if (centro.latitud == null || centro.longitud == null || !this.mapa) return;
     this.seleccionado.set(centro.id);
     this.mapa.flyTo([centro.latitud, centro.longitud], 15, { duration: 0.8 });
-    this.marcadores.get(centro.id)?.openPopup();
   }
 
   verTodos(): void {
@@ -206,13 +205,11 @@ export class PenitenciariosComponent implements AfterViewInit, OnDestroy {
               iconSize: [18, 18],
               iconAnchor: [9, 9],
             });
-      const marcador = L.marker([centro.latitud!, centro.longitud!], { icon: icono })
-        .addTo(this.mapa)
-        .bindPopup(
-          `<strong>${escaparHtml(centro.nombre)}</strong><br/>` +
-            (this.poblacion() ? `${personas} persona(s) en el centro<br/>` : '') +
-            `<span style="font-family:monospace;font-size:10px">${centro.latitud}, ${centro.longitud}</span>`,
-        );
+      // Sin popup: el clic abre la ficha flotante (detalle completo del centro).
+      const marcador = L.marker([centro.latitud!, centro.longitud!], {
+        icon: icono,
+        title: centro.nombre,
+      }).addTo(this.mapa);
       marcador.on('click', () => this.seleccionado.set(centro.id));
       this.marcadores.set(centro.id, marcador);
     }
@@ -225,12 +222,4 @@ export class PenitenciariosComponent implements AfterViewInit, OnDestroy {
       this.mapa.fitBounds(L.latLngBounds(puntos).pad(0.15));
     }
   }
-}
-
-function escaparHtml(texto: string): string {
-  return texto
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
