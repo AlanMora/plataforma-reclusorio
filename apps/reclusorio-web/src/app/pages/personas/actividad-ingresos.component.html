@@ -99,6 +99,7 @@
           <th>Delito</th>
           <th>Ubicación</th>
           <th>Autoridad</th>
+          <th>Revisión</th>
           <th></th>
         </tr>
       </thead>
@@ -115,6 +116,14 @@
             </td>
             <td>{{ r.ubicacion || '—' }}</td>
             <td>{{ r.autoridad || '—' }}</td>
+            <td>
+              <rw-revision-registro
+                recurso="ingresos-egresos"
+                [id]="r.idIngresoEgreso"
+                [estado]="r.estadoRevision"
+                permiso="ingresos:crear"
+              />
+            </td>
             <td class="text-right">
               <button
                 class="btn-secundario btn-mini"

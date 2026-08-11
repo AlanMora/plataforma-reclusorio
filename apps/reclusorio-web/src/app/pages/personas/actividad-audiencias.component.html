@@ -164,6 +164,7 @@
           <th>Modalidad</th>
           <th>Resolución</th>
           <th>Próxima</th>
+          <th>Revisión</th>
           <th></th>
         </tr>
       </thead>
@@ -186,6 +187,14 @@
               @if (r.fechaSiguienteAudiencia) {
                 · {{ r.fechaSiguienteAudiencia | date: 'dd/MM/yy HH:mm' }}
               }
+            </td>
+            <td>
+              <rw-revision-registro
+                recurso="audiencias"
+                [id]="r.idAudiencia"
+                [estado]="r.estadoRevision"
+                permiso="audiencias:crear"
+              />
             </td>
             <td class="text-right">
               <button

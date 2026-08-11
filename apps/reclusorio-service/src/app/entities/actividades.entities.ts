@@ -32,6 +32,15 @@ export class IngresoEgreso {
   @Column({ type: 'uuid', nullable: true })
   idDelito?: string;
 
+
+  /**
+   * Validación inicial Confirmar/Descartar (decisión del equipo 2026-08-11,
+   * P10 del PLAN): PENDIENTE al crear; una vez CONFIRMADO o DESCARTADO el
+   * registro no admite más cambios.
+   */
+  @Column({ type: 'varchar', length: 20, default: 'PENDIENTE' })
+  estadoRevision!: string;
+
   @BeforeInsert()
   asignarId(): void {
     if (!this.idIngresoEgreso) this.idIngresoEgreso = uuidv7();
@@ -65,6 +74,15 @@ export class Movimiento {
 
   @Column({ type: 'uuid' })
   idMotivoMovimiento!: string;
+
+
+  /**
+   * Validación inicial Confirmar/Descartar (decisión del equipo 2026-08-11,
+   * P10 del PLAN): PENDIENTE al crear; una vez CONFIRMADO o DESCARTADO el
+   * registro no admite más cambios.
+   */
+  @Column({ type: 'varchar', length: 20, default: 'PENDIENTE' })
+  estadoRevision!: string;
 
   @BeforeInsert()
   asignarId(): void {
@@ -128,6 +146,15 @@ export class Audiencia {
   @Column({ type: 'timestamptz', nullable: true })
   fechaSiguienteAudiencia?: Date;
 
+
+  /**
+   * Validación inicial Confirmar/Descartar (decisión del equipo 2026-08-11,
+   * P10 del PLAN): PENDIENTE al crear; una vez CONFIRMADO o DESCARTADO el
+   * registro no admite más cambios.
+   */
+  @Column({ type: 'varchar', length: 20, default: 'PENDIENTE' })
+  estadoRevision!: string;
+
   @BeforeInsert()
   asignarId(): void {
     if (!this.idAudiencia) this.idAudiencia = uuidv7();
@@ -164,6 +191,15 @@ export class Traslado {
 
   @Column({ type: 'uuid' })
   idEstatusTraslado!: string;
+
+
+  /**
+   * Validación inicial Confirmar/Descartar (decisión del equipo 2026-08-11,
+   * P10 del PLAN): PENDIENTE al crear; una vez CONFIRMADO o DESCARTADO el
+   * registro no admite más cambios.
+   */
+  @Column({ type: 'varchar', length: 20, default: 'PENDIENTE' })
+  estadoRevision!: string;
 
   @BeforeInsert()
   asignarId(): void {

@@ -26,16 +26,17 @@
           <th>Centro</th>
           <th>Descripción</th>
           <th>IPH</th>
+          <th>Revisión</th>
         </tr>
       </thead>
       <tbody>
         @if (cargando()) {
           <tr>
-            <td colspan="5" class="py-8 text-center text-slate-500">Consultando incidencias…</td>
+            <td colspan="6" class="py-8 text-center text-slate-500">Consultando incidencias…</td>
           </tr>
         } @else if (pagina().items.length === 0) {
           <tr>
-            <td colspan="5" class="py-8 text-center text-slate-500">
+            <td colspan="6" class="py-8 text-center text-slate-500">
               Sin incidencias registradas.
             </td>
           </tr>
@@ -49,6 +50,14 @@
               <td class="max-w-[200px] truncate">{{ centroDe(i.idCentroPenitenciario) }}</td>
               <td class="max-w-[320px] truncate" [title]="i.descripcion">{{ i.descripcion }}</td>
               <td class="font-mono text-xs">{{ i.iph || '—' }}</td>
+              <td (click)="$event.stopPropagation()">
+                <rw-revision-registro
+                  recurso="incidencias"
+                  [id]="i.idIncidencia"
+                  [estado]="i.estadoRevision"
+                  permiso="incidencias:crear"
+                />
+              </td>
             </tr>
           }
         }

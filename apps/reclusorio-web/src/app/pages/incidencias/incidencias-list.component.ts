@@ -7,12 +7,13 @@ import { PermisoDirective } from '../../core/permiso.directive';
 import { PaginadorComponent } from '../../shared/paginador.component';
 import { Incidencia, Paginado } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
+import { RevisionRegistroComponent } from '../../shared/revision-registro.component';
 
 /** Consulta paginada de incidencias (RF-INC-009). */
 @Component({
   selector: 'rw-incidencias-list',
   standalone: true,
-  imports: [DatePipe, RouterLink, PermisoDirective, PaginadorComponent],
+  imports: [DatePipe, RouterLink, PermisoDirective, PaginadorComponent, RevisionRegistroComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './incidencias-list.component.html',
 })

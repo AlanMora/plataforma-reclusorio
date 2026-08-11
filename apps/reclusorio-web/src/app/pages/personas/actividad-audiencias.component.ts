@@ -11,6 +11,7 @@ import { SelectBuscableComponent, aOpciones } from '../../shared/select-buscable
 import { ElementoPickerComponent, nombreElemento } from '../../shared/elemento-picker.component';
 import { Audiencia, Elemento, ValorCatalogo } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
+import { RevisionRegistroComponent } from '../../shared/revision-registro.component';
 
 /**
  * Audiencias (RF-AUD-001..008): datos jurídicos, clasificación, coherencia
@@ -28,6 +29,7 @@ import { mensajeDe } from '../../core/problem';
     ElementoPickerComponent,
     SelectorFechaComponent,
     SelectBuscableComponent,
+    RevisionRegistroComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './actividad-audiencias.component.html',

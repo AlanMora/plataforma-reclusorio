@@ -6,6 +6,7 @@ import { IsBoolean, IsDateString, IsOptional, IsString, IsUUID, MaxLength } from
 import { DatabaseModule } from '@icms/database';
 import { BusinessRuleException, EntityNotFoundException, PaginationQueryDto, paginate } from '@icms/common';
 import { RequirePermissions } from '@icms/auth';
+import { EstadoRevision, marcarRevision } from '../actividades/revision';
 import {
   Incidencia,
   IncidenciaAutoridad,
@@ -128,6 +129,11 @@ export class IncidenciasService {
       }),
     );
   }
+
+  /** Validación inicial P10: confirmar o descartar una única vez. */
+  revisar(id: string, estado: EstadoRevision) {
+    return marcarRevision(this.repo as never, 'idIncidencia', id, estado, 'Incidencia');
+  }
 }
 
 @ApiTags('incidencias')
@@ -176,6 +182,20 @@ export class IncidenciasController {
   @ApiOperation({ summary: 'Asociar elemento; puede marcarse como primer respondiente (RF-INC-005/007)' })
   asociarElemento(@Param('id') id: string, @Body() dto: AsociarElementoIncidenciaDto) {
     return this.service.asociarElemento(id, dto);
+  }
+
+  @Post(':id/confirmar')
+  @RequirePermissions('incidencias:crear')
+  @ApiOperation({ summary: 'Confirmar el registro (validación inicial P10, una sola vez)' })
+  confirmar(@Param('id') id: string) {
+    return this.service.revisar(id, 'CONFIRMADO');
+  }
+
+  @Post(':id/descartar')
+  @RequirePermissions('incidencias:crear')
+  @ApiOperation({ summary: 'Descartar el registro (validación inicial P10, una sola vez)' })
+  descartar(@Param('id') id: string) {
+    return this.service.revisar(id, 'DESCARTADO');
   }
 }
 

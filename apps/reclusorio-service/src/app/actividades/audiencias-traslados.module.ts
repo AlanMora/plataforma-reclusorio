@@ -24,6 +24,7 @@ import {
 import { PersonasModule, PersonasService } from '../personas/personas.module';
 import { ElementosModule, ElementosService } from '../elementos/elementos.module';
 import { ValidadorCatalogos } from './validador-catalogos.service';
+import { EstadoRevision, marcarRevision } from './revision';
 
 class CrearAudienciaDto {
   @IsDateString() fecha!: string;
@@ -104,6 +105,11 @@ export class AudienciasService {
     if (existente) throw new BusinessRuleException('El elemento ya está asociado a esta audiencia');
     return this.asociaciones.save(this.asociaciones.create({ idAudiencia, idElemento }));
   }
+
+  /** Validación inicial P10: confirmar o descartar una única vez. */
+  revisar(id: string, estado: EstadoRevision) {
+    return marcarRevision(this.repo as never, 'idAudiencia', id, estado, 'Audiencia');
+  }
 }
 
 /** Traslados (RF-TRA-001..007). */
@@ -145,6 +151,11 @@ export class TrasladosService {
     if (existente) throw new BusinessRuleException('El elemento ya está asociado a este traslado');
     return this.asociaciones.save(this.asociaciones.create({ idTraslado, idElemento }));
   }
+
+  /** Validación inicial P10: confirmar o descartar una única vez. */
+  revisar(id: string, estado: EstadoRevision) {
+    return marcarRevision(this.repo as never, 'idTraslado', id, estado, 'Traslado');
+  }
 }
 
 @ApiTags('audiencias')
@@ -180,6 +191,20 @@ export class AudienciasController {
   asociar(@Param('id') id: string, @Body() dto: AsociarElementoDto) {
     return this.service.asociarElemento(id, dto.idElemento);
   }
+
+  @Post('audiencias/:id/confirmar')
+  @RequirePermissions('audiencias:crear')
+  @ApiOperation({ summary: 'Confirmar el registro (validación inicial P10, una sola vez)' })
+  confirmar(@Param('id') id: string) {
+    return this.service.revisar(id, 'CONFIRMADO');
+  }
+
+  @Post('audiencias/:id/descartar')
+  @RequirePermissions('audiencias:crear')
+  @ApiOperation({ summary: 'Descartar el registro (validación inicial P10, una sola vez)' })
+  descartar(@Param('id') id: string) {
+    return this.service.revisar(id, 'DESCARTADO');
+  }
 }
 
 @ApiTags('traslados')
@@ -214,6 +239,20 @@ export class TrasladosController {
   @ApiOperation({ summary: 'Asociar un elemento participante (RF-TRA-006, sin duplicados)' })
   asociar(@Param('id') id: string, @Body() dto: AsociarElementoDto) {
     return this.service.asociarElemento(id, dto.idElemento);
+  }
+
+  @Post('traslados/:id/confirmar')
+  @RequirePermissions('traslados:crear')
+  @ApiOperation({ summary: 'Confirmar el registro (validación inicial P10, una sola vez)' })
+  confirmar(@Param('id') id: string) {
+    return this.service.revisar(id, 'CONFIRMADO');
+  }
+
+  @Post('traslados/:id/descartar')
+  @RequirePermissions('traslados:crear')
+  @ApiOperation({ summary: 'Descartar el registro (validación inicial P10, una sola vez)' })
+  descartar(@Param('id') id: string) {
+    return this.service.revisar(id, 'DESCARTADO');
   }
 }
 

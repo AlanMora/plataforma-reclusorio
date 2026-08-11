@@ -11,6 +11,7 @@ import { SelectBuscableComponent, aOpciones } from '../../shared/select-buscable
 import { ElementoPickerComponent, nombreElemento } from '../../shared/elemento-picker.component';
 import { Elemento, Traslado, ValorCatalogo } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
+import { RevisionRegistroComponent } from '../../shared/revision-registro.component';
 
 /** Traslados (RF-TRA-001..007) con elementos participantes (RF-TRA-006). */
 @Component({
@@ -24,6 +25,7 @@ import { mensajeDe } from '../../core/problem';
     ElementoPickerComponent,
     SelectorFechaComponent,
     SelectBuscableComponent,
+    RevisionRegistroComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './actividad-traslados.component.html',

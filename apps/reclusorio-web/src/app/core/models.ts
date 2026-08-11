@@ -134,6 +134,8 @@ export interface IngresoEgreso {
   ubicacion?: string;
   autoridad?: string;
   idDelito?: string;
+  /** Validación inicial P10: PENDIENTE | CONFIRMADO | DESCARTADO. */
+  estadoRevision?: string;
 }
 
 export interface Movimiento {
@@ -145,6 +147,8 @@ export interface Movimiento {
   idCentroDestino: string;
   ubicacion?: string;
   idMotivoMovimiento: string;
+  /** Validación inicial P10: PENDIENTE | CONFIRMADO | DESCARTADO. */
+  estadoRevision?: string;
 }
 
 export interface Audiencia {
@@ -163,6 +167,8 @@ export interface Audiencia {
   observaciones?: string;
   idProximaAudiencia: string;
   fechaSiguienteAudiencia?: string;
+  /** Validación inicial P10: PENDIENTE | CONFIRMADO | DESCARTADO. */
+  estadoRevision?: string;
   /** Presente solo en el detalle GET /audiencias/:id. */
   elementos?: string[];
 }
@@ -177,6 +183,8 @@ export interface Traslado {
   unidades?: string;
   observaciones?: string;
   idEstatusTraslado: string;
+  /** Validación inicial P10: PENDIENTE | CONFIRMADO | DESCARTADO. */
+  estadoRevision?: string;
   /** Presente solo en el detalle GET /traslados/:id. */
   elementos?: string[];
 }
@@ -191,6 +199,8 @@ export interface Incidencia {
   /** Nombre libre cuando el elemento no está registrado (RF-INC-007). */
   primerRespondiente?: string;
   narrativa?: string;
+  /** Validación inicial P10: PENDIENTE | CONFIRMADO | DESCARTADO. */
+  estadoRevision?: string;
 }
 
 export interface IncidenciaDetalle extends Incidencia {

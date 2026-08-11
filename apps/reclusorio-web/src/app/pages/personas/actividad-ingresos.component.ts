@@ -10,6 +10,7 @@ import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
 import { SelectBuscableComponent, aOpciones } from '../../shared/select-buscable.component';
 import { IngresoEgreso, ValorCatalogo } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
+import { RevisionRegistroComponent } from '../../shared/revision-registro.component';
 
 /** Ingresos y libertades de la persona (RF-IEG-001..005). */
 @Component({
@@ -22,6 +23,7 @@ import { mensajeDe } from '../../core/problem';
     ArchivosPanelComponent,
     SelectorFechaComponent,
     SelectBuscableComponent,
+    RevisionRegistroComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './actividad-ingresos.component.html',

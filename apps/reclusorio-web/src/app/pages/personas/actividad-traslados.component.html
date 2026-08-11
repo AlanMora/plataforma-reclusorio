@@ -110,6 +110,7 @@
           <th>Destino</th>
           <th>Estatus</th>
           <th>Unidades</th>
+          <th>Revisión</th>
           <th></th>
         </tr>
       </thead>
@@ -125,6 +126,14 @@
               <span class="chip-alerta">{{ nombre(mapaEstatus, r.idEstatusTraslado) }}</span>
             </td>
             <td>{{ r.unidades || '—' }}</td>
+            <td>
+              <rw-revision-registro
+                recurso="traslados"
+                [id]="r.idTraslado"
+                [estado]="r.estadoRevision"
+                permiso="traslados:crear"
+              />
+            </td>
             <td class="text-right">
               <button
                 class="btn-secundario btn-mini"

@@ -11,6 +11,7 @@ import { Centro, Delito } from '../entities/catalogos-administrables.entities';
 import { MotivoMovimiento, TipoIngresoEgreso, TipoMovimiento } from '../entities/catalogos-fijos.entities';
 import { PersonasModule, PersonasService } from '../personas/personas.module';
 import { ValidadorCatalogos } from './validador-catalogos.service';
+import { EstadoRevision, marcarRevision } from './revision';
 
 class CrearIngresoEgresoDto {
   @IsUUID() idTipoIngresoEgreso!: string;
@@ -58,6 +59,11 @@ export class IngresosEgresosService {
     const registro = await this.repo.findOne({ where: { idIngresoEgreso } });
     if (!registro) throw new EntityNotFoundException('Ingreso/egreso', idIngresoEgreso);
     return registro;
+  }
+
+  /** Validación inicial P10: confirmar o descartar una única vez. */
+  revisar(id: string, estado: EstadoRevision) {
+    return marcarRevision(this.repo as never, 'idIngresoEgreso', id, estado, 'Ingreso/egreso');
   }
 
   /**
@@ -167,6 +173,11 @@ export class MovimientosService {
     if (!registro) throw new EntityNotFoundException('Movimiento', idMovimiento);
     return registro;
   }
+
+  /** Validación inicial P10: confirmar o descartar una única vez. */
+  revisar(id: string, estado: EstadoRevision) {
+    return marcarRevision(this.repo as never, 'idMovimiento', id, estado, 'Movimiento');
+  }
 }
 
 @ApiTags('ingresos-egresos')
@@ -205,6 +216,20 @@ export class IngresosEgresosController {
   obtener(@Param('id') id: string) {
     return this.service.obtener(id);
   }
+
+  @Post('ingresos-egresos/:id/confirmar')
+  @RequirePermissions('ingresos:crear')
+  @ApiOperation({ summary: 'Confirmar el registro (validación inicial P10, una sola vez)' })
+  confirmar(@Param('id') id: string) {
+    return this.service.revisar(id, 'CONFIRMADO');
+  }
+
+  @Post('ingresos-egresos/:id/descartar')
+  @RequirePermissions('ingresos:crear')
+  @ApiOperation({ summary: 'Descartar el registro (validación inicial P10, una sola vez)' })
+  descartar(@Param('id') id: string) {
+    return this.service.revisar(id, 'DESCARTADO');
+  }
 }
 
 @ApiTags('movimientos')
@@ -232,6 +257,20 @@ export class MovimientosController {
   @ApiOperation({ summary: 'Consultar un movimiento por id' })
   obtener(@Param('id') id: string) {
     return this.service.obtener(id);
+  }
+
+  @Post('movimientos/:id/confirmar')
+  @RequirePermissions('movimientos:crear')
+  @ApiOperation({ summary: 'Confirmar el registro (validación inicial P10, una sola vez)' })
+  confirmar(@Param('id') id: string) {
+    return this.service.revisar(id, 'CONFIRMADO');
+  }
+
+  @Post('movimientos/:id/descartar')
+  @RequirePermissions('movimientos:crear')
+  @ApiOperation({ summary: 'Descartar el registro (validación inicial P10, una sola vez)' })
+  descartar(@Param('id') id: string) {
+    return this.service.revisar(id, 'DESCARTADO');
   }
 }
 

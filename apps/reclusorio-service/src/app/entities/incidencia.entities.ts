@@ -38,6 +38,15 @@ export class Incidencia {
   @Column({ type: 'text', nullable: true })
   narrativa?: string;
 
+
+  /**
+   * Validación inicial Confirmar/Descartar (decisión del equipo 2026-08-11,
+   * P10 del PLAN): PENDIENTE al crear; una vez CONFIRMADO o DESCARTADO el
+   * registro no admite más cambios.
+   */
+  @Column({ type: 'varchar', length: 20, default: 'PENDIENTE' })
+  estadoRevision!: string;
+
   @BeforeInsert()
   asignarId(): void {
     if (!this.idIncidencia) this.idIncidencia = uuidv7();

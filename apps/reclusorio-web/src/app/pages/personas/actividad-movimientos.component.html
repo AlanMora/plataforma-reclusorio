@@ -98,6 +98,7 @@
           <th>Motivo</th>
           <th>Trayecto</th>
           <th>Ubicación</th>
+          <th>Revisión</th>
           <th></th>
         </tr>
       </thead>
@@ -115,6 +116,14 @@
               {{ nombre(mapaCentros, r.idCentroDestino) }}
             </td>
             <td>{{ r.ubicacion || '—' }}</td>
+            <td>
+              <rw-revision-registro
+                recurso="movimientos"
+                [id]="r.idMovimiento"
+                [estado]="r.estadoRevision"
+                permiso="movimientos:crear"
+              />
+            </td>
             <td class="text-right">
               <button
                 class="btn-secundario btn-mini"
