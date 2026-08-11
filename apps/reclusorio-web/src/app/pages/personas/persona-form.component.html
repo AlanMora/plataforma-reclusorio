@@ -6,15 +6,34 @@
   <div class="grid gap-4 md:grid-cols-3">
     <div>
       <label class="campo-etiqueta obligatorio" for="primerNombre">Nombre(s)</label>
-      <input class="campo" id="primerNombre" name="primerNombre" maxlength="150" required [(ngModel)]="modelo.primerNombre" />
+      <input
+        class="campo"
+        id="primerNombre"
+        name="primerNombre"
+        maxlength="150"
+        required
+        [(ngModel)]="modelo.primerNombre"
+      />
     </div>
     <div>
       <label class="campo-etiqueta" for="apellidoPaterno">Apellido paterno</label>
-      <input class="campo" id="apellidoPaterno" name="apellidoPaterno" maxlength="150" [(ngModel)]="modelo.apellidoPaterno" />
+      <input
+        class="campo"
+        id="apellidoPaterno"
+        name="apellidoPaterno"
+        maxlength="150"
+        [(ngModel)]="modelo.apellidoPaterno"
+      />
     </div>
     <div>
       <label class="campo-etiqueta" for="apellidoMaterno">Apellido materno</label>
-      <input class="campo" id="apellidoMaterno" name="apellidoMaterno" maxlength="150" [(ngModel)]="modelo.apellidoMaterno" />
+      <input
+        class="campo"
+        id="apellidoMaterno"
+        name="apellidoMaterno"
+        maxlength="150"
+        [(ngModel)]="modelo.apellidoMaterno"
+      />
     </div>
     <div>
       <label class="campo-etiqueta obligatorio" for="curp">CURP</label>
@@ -30,8 +49,17 @@
     </div>
     <div>
       <label class="campo-etiqueta obligatorio" for="fechaNacimiento">Fecha de nacimiento</label>
-      <input class="campo" id="fechaNacimiento" name="fechaNacimiento" type="date" required [(ngModel)]="modelo.fechaNacimiento" />
-      <p class="mt-1 text-[11px] text-slate-600">La edad SIEMPRE se calcula; nunca se captura (RF-GEN-008).</p>
+      <input
+        class="campo"
+        id="fechaNacimiento"
+        name="fechaNacimiento"
+        type="date"
+        required
+        [(ngModel)]="modelo.fechaNacimiento"
+      />
+      <p class="mt-1 text-[11px] text-slate-600">
+        La edad SIEMPRE se calcula; nunca se captura (RF-GEN-008).
+      </p>
     </div>
     <div>
       <label class="campo-etiqueta" for="alias">Alias</label>
@@ -39,37 +67,86 @@
     </div>
     <div>
       <label class="campo-etiqueta" for="genero">Género</label>
-      <input class="campo" id="genero" name="genero" maxlength="50" [(ngModel)]="modelo.genero" placeholder="Pendiente P3: texto libre" />
+      <select class="campo" id="genero" name="genero" [(ngModel)]="modelo.genero">
+        <option value="">— Seleccione —</option>
+        @for (g of generosOpciones(); track g) {
+          <option [value]="g">{{ g }}</option>
+        }
+      </select>
     </div>
     <div>
       <label class="campo-etiqueta" for="estadoCivil">Estado civil</label>
-      <input class="campo" id="estadoCivil" name="estadoCivil" maxlength="50" [(ngModel)]="modelo.estadoCivil" placeholder="Pendiente P3: texto libre" />
+      <select class="campo" id="estadoCivil" name="estadoCivil" [(ngModel)]="modelo.estadoCivil">
+        <option value="">— Seleccione —</option>
+        @for (e of estadosCivilesOpciones(); track e) {
+          <option [value]="e">{{ e }}</option>
+        }
+      </select>
     </div>
     <div>
       <label class="campo-etiqueta" for="nivelEducativo">Nivel educativo</label>
-      <input class="campo" id="nivelEducativo" name="nivelEducativo" maxlength="50" [(ngModel)]="modelo.nivelEducativo" />
+      <select
+        class="campo"
+        id="nivelEducativo"
+        name="nivelEducativo"
+        [(ngModel)]="modelo.nivelEducativo"
+      >
+        <option value="">— Seleccione —</option>
+        @for (n of nivelesEducativosOpciones(); track n) {
+          <option [value]="n">{{ n }}</option>
+        }
+      </select>
     </div>
     <div>
       <label class="campo-etiqueta" for="ocupacion">Ocupación</label>
-      <input class="campo" id="ocupacion" name="ocupacion" maxlength="50" [(ngModel)]="modelo.ocupacion" />
+      <input
+        class="campo"
+        id="ocupacion"
+        name="ocupacion"
+        maxlength="50"
+        [(ngModel)]="modelo.ocupacion"
+      />
     </div>
     <div>
       <label class="campo-etiqueta" for="nacionalidad">Nacionalidad</label>
-      <input class="campo" id="nacionalidad" name="nacionalidad" maxlength="255" [(ngModel)]="modelo.nacionalidad" />
+      <select class="campo" id="nacionalidad" name="nacionalidad" [(ngModel)]="modelo.nacionalidad">
+        <option value="">— Seleccione —</option>
+        @for (n of nacionalidadesOpciones(); track n) {
+          <option [value]="n">{{ n }}</option>
+        }
+      </select>
     </div>
     <div>
       <label class="campo-etiqueta" for="estadoNacimiento">Estado de nacimiento</label>
-      <input class="campo" id="estadoNacimiento" name="estadoNacimiento" maxlength="255" [(ngModel)]="modelo.estadoNacimiento" />
+      <select
+        class="campo"
+        id="estadoNacimiento"
+        name="estadoNacimiento"
+        [(ngModel)]="modelo.estadoNacimiento"
+      >
+        <option value="">— Seleccione —</option>
+        @for (e of estadosNacimientoOpciones(); track e) {
+          <option [value]="e">{{ e }}</option>
+        }
+      </select>
     </div>
     <div>
       <label class="campo-etiqueta" for="numeroTelefono">Teléfono</label>
-      <input class="campo" id="numeroTelefono" name="numeroTelefono" maxlength="50" [(ngModel)]="modelo.numeroTelefono" />
+      <input
+        class="campo"
+        id="numeroTelefono"
+        name="numeroTelefono"
+        maxlength="50"
+        [(ngModel)]="modelo.numeroTelefono"
+      />
     </div>
   </div>
 
   <div class="flex justify-end gap-3">
     <button class="btn-primario" type="submit" [disabled]="guardando()">
-      {{ guardando() ? 'Guardando…' : modo() === 'crear' ? 'Registrar persona' : 'Guardar cambios' }}
+      {{
+        guardando() ? 'Guardando…' : modo() === 'crear' ? 'Registrar persona' : 'Guardar cambios'
+      }}
     </button>
   </div>
 </form>

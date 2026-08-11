@@ -18,7 +18,13 @@ import {
   DomicilioGeocodificado,
   MapaDomicilioComponent,
 } from '../../shared/mapa-domicilio.component';
-import { PAISES_DUMMY, canonizar, estadosDe, municipiosDe } from '../../core/ubicaciones-dummy';
+import {
+  PAISES_DUMMY,
+  canonizar,
+  conValorActual,
+  estadosDe,
+  municipiosDe,
+} from '../../core/ubicaciones-dummy';
 
 type Pestana =
   'datos' | 'domicilios' | 'ingresos' | 'movimientos' | 'audiencias' | 'traslados' | 'archivos';
@@ -38,11 +44,6 @@ function nuevoDomicilio() {
     latitud: null as number | null,
     longitud: null as number | null,
   };
-}
-
-/** Asegura que el valor vigente aparezca como opción aunque no esté en el catálogo dummy. */
-function conValorActual(opciones: string[], actual: string): string[] {
-  return actual && !opciones.includes(actual) ? [actual, ...opciones] : opciones;
 }
 
 const PESTANAS: { clave: Pestana; etiqueta: string }[] = [

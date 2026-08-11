@@ -156,3 +156,11 @@ export function canonizar(valor: string, catalogo: string[]): string {
   const hit = catalogo.find((c) => normalizarUbicacion(c) === normalizarUbicacion(valor));
   return hit ?? valor;
 }
+
+/**
+ * Asegura que el valor vigente aparezca como opción del select aunque no esté
+ * en el catálogo dummy (registros previos capturados como texto libre).
+ */
+export function conValorActual(opciones: string[], actual: string): string[] {
+  return actual && !opciones.includes(actual) ? [actual, ...opciones] : opciones;
+}

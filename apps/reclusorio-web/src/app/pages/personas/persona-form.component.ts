@@ -1,15 +1,32 @@
-import { ChangeDetectionStrategy, Component, inject, input, OnInit, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  OnInit,
+  output,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
 import { ToastService } from '../../core/toast.service';
 import { Persona } from '../../core/models';
 import { mensajeDe, problemaDe } from '../../core/problem';
+import { conValorActual } from '../../core/ubicaciones-dummy';
+import {
+  ESTADOS_CIVILES_DUMMY,
+  ESTADOS_NACIMIENTO_DUMMY,
+  GENEROS_DUMMY,
+  NACIONALIDADES_DUMMY,
+  NIVELES_EDUCATIVOS_DUMMY,
+} from '../../core/persona-opciones-dummy';
 
 /**
  * Alta y modificación de personas (RF-PER-003/005).
  * DP-007: nombre, CURP y fecha de nacimiento obligatorios (valida el backend;
- * aquí solo se marca la obligatoriedad). Género/estado civil: texto libre
- * mientras el equipo define los ENUM (pendiente P3 — no se inventan valores).
+ * aquí solo se marca la obligatoriedad). Género/estado civil/nivel educativo/
+ * nacionalidad/estado de nacimiento: selects con data dummy mientras el equipo
+ * entrega los valores oficiales (P3) — el backend sigue aceptando texto.
  */
 @Component({
   selector: 'rw-persona-form',
@@ -44,6 +61,30 @@ export class PersonaFormComponent implements OnInit {
     estadoNacimiento: '',
     numeroTelefono: '',
   };
+
+  /**
+   * Opciones de cada select: catálogo dummy + el valor ya guardado si no está
+   * en la lista (registros previos capturados como texto libre).
+   */
+  generosOpciones(): string[] {
+    return conValorActual(GENEROS_DUMMY, this.modelo['genero']);
+  }
+
+  estadosCivilesOpciones(): string[] {
+    return conValorActual(ESTADOS_CIVILES_DUMMY, this.modelo['estadoCivil']);
+  }
+
+  nivelesEducativosOpciones(): string[] {
+    return conValorActual(NIVELES_EDUCATIVOS_DUMMY, this.modelo['nivelEducativo']);
+  }
+
+  nacionalidadesOpciones(): string[] {
+    return conValorActual(NACIONALIDADES_DUMMY, this.modelo['nacionalidad']);
+  }
+
+  estadosNacimientoOpciones(): string[] {
+    return conValorActual(ESTADOS_NACIMIENTO_DUMMY, this.modelo['estadoNacimiento']);
+  }
 
   ngOnInit(): void {
     const p = this.inicial();
