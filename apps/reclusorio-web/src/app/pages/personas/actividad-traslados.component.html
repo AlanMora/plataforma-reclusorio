@@ -24,48 +24,33 @@
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="traTipo">Tipo de traslado</label>
-        <select
-          class="campo"
-          id="traTipo"
+        <rw-select-buscable
+          idCampo="traTipo"
           name="idTipoTraslado"
           required
+          [opciones]="aOpciones(tipos())"
           [(ngModel)]="forma.idTipoTraslado"
-        >
-          <option value="" disabled>Selecciona…</option>
-          @for (v of tipos(); track v.id) {
-            <option [value]="v.id">{{ v.nombre }}</option>
-          }
-        </select>
+        />
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="traDestino">Destino</label>
-        <select
-          class="campo"
-          id="traDestino"
+        <rw-select-buscable
+          idCampo="traDestino"
           name="idDestinoTraslado"
           required
+          [opciones]="aOpciones(destinos())"
           [(ngModel)]="forma.idDestinoTraslado"
-        >
-          <option value="" disabled>Selecciona…</option>
-          @for (v of destinos(); track v.id) {
-            <option [value]="v.id">{{ v.nombre }}</option>
-          }
-        </select>
+        />
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="traEstatus">Estatus</label>
-        <select
-          class="campo"
-          id="traEstatus"
+        <rw-select-buscable
+          idCampo="traEstatus"
           name="idEstatusTraslado"
           required
+          [opciones]="aOpciones(estatus())"
           [(ngModel)]="forma.idEstatusTraslado"
-        >
-          <option value="" disabled>Selecciona…</option>
-          @for (v of estatus(); track v.id) {
-            <option [value]="v.id">{{ v.nombre }}</option>
-          }
-        </select>
+        />
       </div>
       <div>
         <label class="campo-etiqueta" for="traUnidades">Unidades</label>

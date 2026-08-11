@@ -14,33 +14,23 @@
     <form class="panel grid gap-4 p-4 md:grid-cols-3" (ngSubmit)="crear()">
       <div>
         <label class="campo-etiqueta obligatorio" for="movTipo">Tipo de movimiento</label>
-        <select
-          class="campo"
-          id="movTipo"
+        <rw-select-buscable
+          idCampo="movTipo"
           name="idTipoMovimiento"
           required
+          [opciones]="aOpciones(tipos())"
           [(ngModel)]="forma.idTipoMovimiento"
-        >
-          <option value="" disabled>Selecciona…</option>
-          @for (v of tipos(); track v.id) {
-            <option [value]="v.id">{{ v.nombre }}</option>
-          }
-        </select>
+        />
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="movMotivo">Motivo</label>
-        <select
-          class="campo"
-          id="movMotivo"
+        <rw-select-buscable
+          idCampo="movMotivo"
           name="idMotivoMovimiento"
           required
+          [opciones]="aOpciones(motivos())"
           [(ngModel)]="forma.idMotivoMovimiento"
-        >
-          <option value="" disabled>Selecciona…</option>
-          @for (v of motivos(); track v.id) {
-            <option [value]="v.id">{{ v.nombre }}</option>
-          }
-        </select>
+        />
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="movFecha">Fecha y hora</label>
@@ -54,33 +44,23 @@
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="movOrigen">Centro de origen</label>
-        <select
-          class="campo"
-          id="movOrigen"
+        <rw-select-buscable
+          idCampo="movOrigen"
           name="idCentroOrigen"
           required
+          [opciones]="aOpciones(centros())"
           [(ngModel)]="forma.idCentroOrigen"
-        >
-          <option value="" disabled>Selecciona…</option>
-          @for (v of centros(); track v.id) {
-            <option [value]="v.id">{{ v.nombre }}</option>
-          }
-        </select>
+        />
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="movDestino">Centro de destino</label>
-        <select
-          class="campo"
-          id="movDestino"
+        <rw-select-buscable
+          idCampo="movDestino"
           name="idCentroDestino"
           required
+          [opciones]="aOpciones(centros())"
           [(ngModel)]="forma.idCentroDestino"
-        >
-          <option value="" disabled>Selecciona…</option>
-          @for (v of centros(); track v.id) {
-            <option [value]="v.id">{{ v.nombre }}</option>
-          }
-        </select>
+        />
       </div>
       <div>
         <label class="campo-etiqueta" for="movUbicacion">Ubicación</label>

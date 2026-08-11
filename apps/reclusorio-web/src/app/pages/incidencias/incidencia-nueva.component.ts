@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@ang
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
+import { SelectBuscableComponent, aOpciones } from '../../shared/select-buscable.component';
 import { ApiService } from '../../core/api.service';
 import { CatalogosService } from '../../core/catalogos.service';
 import { ToastService } from '../../core/toast.service';
@@ -12,11 +13,14 @@ import { mensajeDe } from '../../core/problem';
 @Component({
   selector: 'rw-incidencia-nueva',
   standalone: true,
-  imports: [RouterLink, FormsModule, SelectorFechaComponent],
+  imports: [RouterLink, FormsModule, SelectorFechaComponent, SelectBuscableComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './incidencia-nueva.component.html',
 })
 export class IncidenciaNuevaComponent implements OnInit {
+  /** Adapta valores de catálogo a opciones del select buscable. */
+  readonly aOpciones = aOpciones;
+
   private readonly api = inject(ApiService);
   private readonly catalogos = inject(CatalogosService);
   private readonly toast = inject(ToastService);

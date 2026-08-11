@@ -10,33 +10,23 @@
   <form class="panel grid gap-4 p-6 md:grid-cols-2" (ngSubmit)="crear()">
     <div>
       <label class="campo-etiqueta obligatorio" for="incCentro">Centro penitenciario</label>
-      <select
-        class="campo"
-        id="incCentro"
+      <rw-select-buscable
+        idCampo="incCentro"
         name="idCentroPenitenciario"
         required
+        [opciones]="aOpciones(centros())"
         [(ngModel)]="forma.idCentroPenitenciario"
-      >
-        <option value="" disabled>Selecciona…</option>
-        @for (v of centros(); track v.id) {
-          <option [value]="v.id">{{ v.nombre }}</option>
-        }
-      </select>
+      />
     </div>
     <div>
       <label class="campo-etiqueta obligatorio" for="incTipo">Tipo de incidencia</label>
-      <select
-        class="campo"
-        id="incTipo"
+      <rw-select-buscable
+        idCampo="incTipo"
         name="idTipoIncidencia"
         required
+        [opciones]="aOpciones(tipos())"
         [(ngModel)]="forma.idTipoIncidencia"
-      >
-        <option value="" disabled>Selecciona…</option>
-        @for (v of tipos(); track v.id) {
-          <option [value]="v.id">{{ v.nombre }}</option>
-        }
-      </select>
+      />
     </div>
     <div>
       <label class="campo-etiqueta obligatorio" for="incFecha">Fecha y hora</label>

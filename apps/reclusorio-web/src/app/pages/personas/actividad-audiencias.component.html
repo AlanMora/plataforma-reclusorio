@@ -32,48 +32,33 @@
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="audForma">Forma de ingreso</label>
-        <select
-          class="campo"
-          id="audForma"
+        <rw-select-buscable
+          idCampo="audForma"
           name="idFormaIngresoAudiencia"
           required
+          [opciones]="aOpciones(formasIngreso())"
           [(ngModel)]="forma.idFormaIngresoAudiencia"
-        >
-          <option value="" disabled>Selecciona…</option>
-          @for (v of formasIngreso(); track v.id) {
-            <option [value]="v.id">{{ v.nombre }}</option>
-          }
-        </select>
+        />
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="audJuzgado">Juzgado</label>
-        <select
-          class="campo"
-          id="audJuzgado"
+        <rw-select-buscable
+          idCampo="audJuzgado"
           name="idJuzgado"
           required
+          [opciones]="aOpciones(juzgados())"
           [(ngModel)]="forma.idJuzgado"
-        >
-          <option value="" disabled>Selecciona…</option>
-          @for (v of juzgados(); track v.id) {
-            <option [value]="v.id">{{ v.nombre }}</option>
-          }
-        </select>
+        />
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="audJuez">Juez del juzgado</label>
-        <select
-          class="campo"
-          id="audJuez"
+        <rw-select-buscable
+          idCampo="audJuez"
           name="idJuezJuzgado"
           required
+          [opciones]="aOpciones(jueces())"
           [(ngModel)]="forma.idJuezJuzgado"
-        >
-          <option value="" disabled>Selecciona…</option>
-          @for (v of jueces(); track v.id) {
-            <option [value]="v.id">{{ v.nombre }}</option>
-          }
-        </select>
+        />
       </div>
       <div>
         <label class="campo-etiqueta" for="audNombreJuez">Nombre del juez (texto)</label>
@@ -87,63 +72,44 @@
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="audTipo">Tipo de audiencia</label>
-        <select
-          class="campo"
-          id="audTipo"
+        <rw-select-buscable
+          idCampo="audTipo"
           name="idTipoAudiencia"
           required
+          [opciones]="aOpciones(tipos())"
           [(ngModel)]="forma.idTipoAudiencia"
-        >
-          <option value="" disabled>Selecciona…</option>
-          @for (v of tipos(); track v.id) {
-            <option [value]="v.id">{{ v.nombre }}</option>
-          }
-        </select>
+        />
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="audModalidad">Modalidad</label>
-        <select
-          class="campo"
-          id="audModalidad"
+        <rw-select-buscable
+          idCampo="audModalidad"
           name="idModalidadAudiencia"
           required
+          [opciones]="aOpciones(modalidades())"
           [(ngModel)]="forma.idModalidadAudiencia"
-        >
-          <option value="" disabled>Selecciona…</option>
-          @for (v of modalidades(); track v.id) {
-            <option [value]="v.id">{{ v.nombre }}</option>
-          }
-        </select>
+        />
       </div>
       <div>
         <label class="campo-etiqueta" for="audResolucion">Resolución</label>
-        <select
-          class="campo"
-          id="audResolucion"
+        <rw-select-buscable
+          idCampo="audResolucion"
           name="idResolucionAudiencia"
+          placeholder="— Sin resolución —"
+          [opciones]="aOpciones(resoluciones())"
           [(ngModel)]="forma.idResolucionAudiencia"
-        >
-          <option value="">— Sin resolución —</option>
-          @for (v of resoluciones(); track v.id) {
-            <option [value]="v.id">{{ v.nombre }}</option>
-          }
-        </select>
+        />
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="audProxima">¿Habrá próxima audiencia?</label>
-        <select
-          class="campo"
-          id="audProxima"
+        <rw-select-buscable
+          idCampo="audProxima"
           name="idProximaAudiencia"
           required
+          [opciones]="aOpciones(proximas())"
           [(ngModel)]="forma.idProximaAudiencia"
           (ngModelChange)="alCambiarProxima()"
-        >
-          <option value="" disabled>Selecciona…</option>
-          @for (v of proximas(); track v.id) {
-            <option [value]="v.id">{{ v.nombre }}</option>
-          }
-        </select>
+        />
       </div>
       <div>
         <label class="campo-etiqueta" for="audSiguiente">Fecha de la siguiente audiencia</label>

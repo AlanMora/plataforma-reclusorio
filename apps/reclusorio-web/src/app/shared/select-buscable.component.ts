@@ -14,6 +14,17 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { normalizarUbicacion } from '../core/ubicaciones-dummy';
 
+/** Opción con valor persistible (p. ej. UUID) y etiqueta visible. */
+export interface OpcionSelect {
+  valor: string;
+  etiqueta: string;
+}
+
+/** Convierte valores de catálogo ({id, nombre}) en opciones del select. */
+export function aOpciones(valores: Array<{ id: string; nombre: string }>): OpcionSelect[] {
+  return valores.map((v) => ({ valor: v.id, etiqueta: v.nombre }));
+}
+
 /**
  * Select con buscador integrado (RF-GEN: captura asistida por catálogo).
  * Compatible con ngModel/formularios (ControlValueAccessor): se usa igual que
@@ -36,7 +47,8 @@ import { normalizarUbicacion } from '../core/ubicaciones-dummy';
 export class SelectBuscableComponent implements ControlValueAccessor {
   private readonly host = inject(ElementRef<HTMLElement>);
 
-  readonly opciones = input<string[]>([]);
+  /** Cadenas simples (valor = etiqueta) u objetos {valor, etiqueta} (p. ej. UUID + nombre). */
+  readonly opciones = input<Array<string | OpcionSelect>>([]);
   readonly placeholder = input('— Seleccione —');
   /** id del botón, para asociarlo con el label del formulario. */
   readonly idCampo = input('');
@@ -46,10 +58,21 @@ export class SelectBuscableComponent implements ControlValueAccessor {
   readonly filtro = signal('');
   readonly deshabilitado = signal(false);
 
+  private readonly normalizadas = computed<OpcionSelect[]>(() =>
+    this.opciones().map((o) => (typeof o === 'string' ? { valor: o, etiqueta: o } : o)),
+  );
+
   readonly filtradas = computed(() => {
     const f = normalizarUbicacion(this.filtro());
-    const opciones = this.opciones();
-    return f ? opciones.filter((o) => normalizarUbicacion(o).includes(f)) : opciones;
+    const opciones = this.normalizadas();
+    return f ? opciones.filter((o) => normalizarUbicacion(o.etiqueta).includes(f)) : opciones;
+  });
+
+  /** Texto visible del valor elegido (para UUIDs muestra su nombre). */
+  readonly etiquetaSeleccionada = computed(() => {
+    const v = this.valor();
+    if (!v) return '';
+    return this.normalizadas().find((o) => o.valor === v)?.etiqueta ?? v;
   });
 
   private readonly campoBusqueda = viewChild<ElementRef<HTMLInputElement>>('campoBusqueda');
@@ -109,7 +132,7 @@ export class SelectBuscableComponent implements ControlValueAccessor {
   elegirPrimera(evento: Event): void {
     evento.preventDefault();
     const primera = this.filtradas()[0];
-    if (primera !== undefined) this.elegir(primera);
+    if (primera !== undefined) this.elegir(primera.valor);
   }
 
   @HostListener('document:click', ['$event'])

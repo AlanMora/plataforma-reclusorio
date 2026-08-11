@@ -6,7 +6,9 @@
     [disabled]="deshabilitado()"
     (click)="alternar()"
   >
-    <span class="truncate" [class.text-slate-600]="!valor()">{{ valor() || placeholder() }}</span>
+    <span class="truncate" [class.text-slate-600]="!valor()">{{
+      etiquetaSeleccionada() || placeholder()
+    }}</span>
     <span class="shrink-0 text-[9px] text-slate-500">▼</span>
   </button>
 
@@ -37,16 +39,16 @@
             {{ placeholder() }}
           </button>
         </li>
-        @for (o of filtradas(); track o) {
+        @for (o of filtradas(); track o.valor) {
           <li>
             <button
               class="block w-full px-3 py-2 text-left text-xs hover:bg-neon/10 hover:text-neon"
-              [class.text-neon]="o === valor()"
-              [class.text-slate-300]="o !== valor()"
+              [class.text-neon]="o.valor === valor()"
+              [class.text-slate-300]="o.valor !== valor()"
               type="button"
-              (click)="elegir(o)"
+              (click)="elegir(o.valor)"
             >
-              {{ o }}
+              {{ o.etiqueta }}
             </button>
           </li>
         }

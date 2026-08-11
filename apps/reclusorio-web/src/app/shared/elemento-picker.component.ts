@@ -34,6 +34,20 @@ export class ElementoPickerComponent {
 
   nombreDe = nombreElemento;
 
+  /**
+   * Emite el elemento y deja el buscador LIMPIO para la siguiente captura
+   * (requerimiento de usabilidad: asociar varios elementos de corrido).
+   */
+  elegir(elemento: Elemento): void {
+    this.elegido.emit(elemento);
+    this.numero = '';
+    this.nombre = '';
+    this.adscripcion = '';
+    this.resultados.set([]);
+    this.buscado.set(false);
+    this.error.set(null);
+  }
+
   async buscar(): Promise<void> {
     this.buscando.set(true);
     this.error.set(null);

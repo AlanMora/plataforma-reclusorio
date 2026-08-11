@@ -7,6 +7,7 @@ import { ToastService } from '../../core/toast.service';
 import { PermisoDirective } from '../../core/permiso.directive';
 import { ArchivosPanelComponent } from '../../shared/archivos-panel.component';
 import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
+import { SelectBuscableComponent, aOpciones } from '../../shared/select-buscable.component';
 import { ElementoPickerComponent, nombreElemento } from '../../shared/elemento-picker.component';
 import { Elemento, Traslado, ValorCatalogo } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
@@ -22,11 +23,15 @@ import { mensajeDe } from '../../core/problem';
     ArchivosPanelComponent,
     ElementoPickerComponent,
     SelectorFechaComponent,
+    SelectBuscableComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './actividad-traslados.component.html',
 })
 export class ActividadTrasladosComponent implements OnInit {
+  /** Adapta valores de catálogo a opciones del select buscable. */
+  readonly aOpciones = aOpciones;
+
   private readonly api = inject(ApiService);
   private readonly catalogos = inject(CatalogosService);
   private readonly toast = inject(ToastService);
