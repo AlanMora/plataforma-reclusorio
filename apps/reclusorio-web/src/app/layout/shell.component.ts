@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter, map } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { SessionService } from '../core/session.service';
 import { RealtimeService } from '../core/realtime.service';
@@ -40,9 +42,30 @@ export class ShellComponent {
   // Se inyecta para activar la escucha de revocación (RF-SES-009).
   private readonly realtime = inject(RealtimeService);
 
+  private readonly router = inject(Router);
+
   readonly menuVisible = computed(() =>
     MENU.filter((item) => !item.permiso || this.auth.permisos().includes(item.permiso)),
   );
+
+  private readonly urlActual = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => e.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  /** Título de la sección actual para la barra superior. */
+  readonly tituloPagina = computed(() => {
+    const url = this.urlActual();
+    if (url === '/' || url === '') return 'Panel de control';
+    return (
+      MENU.find((item) => item.ruta !== '/' && url.startsWith(item.ruta))?.etiqueta ?? 'Consola'
+    );
+  });
+
+  readonly inicialUsuario = computed(() => (this.auth.email()?.[0] ?? '?').toUpperCase());
 
   readonly cuentaRegresiva = computed(() => {
     const s = this.session.restante();

@@ -1,13 +1,24 @@
-<div class="mx-auto max-w-4xl space-y-5">
-  <div>
-    <a routerLink="/personas" class="etiqueta hover:text-neon">← Personas</a>
-    <h2 class="mt-1 text-2xl font-bold text-slate-100">Registrar persona</h2>
-    <p class="mt-1 text-sm text-slate-500">
-      Nombre, CURP y fecha de nacimiento son obligatorios (DP-007); el backend
-      valida el formato oficial de la CURP.
-    </p>
+<div class="mx-auto max-w-4xl space-y-6">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div class="min-w-0">
+      <nav
+        class="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-slate-600"
+        aria-label="Ruta"
+      >
+        <a routerLink="/personas" class="transition-colors hover:text-neon">Personas</a>
+        <span aria-hidden="true">/</span>
+        <span class="text-slate-400">Registro</span>
+      </nav>
+      <h2 class="mt-2 text-2xl font-bold tracking-tight text-slate-100">Registrar persona</h2>
+      <p class="mt-1 max-w-xl text-sm text-slate-500">
+        Alta en el padrón de personas. Nombre, CURP y fecha de nacimiento son obligatorios; el resto
+        puede completarse después desde el expediente.
+      </p>
+    </div>
+    <a routerLink="/personas" class="btn-secundario btn-mini shrink-0">← Volver al listado</a>
   </div>
-  <div class="panel p-6">
+
+  <div class="panel panel-glow p-6 md:p-8">
     <rw-persona-form modo="crear" (guardada)="alGuardar($event)" />
   </div>
 </div>

@@ -1,6 +1,8 @@
 <div class="flex min-h-screen">
   <!-- ===================== SIDEBAR ===================== -->
-  <aside class="fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r border-borde bg-panel/95 backdrop-blur">
+  <aside
+    class="fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r border-borde bg-panel/95 backdrop-blur"
+  >
     <div class="border-b border-borde px-5 py-5">
       <p class="font-mono text-[10px] uppercase tracking-[0.3em] text-neon">Plataforma</p>
       <h1 class="mt-1 text-lg font-bold leading-tight tracking-wide text-slate-100">
@@ -31,8 +33,13 @@
     </nav>
 
     <div class="border-t border-borde px-5 py-4">
-      <p class="truncate font-mono text-xs text-slate-400" [title]="auth.email()">{{ auth.email() }}</p>
-      <button class="btn-secundario btn-mini mt-3 w-full justify-center" (click)="auth.cerrarSesion()">
+      <p class="truncate font-mono text-xs text-slate-400" [title]="auth.email()">
+        {{ auth.email() }}
+      </p>
+      <button
+        class="btn-secundario btn-mini mt-3 w-full justify-center"
+        (click)="auth.cerrarSesion()"
+      >
         Cerrar sesión
       </button>
     </div>
@@ -41,13 +48,26 @@
   <!-- ===================== CONTENIDO ===================== -->
   <div class="ml-60 flex min-h-screen flex-1 flex-col">
     <header
-      class="sticky top-0 z-20 flex items-center justify-end gap-4 border-b border-borde bg-fondo/80 px-6 py-3 backdrop-blur"
+      class="sticky top-0 z-20 flex items-center gap-5 border-b border-borde bg-fondo/80 px-6 py-2.5 backdrop-blur"
     >
-      <span class="etiqueta hidden sm:inline">sesión</span>
-      <span class="chip" [class]="claseSesion()">
+      <div class="min-w-0 grow">
+        <p class="font-mono text-[9px] uppercase tracking-[0.28em] text-slate-600">
+          Consola operativa
+        </p>
+        <h2 class="truncate text-sm font-semibold tracking-wide text-slate-200">
+          {{ tituloPagina() }}
+        </h2>
+      </div>
+
+      <span class="chip" [class]="claseSesion()" title="Tiempo restante de la sesión (RF-SES-002)">
         ⏱ {{ cuentaRegresiva() }}
       </span>
-      <a routerLink="/notificaciones" class="relative text-lg text-slate-400 hover:text-neon" title="Notificaciones">
+
+      <a
+        routerLink="/notificaciones"
+        class="relative text-lg text-slate-400 transition-colors hover:text-neon"
+        title="Notificaciones"
+      >
         ◎
         @if (notificaciones.noLeidas() > 0) {
           <span
@@ -57,6 +77,22 @@
           </span>
         }
       </a>
+
+      <div class="hidden items-center gap-2.5 border-l border-borde pl-5 sm:flex">
+        <span
+          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neon/40 bg-neon/10 font-mono text-xs font-bold text-neon"
+        >
+          {{ inicialUsuario() }}
+        </span>
+        <span class="min-w-0 leading-tight">
+          <span class="block max-w-52 truncate text-xs text-slate-300" [title]="auth.email()">
+            {{ auth.email() }}
+          </span>
+          <span class="block font-mono text-[9px] uppercase tracking-[0.2em] text-slate-600">
+            sesión activa
+          </span>
+        </span>
+      </div>
     </header>
 
     <main class="flex-1 px-6 py-6">
@@ -71,11 +107,15 @@
     <p class="etiqueta text-alerta">Sesión por expirar</p>
     <p class="mt-2 text-sm text-slate-300">
       Tu sesión expira en
-      <span class="font-mono font-bold text-alerta">{{ cuentaRegresiva() }}</span>.
-      ¿Deseas extenderla 30 minutos?
+      <span class="font-mono font-bold text-alerta">{{ cuentaRegresiva() }}</span
+      >. ¿Deseas extenderla 30 minutos?
     </p>
     <div class="mt-4 flex gap-2">
-      <button class="btn-primario grow justify-center" [disabled]="session.extendiendo()" (click)="session.extender()">
+      <button
+        class="btn-primario grow justify-center"
+        [disabled]="session.extendiendo()"
+        (click)="session.extender()"
+      >
         {{ session.extendiendo() ? 'Extendiendo…' : 'Extender sesión' }}
       </button>
       <button class="btn-secundario" (click)="auth.cerrarSesion()">Salir</button>

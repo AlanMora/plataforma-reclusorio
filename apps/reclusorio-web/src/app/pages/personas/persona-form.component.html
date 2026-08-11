@@ -1,142 +1,191 @@
-<form class="space-y-5" (ngSubmit)="guardar()">
+<form class="space-y-8" (ngSubmit)="guardar()">
   @if (error()) {
     <p class="alerta-error whitespace-pre-line">{{ error() }}</p>
   }
 
-  <div class="grid gap-4 md:grid-cols-3">
-    <div>
-      <label class="campo-etiqueta obligatorio" for="primerNombre">Nombre(s)</label>
-      <input
-        class="campo"
-        id="primerNombre"
-        name="primerNombre"
-        maxlength="150"
-        required
-        [(ngModel)]="modelo.primerNombre"
-      />
-    </div>
-    <div>
-      <label class="campo-etiqueta" for="apellidoPaterno">Apellido paterno</label>
-      <input
-        class="campo"
-        id="apellidoPaterno"
-        name="apellidoPaterno"
-        maxlength="150"
-        [(ngModel)]="modelo.apellidoPaterno"
-      />
-    </div>
-    <div>
-      <label class="campo-etiqueta" for="apellidoMaterno">Apellido materno</label>
-      <input
-        class="campo"
-        id="apellidoMaterno"
-        name="apellidoMaterno"
-        maxlength="150"
-        [(ngModel)]="modelo.apellidoMaterno"
-      />
-    </div>
-    <div>
-      <label class="campo-etiqueta obligatorio" for="curp">CURP</label>
-      <input
-        class="campo font-mono uppercase"
-        id="curp"
-        name="curp"
-        maxlength="18"
-        required
-        placeholder="18 caracteres"
-        [(ngModel)]="modelo.curp"
-      />
-    </div>
-    <div>
-      <label class="campo-etiqueta obligatorio" for="fechaNacimiento">Fecha de nacimiento</label>
-      <input
-        class="campo"
-        id="fechaNacimiento"
-        name="fechaNacimiento"
-        type="date"
-        required
-        [(ngModel)]="modelo.fechaNacimiento"
-      />
-      <p class="mt-1 text-[11px] text-slate-600">
-        La edad SIEMPRE se calcula; nunca se captura (RF-GEN-008).
-      </p>
-    </div>
-    <div>
-      <label class="campo-etiqueta" for="alias">Alias</label>
-      <input class="campo" id="alias" name="alias" maxlength="150" [(ngModel)]="modelo.alias" />
-    </div>
-    <div>
-      <label class="campo-etiqueta" for="genero">Género</label>
-      <rw-select-buscable
-        idCampo="genero"
-        name="genero"
-        [opciones]="generosOpciones()"
-        [(ngModel)]="modelo.genero"
-      />
-    </div>
-    <div>
-      <label class="campo-etiqueta" for="estadoCivil">Estado civil</label>
-      <rw-select-buscable
-        idCampo="estadoCivil"
-        name="estadoCivil"
-        [opciones]="estadosCivilesOpciones()"
-        [(ngModel)]="modelo.estadoCivil"
-      />
-    </div>
-    <div>
-      <label class="campo-etiqueta" for="nivelEducativo">Nivel educativo</label>
-      <rw-select-buscable
-        idCampo="nivelEducativo"
-        name="nivelEducativo"
-        [opciones]="nivelesEducativosOpciones()"
-        [(ngModel)]="modelo.nivelEducativo"
-      />
-    </div>
-    <div>
-      <label class="campo-etiqueta" for="ocupacion">Ocupación</label>
-      <rw-select-buscable
-        idCampo="ocupacion"
-        name="ocupacion"
-        [opciones]="ocupacionesOpciones()"
-        [(ngModel)]="modelo.ocupacion"
-      />
-    </div>
-    <div>
-      <label class="campo-etiqueta" for="nacionalidad">Nacionalidad</label>
-      <rw-select-buscable
-        idCampo="nacionalidad"
-        name="nacionalidad"
-        [opciones]="nacionalidadesOpciones()"
-        [(ngModel)]="modelo.nacionalidad"
-      />
-    </div>
-    <div>
-      <label class="campo-etiqueta" for="estadoNacimiento">Estado de nacimiento</label>
-      <rw-select-buscable
-        idCampo="estadoNacimiento"
-        name="estadoNacimiento"
-        [opciones]="estadosNacimientoOpciones()"
-        [(ngModel)]="modelo.estadoNacimiento"
-      />
-    </div>
-    <div>
-      <label class="campo-etiqueta" for="numeroTelefono">Teléfono</label>
-      <input
-        #campoTelefono
-        class="campo"
-        id="numeroTelefono"
-        name="numeroTelefono"
-        maxlength="50"
-        inputmode="numeric"
-        pattern="[0-9]*"
-        placeholder="Solo dígitos"
-        [(ngModel)]="modelo.numeroTelefono"
-        (ngModelChange)="sanearTelefono(campoTelefono)"
-      />
-    </div>
-  </div>
+  <!-- ===== 01 · Identificación ===== -->
+  <section>
+    <header class="mb-4 flex items-center gap-3">
+      <span class="font-mono text-[11px] font-bold text-neon">01</span>
+      <div class="min-w-0">
+        <h3 class="text-sm font-semibold tracking-wide text-slate-200">Identificación</h3>
+        <p class="text-xs text-slate-500">Datos oficiales que identifican a la persona.</p>
+      </div>
+      <span class="ml-2 h-px grow bg-borde" aria-hidden="true"></span>
+    </header>
 
-  <div class="flex justify-end gap-3">
+    <div class="grid gap-x-5 gap-y-4 md:grid-cols-3">
+      <div>
+        <label class="campo-etiqueta obligatorio" for="primerNombre">Nombre(s)</label>
+        <input
+          class="campo"
+          id="primerNombre"
+          name="primerNombre"
+          maxlength="150"
+          required
+          [(ngModel)]="modelo.primerNombre"
+        />
+      </div>
+      <div>
+        <label class="campo-etiqueta" for="apellidoPaterno">Apellido paterno</label>
+        <input
+          class="campo"
+          id="apellidoPaterno"
+          name="apellidoPaterno"
+          maxlength="150"
+          [(ngModel)]="modelo.apellidoPaterno"
+        />
+      </div>
+      <div>
+        <label class="campo-etiqueta" for="apellidoMaterno">Apellido materno</label>
+        <input
+          class="campo"
+          id="apellidoMaterno"
+          name="apellidoMaterno"
+          maxlength="150"
+          [(ngModel)]="modelo.apellidoMaterno"
+        />
+      </div>
+      <div>
+        <label class="campo-etiqueta obligatorio" for="curp">CURP</label>
+        <input
+          class="campo font-mono uppercase"
+          id="curp"
+          name="curp"
+          maxlength="18"
+          required
+          placeholder="18 caracteres"
+          [(ngModel)]="modelo.curp"
+        />
+        <p class="mt-1 text-[11px] text-slate-600">El backend valida el formato oficial.</p>
+      </div>
+      <div>
+        <label class="campo-etiqueta obligatorio" for="fechaNacimiento">Fecha de nacimiento</label>
+        <input
+          class="campo"
+          id="fechaNacimiento"
+          name="fechaNacimiento"
+          type="date"
+          required
+          [(ngModel)]="modelo.fechaNacimiento"
+        />
+        <p class="mt-1 text-[11px] text-slate-600">
+          La edad SIEMPRE se calcula; nunca se captura (RF-GEN-008).
+        </p>
+      </div>
+      <div>
+        <label class="campo-etiqueta" for="alias">Alias</label>
+        <input class="campo" id="alias" name="alias" maxlength="150" [(ngModel)]="modelo.alias" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 02 · Perfil sociodemográfico ===== -->
+  <section>
+    <header class="mb-4 flex items-center gap-3">
+      <span class="font-mono text-[11px] font-bold text-neon">02</span>
+      <div class="min-w-0">
+        <h3 class="text-sm font-semibold tracking-wide text-slate-200">Perfil sociodemográfico</h3>
+        <p class="text-xs text-slate-500">
+          Seleccione de los catálogos; puede buscar dentro de cada lista.
+        </p>
+      </div>
+      <span class="ml-2 h-px grow bg-borde" aria-hidden="true"></span>
+    </header>
+
+    <div class="grid gap-x-5 gap-y-4 md:grid-cols-2 lg:grid-cols-4">
+      <div>
+        <label class="campo-etiqueta" for="genero">Género</label>
+        <rw-select-buscable
+          idCampo="genero"
+          name="genero"
+          [opciones]="generosOpciones()"
+          [(ngModel)]="modelo.genero"
+        />
+      </div>
+      <div>
+        <label class="campo-etiqueta" for="estadoCivil">Estado civil</label>
+        <rw-select-buscable
+          idCampo="estadoCivil"
+          name="estadoCivil"
+          [opciones]="estadosCivilesOpciones()"
+          [(ngModel)]="modelo.estadoCivil"
+        />
+      </div>
+      <div>
+        <label class="campo-etiqueta" for="nivelEducativo">Nivel educativo</label>
+        <rw-select-buscable
+          idCampo="nivelEducativo"
+          name="nivelEducativo"
+          [opciones]="nivelesEducativosOpciones()"
+          [(ngModel)]="modelo.nivelEducativo"
+        />
+      </div>
+      <div>
+        <label class="campo-etiqueta" for="ocupacion">Ocupación</label>
+        <rw-select-buscable
+          idCampo="ocupacion"
+          name="ocupacion"
+          [opciones]="ocupacionesOpciones()"
+          [(ngModel)]="modelo.ocupacion"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 03 · Origen y contacto ===== -->
+  <section>
+    <header class="mb-4 flex items-center gap-3">
+      <span class="font-mono text-[11px] font-bold text-neon">03</span>
+      <div class="min-w-0">
+        <h3 class="text-sm font-semibold tracking-wide text-slate-200">Origen y contacto</h3>
+        <p class="text-xs text-slate-500">Procedencia de la persona y medio de localización.</p>
+      </div>
+      <span class="ml-2 h-px grow bg-borde" aria-hidden="true"></span>
+    </header>
+
+    <div class="grid gap-x-5 gap-y-4 md:grid-cols-3">
+      <div>
+        <label class="campo-etiqueta" for="nacionalidad">Nacionalidad</label>
+        <rw-select-buscable
+          idCampo="nacionalidad"
+          name="nacionalidad"
+          [opciones]="nacionalidadesOpciones()"
+          [(ngModel)]="modelo.nacionalidad"
+        />
+      </div>
+      <div>
+        <label class="campo-etiqueta" for="estadoNacimiento">Estado de nacimiento</label>
+        <rw-select-buscable
+          idCampo="estadoNacimiento"
+          name="estadoNacimiento"
+          [opciones]="estadosNacimientoOpciones()"
+          [(ngModel)]="modelo.estadoNacimiento"
+        />
+      </div>
+      <div>
+        <label class="campo-etiqueta" for="numeroTelefono">Teléfono</label>
+        <input
+          #campoTelefono
+          class="campo"
+          id="numeroTelefono"
+          name="numeroTelefono"
+          maxlength="50"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          placeholder="Solo dígitos"
+          [(ngModel)]="modelo.numeroTelefono"
+          (ngModelChange)="sanearTelefono(campoTelefono)"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Acciones ===== -->
+  <div class="flex flex-wrap items-center gap-3 border-t border-borde pt-5">
+    <p class="mr-auto text-[11px] text-slate-600">
+      Los campos marcados con <span class="text-neon">*</span> son obligatorios (DP-007).
+    </p>
     <button class="btn-primario" type="submit" [disabled]="guardando()">
       {{
         guardando() ? 'Guardando…' : modo() === 'crear' ? 'Registrar persona' : 'Guardar cambios'
