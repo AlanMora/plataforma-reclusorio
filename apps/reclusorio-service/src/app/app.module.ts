@@ -24,6 +24,9 @@ import { ArchivosModule } from './archivos/archivos.module';
 import { ReportesModule } from './reportes/reportes.module';
 import { CatalogSeederService } from './seeds/seeder.service';
 import { Init1786043245489 } from '../migrations/1786043245489-Init';
+import { DomicilioCoordenadas1786457865399 } from '../migrations/1786457865399-DomicilioCoordenadas';
+import { CentroCoordenadas1786480000000 } from '../migrations/1786480000000-CentroCoordenadas';
+import { EstadoRevision1786500000000 } from '../migrations/1786500000000-EstadoRevision';
 
 /**
  * Servicio de dominio de la Plataforma de Gestión de Reclusorio.
@@ -44,7 +47,12 @@ import { Init1786043245489 } from '../migrations/1786043245489-Init';
       entities: [...ENTIDADES_RECLUSORIO, OutboxEvent, InboxEvent],
       // Como clase importada para que webpack la incluya en el bundle; en
       // producción se ejecuta al arrancar (en dev el esquema lo crea synchronize).
-      migrations: [Init1786043245489],
+      migrations: [
+        Init1786043245489,
+        DomicilioCoordenadas1786457865399,
+        CentroCoordenadas1786480000000,
+        EstadoRevision1786500000000,
+      ],
     }),
     OutboxModule.forRoot({ withRelay: true }),
     CatalogosModule,
