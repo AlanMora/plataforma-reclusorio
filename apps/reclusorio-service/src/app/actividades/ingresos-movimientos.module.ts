@@ -59,6 +59,84 @@ export class IngresosEgresosService {
     if (!registro) throw new EntityNotFoundException('Ingreso/egreso', idIngresoEgreso);
     return registro;
   }
+
+  /**
+   * Población actual por centro (módulo Penitenciarios): una persona está en
+   * un centro si su ÚLTIMO registro de ingreso/egreso es de tipo INGRESO; una
+   * LIBERTAD posterior la saca del conteo. Devuelve por centro el total y los
+   * datos más relevantes de cada persona (la edad SIEMPRE calculada).
+   */
+  async poblacionPorCentro() {
+    const filas: Array<{
+      idCentroPenitenciario: string;
+      idPersona: string;
+      fecha: Date;
+      primerNombre?: string;
+      apellidoPaterno?: string;
+      apellidoMaterno?: string;
+      alias?: string;
+      curp?: string;
+      fechaNacimiento?: string;
+      delito?: string;
+    }> = await this.repo.query(`
+      SELECT u."idCentroPenitenciario", u."idPersona", u.fecha,
+             p."primerNombre", p."apellidoPaterno", p."apellidoMaterno",
+             p.alias, p.curp, p."fechaNacimiento", d.nombre AS delito
+      FROM (
+        SELECT DISTINCT ON ("idPersona") *
+        FROM ingreso_egreso
+        ORDER BY "idPersona", fecha DESC, "idIngresoEgreso" DESC
+      ) u
+      JOIN tipo_ingreso_egreso t
+        ON t."idTipoIngresoEgreso" = u."idTipoIngresoEgreso" AND t.nombre = 'INGRESO'
+      JOIN personas p ON p."idPersona" = u."idPersona"
+      LEFT JOIN delitos d ON d."idDelito" = u."idDelito"
+      ORDER BY u."idCentroPenitenciario", u.fecha DESC
+    `);
+
+    const porCentro = new Map<
+      string,
+      Array<{
+        idPersona: string;
+        nombre: string;
+        alias?: string;
+        curp?: string;
+        edad: number | null;
+        fechaIngreso: Date;
+        delito?: string;
+      }>
+    >();
+    for (const f of filas) {
+      const lista = porCentro.get(f.idCentroPenitenciario) ?? [];
+      lista.push({
+        idPersona: f.idPersona,
+        nombre: [f.primerNombre, f.apellidoPaterno, f.apellidoMaterno].filter(Boolean).join(' '),
+        alias: f.alias ?? undefined,
+        curp: f.curp ?? undefined,
+        edad: edadDe(f.fechaNacimiento),
+        fechaIngreso: f.fecha,
+        delito: f.delito ?? undefined,
+      });
+      porCentro.set(f.idCentroPenitenciario, lista);
+    }
+    return [...porCentro.entries()].map(([idCentroPenitenciario, personas]) => ({
+      idCentroPenitenciario,
+      total: personas.length,
+      personas,
+    }));
+  }
+}
+
+/** Edad SIEMPRE calculada, nunca persistida (RF-GEN-008). */
+function edadDe(fechaNacimiento?: string | Date): number | null {
+  if (!fechaNacimiento) return null;
+  const nacimiento = new Date(fechaNacimiento);
+  if (Number.isNaN(nacimiento.getTime())) return null;
+  const hoy = new Date();
+  let edad = hoy.getFullYear() - nacimiento.getFullYear();
+  const mes = hoy.getMonth() - nacimiento.getMonth();
+  if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) edad--;
+  return edad;
 }
 
 /** Movimientos (RF-MOV-001..005). */
@@ -109,6 +187,16 @@ export class IngresosEgresosController {
   @ApiOperation({ summary: 'Registrar ingreso o libertad (RF-IEG-001..003)' })
   crear(@Param('idPersona') idPersona: string, @Body() dto: CrearIngresoEgresoDto) {
     return this.service.crear(idPersona, dto);
+  }
+
+  // Declarada ANTES de 'ingresos-egresos/:id' para que la ruta fija gane.
+  @Get('ingresos-egresos/poblacion-por-centro')
+  @RequirePermissions('personas:consultar')
+  @ApiOperation({
+    summary: 'Población actual por centro penitenciario (módulo Penitenciarios, P9)',
+  })
+  poblacionPorCentro() {
+    return this.service.poblacionPorCentro();
   }
 
   @Get('ingresos-egresos/:id')

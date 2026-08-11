@@ -9,28 +9,50 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import * as L from 'leaflet';
+import { ApiService } from '../../core/api.service';
 import { CatalogosService } from '../../core/catalogos.service';
 import { ValorCatalogo } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
 
 const CENTRO_JALISCO: L.LatLngTuple = [20.6, -103.35];
 
+/** Persona actualmente en un centro (respuesta de poblacion-por-centro). */
+export interface PersonaEnCentro {
+  idPersona: string;
+  nombre: string;
+  alias?: string;
+  curp?: string;
+  edad: number | null;
+  fechaIngreso: string;
+  delito?: string;
+}
+
+interface PoblacionCentro {
+  idCentroPenitenciario: string;
+  total: number;
+  personas: PersonaEnCentro[];
+}
+
 /**
  * Módulo Penitenciarios: mapa general (Leaflet en blanco y negro) con un
- * punto por cada centro penitenciario del catálogo que tenga coordenadas,
- * el estado de Jalisco resaltado con su límite oficial (OSM) y el listado
- * de centros como panel flotante sobre el propio mapa.
- * Las coordenadas se administran desde Catálogos → Centros penitenciarios.
+ * punto por cada centro penitenciario del catálogo, el estado de Jalisco
+ * resaltado con su límite oficial (OSM), la POBLACIÓN actual de cada centro
+ * sobre el pin (última entrada tipo INGRESO de cada persona) y una ficha
+ * con el detalle de las personas del centro seleccionado.
  */
 @Component({
   selector: 'rw-penitenciarios',
   standalone: true,
+  imports: [DatePipe, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './penitenciarios.component.html',
 })
 export class PenitenciariosComponent implements AfterViewInit, OnDestroy {
   private readonly catalogos = inject(CatalogosService);
+  private readonly api = inject(ApiService);
 
   @ViewChild('contenedor') private readonly contenedor!: ElementRef<HTMLDivElement>;
 
@@ -40,6 +62,8 @@ export class PenitenciariosComponent implements AfterViewInit, OnDestroy {
   readonly seleccionado = signal<string | null>(null);
   /** Panel flotante de centros dentro del mapa (colapsable). */
   readonly panelAbierto = signal(true);
+  /** Población por centro; null si el usuario no puede consultar personas. */
+  readonly poblacion = signal<Map<string, PersonaEnCentro[]> | null>(null);
 
   readonly conUbicacion = computed(() =>
     this.centros().filter((c) => c.latitud != null && c.longitud != null),
@@ -47,6 +71,19 @@ export class PenitenciariosComponent implements AfterViewInit, OnDestroy {
   readonly sinUbicacion = computed(() =>
     this.centros().filter((c) => c.latitud == null || c.longitud == null),
   );
+  readonly totalPoblacion = computed(() => {
+    const mapa = this.poblacion();
+    if (!mapa) return 0;
+    return [...mapa.values()].reduce((suma, lista) => suma + lista.length, 0);
+  });
+  /** Centro seleccionado con su gente, para la ficha de detalle. */
+  readonly detalle = computed(() => {
+    const id = this.seleccionado();
+    if (!id) return null;
+    const centro = this.centros().find((c) => c.id === id);
+    if (!centro) return null;
+    return { centro, personas: this.poblacion()?.get(id) ?? [] };
+  });
 
   private mapa?: L.Map;
   private readonly marcadores = new Map<string, L.Marker>();
@@ -74,6 +111,10 @@ export class PenitenciariosComponent implements AfterViewInit, OnDestroy {
     this.mapa?.remove();
   }
 
+  conteo(idCentro: string): number {
+    return this.poblacion()?.get(idCentro)?.length ?? 0;
+  }
+
   /** Centra el mapa en un centro y abre su ficha. */
   enfocar(centro: ValorCatalogo): void {
     if (centro.latitud == null || centro.longitud == null || !this.mapa) return;
@@ -91,7 +132,10 @@ export class PenitenciariosComponent implements AfterViewInit, OnDestroy {
     this.cargando.set(true);
     this.error.set(null);
     try {
-      const centros = await this.catalogos.listarAdministrable('centros', false);
+      const [centros] = await Promise.all([
+        this.catalogos.listarAdministrable('centros', false),
+        this.cargarPoblacion(),
+      ]);
       this.centros.set(centros);
       this.pintarMarcadores();
       this.ajustarVista();
@@ -99,6 +143,18 @@ export class PenitenciariosComponent implements AfterViewInit, OnDestroy {
       this.error.set(mensajeDe(err));
     } finally {
       this.cargando.set(false);
+    }
+  }
+
+  /** La población requiere personas:consultar; sin permiso el mapa sigue útil. */
+  private async cargarPoblacion(): Promise<void> {
+    try {
+      const datos = await this.api.get<PoblacionCentro[]>(
+        '/api/v1/ingresos-egresos/poblacion-por-centro',
+      );
+      this.poblacion.set(new Map(datos.map((d) => [d.idCentroPenitenciario, d.personas])));
+    } catch {
+      this.poblacion.set(null);
     }
   }
 
@@ -133,19 +189,29 @@ export class PenitenciariosComponent implements AfterViewInit, OnDestroy {
 
   private pintarMarcadores(): void {
     if (!this.mapa) return;
-    const icono = L.divIcon({
-      className: '',
-      html: '<span class="pin-bn"></span>',
-      iconSize: [18, 18],
-      iconAnchor: [9, 9],
-    });
     for (const centro of this.conUbicacion()) {
+      const personas = this.conteo(centro.id);
+      // Con población el pin se vuelve un contador; sin ella, punto simple.
+      const icono =
+        personas > 0
+          ? L.divIcon({
+              className: '',
+              html: `<span class="pin-conteo">${personas}</span>`,
+              iconSize: [26, 26],
+              iconAnchor: [13, 13],
+            })
+          : L.divIcon({
+              className: '',
+              html: '<span class="pin-bn"></span>',
+              iconSize: [18, 18],
+              iconAnchor: [9, 9],
+            });
       const marcador = L.marker([centro.latitud!, centro.longitud!], { icon: icono })
         .addTo(this.mapa)
         .bindPopup(
           `<strong>${escaparHtml(centro.nombre)}</strong><br/>` +
-            `<span style="font-family:monospace;font-size:10px">${centro.latitud}, ${centro.longitud}</span>` +
-            (centro.descripcion ? `<br/>${escaparHtml(centro.descripcion)}` : ''),
+            (this.poblacion() ? `${personas} persona(s) en el centro<br/>` : '') +
+            `<span style="font-family:monospace;font-size:10px">${centro.latitud}, ${centro.longitud}</span>`,
         );
       marcador.on('click', () => this.seleccionado.set(centro.id));
       this.marcadores.set(centro.id, marcador);

@@ -4,11 +4,14 @@
       <p class="etiqueta">Módulo</p>
       <h2 class="text-2xl font-bold text-slate-100">Penitenciarios</h2>
       <p class="mt-1 max-w-xl text-sm text-slate-500">
-        Ubicación geográfica de los centros penitenciarios del estado de Jalisco. Las coordenadas se
-        administran en Catálogos → Centros penitenciarios.
+        Ubicación y población actual de los centros penitenciarios. Una persona cuenta en el centro
+        de su último INGRESO; una LIBERTAD posterior la retira del conteo.
       </p>
     </div>
     <div class="flex items-center gap-2">
+      @if (poblacion() !== null) {
+        <span class="chip-neon">{{ totalPoblacion() }} persona(s) en centros</span>
+      }
       <span class="chip-ok">{{ conUbicacion().length }} con ubicación</span>
       @if (sinUbicacion().length > 0) {
         <span class="chip-alerta">{{ sinUbicacion().length }} sin ubicación</span>
@@ -20,10 +23,11 @@
     <p class="alerta-error">{{ error() }}</p>
   }
 
-  <!-- Mapa a todo lo ancho con el listado flotando encima -->
+  <!-- Mapa a todo lo ancho con el listado y la ficha flotando encima -->
   <div class="panel relative overflow-hidden p-0">
     <div #contenedor class="mapa-bn h-[78vh] w-full"></div>
 
+    <!-- Listado flotante de centros -->
     <div class="absolute left-4 top-4 z-[1000] w-80 max-w-[calc(100%-2rem)]">
       @if (panelAbierto()) {
         <div
@@ -55,12 +59,19 @@
                 (click)="enfocar(c)"
               >
                 <span class="w-4 shrink-0 text-center text-neon/70">📍</span>
-                <span class="min-w-0">
+                <span class="min-w-0 grow">
                   <span class="block truncate text-xs">{{ c.nombre }}</span>
                   <span class="block font-mono text-[9px] text-slate-600">
                     {{ c.latitud }}, {{ c.longitud }}
                   </span>
                 </span>
+                @if (poblacion() !== null && conteo(c.id) > 0) {
+                  <span
+                    class="ml-auto rounded-full bg-neon/20 px-2 font-mono text-[10px] text-neon"
+                  >
+                    {{ conteo(c.id) }}
+                  </span>
+                }
               </button>
             }
             @if (sinUbicacion().length > 0) {
@@ -86,5 +97,80 @@
         </button>
       }
     </div>
+
+    <!-- Ficha del centro seleccionado: población y detalle de personas -->
+    @if (detalle(); as d) {
+      <div class="absolute bottom-4 right-4 z-[1000] w-96 max-w-[calc(100%-2rem)]">
+        <div
+          class="flex max-h-[58vh] flex-col overflow-hidden rounded-xl border border-borde bg-panel/95 shadow-2xl shadow-black/60 backdrop-blur"
+        >
+          <div class="flex items-start gap-2 border-b border-borde px-4 py-3">
+            <div class="min-w-0 grow">
+              <p class="etiqueta">Centro penitenciario</p>
+              <h3 class="mt-0.5 text-sm font-semibold leading-snug text-slate-100">
+                {{ d.centro.nombre }}
+              </h3>
+            </div>
+            <button
+              class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-borde text-xs text-slate-400 hover:border-neon/40 hover:text-neon"
+              type="button"
+              title="Cerrar ficha"
+              (click)="seleccionado.set(null)"
+            >
+              ✕
+            </button>
+          </div>
+
+          @if (poblacion() === null) {
+            <p class="px-4 py-4 text-xs text-slate-500">
+              Sin permiso para consultar la población (personas:consultar).
+            </p>
+          } @else {
+            <div class="flex items-center gap-2 border-b border-borde px-4 py-2.5">
+              <span class="chip-neon">{{ d.personas.length }} persona(s) en el centro</span>
+            </div>
+            <div class="grow divide-y divide-borde/60 overflow-y-auto">
+              @if (d.personas.length === 0) {
+                <p class="px-4 py-4 text-xs text-slate-600">
+                  Ninguna persona tiene su último INGRESO en este centro.
+                </p>
+              }
+              @for (p of d.personas; track p.idPersona) {
+                <a
+                  class="block px-4 py-3 transition-colors hover:bg-neon/5"
+                  [routerLink]="['/personas', p.idPersona]"
+                  title="Abrir expediente"
+                >
+                  <div class="flex items-baseline justify-between gap-2">
+                    <p class="truncate text-sm font-medium text-slate-100">{{ p.nombre }}</p>
+                    @if (p.edad !== null) {
+                      <span class="shrink-0 font-mono text-[10px] text-slate-500">
+                        {{ p.edad }} años
+                      </span>
+                    }
+                  </div>
+                  <div class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
+                    @if (p.alias) {
+                      <span>alias: {{ p.alias }}</span>
+                    }
+                    @if (p.curp) {
+                      <span class="font-mono">{{ p.curp }}</span>
+                    }
+                  </div>
+                  <div class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px]">
+                    <span class="text-slate-400">
+                      Ingreso: {{ p.fechaIngreso | date: 'dd/MM/yyyy HH:mm' }}
+                    </span>
+                    @if (p.delito) {
+                      <span class="text-peligro/80">{{ p.delito }}</span>
+                    }
+                  </div>
+                </a>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
   </div>
 </div>
