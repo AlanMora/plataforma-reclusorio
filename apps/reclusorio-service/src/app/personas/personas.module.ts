@@ -52,7 +52,11 @@ class CrearPersonaDto {
   @IsOptional() @IsString() @MaxLength(50) ocupacion?: string;
   @IsOptional() @IsString() @MaxLength(255) nacionalidad?: string;
   @IsOptional() @IsString() @MaxLength(255) estadoNacimiento?: string;
-  @IsOptional() @IsString() @MaxLength(50) numeroTelefono?: string;
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  @Matches(/^\d*$/, { message: 'numeroTelefono debe contener solo dígitos, sin espacios ni letras' })
+  numeroTelefono?: string;
 }
 
 /** Modificación (RF-PER-005): todos los campos opcionales, mismos tipos/longitudes. */
@@ -75,7 +79,11 @@ class ModificarPersonaDto {
   @IsOptional() @IsString() @MaxLength(50) ocupacion?: string;
   @IsOptional() @IsString() @MaxLength(255) nacionalidad?: string;
   @IsOptional() @IsString() @MaxLength(255) estadoNacimiento?: string;
-  @IsOptional() @IsString() @MaxLength(50) numeroTelefono?: string;
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  @Matches(/^\d*$/, { message: 'numeroTelefono debe contener solo dígitos, sin espacios ni letras' })
+  numeroTelefono?: string;
 }
 
 /** Búsqueda (RF-PER-002): como mínimo por nombre, apellidos, alias y CURP. */

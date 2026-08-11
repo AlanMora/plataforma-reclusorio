@@ -122,11 +122,16 @@
     <div>
       <label class="campo-etiqueta" for="numeroTelefono">Teléfono</label>
       <input
+        #campoTelefono
         class="campo"
         id="numeroTelefono"
         name="numeroTelefono"
         maxlength="50"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        placeholder="Solo dígitos"
         [(ngModel)]="modelo.numeroTelefono"
+        (ngModelChange)="sanearTelefono(campoTelefono)"
       />
     </div>
   </div>

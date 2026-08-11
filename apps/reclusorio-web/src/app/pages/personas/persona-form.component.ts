@@ -92,6 +92,17 @@ export class PersonaFormComponent implements OnInit {
     return conValorActual(ESTADOS_NACIMIENTO_DUMMY, this.modelo['estadoNacimiento']);
   }
 
+  /**
+   * El teléfono solo admite dígitos (RF-GEN-004): descarta letras, espacios y
+   * símbolos al teclear o pegar. Corrige también el elemento porque ngModel no
+   * repinta la vista cuando el valor saneado coincide con el anterior.
+   */
+  sanearTelefono(input: HTMLInputElement): void {
+    const limpio = input.value.replace(/\D+/g, '');
+    this.modelo['numeroTelefono'] = limpio;
+    if (input.value !== limpio) input.value = limpio;
+  }
+
   ngOnInit(): void {
     const p = this.inicial();
     if (!p) return;
