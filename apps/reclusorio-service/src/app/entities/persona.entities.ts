@@ -116,6 +116,14 @@ export class Domicilio {
   @Column({ type: 'varchar', length: 150, nullable: true })
   pais?: string;
 
+  // Coordenadas del domicilio capturadas desde el mapa (decisión del equipo
+  // 2026-08-11, fuera del Modelo de Datos v1.0 — registrada en el PLAN).
+  @Column({ type: 'double precision', nullable: true })
+  latitud?: number;
+
+  @Column({ type: 'double precision', nullable: true })
+  longitud?: number;
+
   @BeforeInsert()
   asignarId(): void {
     if (!this.idDomicilio) this.idDomicilio = uuidv7();

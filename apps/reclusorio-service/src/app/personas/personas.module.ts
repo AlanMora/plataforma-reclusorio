@@ -14,11 +14,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
 import {
   IsDateString,
+  IsNumber,
   IsOptional,
   IsString,
   Length,
   Matches,
+  Max,
   MaxLength,
+  Min,
 } from 'class-validator';
 import { DatabaseModule } from '@icms/database';
 import { EntityNotFoundException, PaginationQueryDto, paginate } from '@icms/common';
@@ -93,6 +96,9 @@ class CrearDomicilioDto {
   @IsOptional() @IsString() @MaxLength(150) estado?: string;
   @IsOptional() @IsString() @MaxLength(150) municipio?: string;
   @IsOptional() @IsString() @MaxLength(150) pais?: string;
+  /** Coordenadas capturadas desde el mapa (desviación aprobada 2026-08-11). */
+  @IsOptional() @IsNumber() @Min(-90) @Max(90) latitud?: number;
+  @IsOptional() @IsNumber() @Min(-180) @Max(180) longitud?: number;
 }
 
 /** Serializa la persona incluyendo la edad calculada (RF-GEN-008). */

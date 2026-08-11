@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import 'leaflet/dist/leaflet.css';
 
 /* =====================================================================
    Tema "consola de mando" — Plataforma de Gestión de Reclusorio (F10)
@@ -201,4 +202,47 @@ body {
   .tab.activo {
     @apply border-neon text-neon;
   }
+}
+
+/* =====================================================================
+   Mapa de domicilios (Leaflet) — tema blanco y negro
+   ===================================================================== */
+
+/* Teselas OSM en escala de grises (className 'tile-bn' del tileLayer). */
+.mapa-bn .tile-bn {
+  filter: grayscale(1) contrast(1.05) brightness(0.98);
+}
+
+.mapa-bn {
+  background: #e5e5e5;
+}
+
+.mapa-bn .leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.85);
+  color: #333;
+  font-size: 9px;
+}
+.mapa-bn .leaflet-control-attribution a {
+  color: #111;
+}
+
+.mapa-bn .leaflet-control-zoom a {
+  background: #fff;
+  color: #111;
+  border-color: #111;
+}
+.mapa-bn .leaflet-control-zoom a:hover {
+  background: #111;
+  color: #fff;
+}
+
+/* Pin del marcador dibujado con CSS (sin PNG), acorde al tema B/N. */
+.pin-bn {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #111;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 2px #111, 0 2px 6px rgba(0, 0, 0, 0.5);
 }

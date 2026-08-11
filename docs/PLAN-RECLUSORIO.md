@@ -67,6 +67,7 @@ Registradas conforme al mandato §22.10 (no asumir silenciosamente):
 | P6 | **Política de archivos** (DP-006) | Tamaño máximo, MIME permitidos, antivirus, retención | Configurable por env; valores por confirmar |
 | P7 | **Política de contraseñas** (DP-004) | Longitud, complejidad, historial, bloqueo | Mínimo 12 caracteres + verificación de contraseña actual (RF-CUE-002); resto por confirmar |
 | P8 | **Framework del frontend** | La spec define comportamiento (RF-UI-*) pero no tecnología | **RESUELTA (06/08/2026): el equipo eligió Angular.** Implementado en F10 como `apps/reclusorio-web` (Angular 22 + Tailwind CSS 4, app del monorepo detrás del gateway) |
+| P9 | **Coordenadas y catálogos de ubicación en domicilios** | El Modelo de Datos v1.0 no define `latitud`/`longitud` ni catálogos de país/estado/municipio | **APROBADA (11/08/2026, indicación directa del equipo):** columnas `latitud`/`longitud` (double precision, nulas) en `domicilios`, capturadas desde el mapa (Leaflet + geocodificación Nominatim/OSM). País/estado/municipio pasan a selects en el frontend con data dummy en `apps/reclusorio-web/src/app/core/ubicaciones-dummy.ts`, a reemplazar por seeders/catálogos reales cuando el equipo los entregue |
 
 ## 5. Definiciones ya resueltas por la base
 

@@ -106,6 +106,9 @@ export interface Domicilio {
   estado?: string;
   municipio?: string;
   pais?: string;
+  /** Coordenadas capturadas desde el mapa (pueden no existir en registros previos). */
+  latitud?: number | null;
+  longitud?: number | null;
 }
 
 export interface PersonaDetalle extends Persona {

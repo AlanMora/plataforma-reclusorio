@@ -1,0 +1,54 @@
+<div class="space-y-2">
+  @if (interactivo()) {
+    <div>
+      <label class="campo-etiqueta" for="mapaBusqueda">Buscar domicilio completo</label>
+      <div class="relative">
+        <input
+          class="campo pr-24"
+          id="mapaBusqueda"
+          name="mapaBusqueda"
+          placeholder="Calle, número, colonia, municipio, estado…"
+          autocomplete="off"
+          [(ngModel)]="consulta"
+          (ngModelChange)="alTeclear()"
+          (keydown.enter)="$event.preventDefault(); buscar()"
+          (keydown.escape)="cerrarResultados()"
+        />
+        @if (buscando()) {
+          <span
+            class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 animate-pulse font-mono text-[10px] uppercase tracking-widest text-neon"
+          >
+            Buscando…
+          </span>
+        }
+        @if (resultados().length > 0) {
+          <ul
+            class="absolute left-0 right-0 top-full z-[1100] mt-1 max-h-56 divide-y divide-borde overflow-y-auto rounded-lg border border-borde bg-panel-2 shadow-xl shadow-black/50"
+          >
+            @for (r of resultados(); track r.place_id) {
+              <li>
+                <button
+                  class="block w-full px-3 py-2 text-left text-xs text-slate-300 hover:bg-neon/10 hover:text-neon"
+                  type="button"
+                  (click)="elegir(r)"
+                >
+                  {{ r.display_name }}
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+      @if (errorBusqueda()) {
+        <p class="mt-1 text-xs text-alerta">{{ errorBusqueda() }}</p>
+      }
+    </div>
+  }
+  <div #contenedor class="mapa-bn h-72 w-full overflow-hidden rounded-lg border border-borde"></div>
+  @if (interactivo()) {
+    <p class="text-[10px] uppercase tracking-widest text-slate-600">
+      Escriba el domicilio y elija una coincidencia de la lista, o haga clic en el mapa para fijar
+      la ubicación; los campos del domicilio se llenan en automático.
+    </p>
+  }
+</div>

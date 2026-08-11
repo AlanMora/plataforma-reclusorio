@@ -30,7 +30,12 @@
 
     <div class="flex overflow-x-auto border-b border-borde">
       @for (p of pestanas; track p.clave) {
-        <button class="tab" [class.activo]="pestana() === p.clave" type="button" (click)="pestana.set(p.clave)">
+        <button
+          class="tab"
+          [class.activo]="pestana() === p.clave"
+          type="button"
+          (click)="pestana.set(p.clave)"
+        >
           {{ p.etiqueta }}
         </button>
       }
@@ -51,7 +56,12 @@
               }
             </div>
             <div class="mt-6 flex justify-end">
-              <button *rwPermiso="'personas:modificar'" class="btn-secundario" type="button" (click)="editando.set(true)">
+              <button
+                *rwPermiso="'personas:modificar'"
+                class="btn-secundario"
+                type="button"
+                (click)="editando.set(true)"
+              >
                 Editar datos
               </button>
             </div>
@@ -70,42 +80,126 @@
               </button>
             </div>
             @if (mostrarFormDomicilio()) {
-              <form class="grid gap-4 rounded-lg border border-borde p-4 md:grid-cols-3" (ngSubmit)="agregarDomicilio()">
+              <form
+                class="grid gap-4 rounded-lg border border-borde p-4 md:grid-cols-3"
+                (ngSubmit)="agregarDomicilio()"
+              >
+                <div class="md:col-span-3">
+                  <rw-mapa-domicilio (domicilio)="alUbicar($event)" />
+                  @if (domicilio.latitud !== null && domicilio.longitud !== null) {
+                    <p class="mt-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">
+                      Coordenadas capturadas: {{ domicilio.latitud | number: '1.5-6' }},
+                      {{ domicilio.longitud | number: '1.5-6' }}
+                    </p>
+                  }
+                </div>
                 <div>
                   <label class="campo-etiqueta obligatorio" for="domCalle">Calle</label>
-                  <input class="campo" id="domCalle" name="calle" maxlength="150" required [(ngModel)]="domicilio.calle" />
+                  <input
+                    class="campo"
+                    id="domCalle"
+                    name="calle"
+                    maxlength="150"
+                    required
+                    [(ngModel)]="domicilio.calle"
+                  />
                 </div>
                 <div>
                   <label class="campo-etiqueta" for="domNumExt">No. exterior</label>
-                  <input class="campo" id="domNumExt" name="numeroExterior" maxlength="30" placeholder="12-A, S/N…" [(ngModel)]="domicilio.numeroExterior" />
+                  <input
+                    class="campo"
+                    id="domNumExt"
+                    name="numeroExterior"
+                    maxlength="30"
+                    placeholder="12-A, S/N…"
+                    [(ngModel)]="domicilio.numeroExterior"
+                  />
                 </div>
                 <div>
                   <label class="campo-etiqueta" for="domNumInt">No. interior</label>
-                  <input class="campo" id="domNumInt" name="numeroInterior" maxlength="30" [(ngModel)]="domicilio.numeroInterior" />
+                  <input
+                    class="campo"
+                    id="domNumInt"
+                    name="numeroInterior"
+                    maxlength="30"
+                    [(ngModel)]="domicilio.numeroInterior"
+                  />
                 </div>
                 <div>
                   <label class="campo-etiqueta" for="domCruce1">Cruce 1</label>
-                  <input class="campo" id="domCruce1" name="cruce1" maxlength="150" [(ngModel)]="domicilio.cruce1" />
+                  <input
+                    class="campo"
+                    id="domCruce1"
+                    name="cruce1"
+                    maxlength="150"
+                    [(ngModel)]="domicilio.cruce1"
+                  />
                 </div>
                 <div>
                   <label class="campo-etiqueta" for="domCruce2">Cruce 2</label>
-                  <input class="campo" id="domCruce2" name="cruce2" maxlength="150" [(ngModel)]="domicilio.cruce2" />
+                  <input
+                    class="campo"
+                    id="domCruce2"
+                    name="cruce2"
+                    maxlength="150"
+                    [(ngModel)]="domicilio.cruce2"
+                  />
                 </div>
                 <div>
                   <label class="campo-etiqueta" for="domColonia">Colonia</label>
-                  <input class="campo" id="domColonia" name="colonia" maxlength="150" [(ngModel)]="domicilio.colonia" />
-                </div>
-                <div>
-                  <label class="campo-etiqueta" for="domMunicipio">Municipio</label>
-                  <input class="campo" id="domMunicipio" name="municipio" maxlength="150" [(ngModel)]="domicilio.municipio" />
-                </div>
-                <div>
-                  <label class="campo-etiqueta" for="domEstado">Estado</label>
-                  <input class="campo" id="domEstado" name="estado" maxlength="150" [(ngModel)]="domicilio.estado" />
+                  <input
+                    class="campo"
+                    id="domColonia"
+                    name="colonia"
+                    maxlength="150"
+                    [(ngModel)]="domicilio.colonia"
+                  />
                 </div>
                 <div>
                   <label class="campo-etiqueta" for="domPais">País</label>
-                  <input class="campo" id="domPais" name="pais" maxlength="150" [(ngModel)]="domicilio.pais" />
+                  <select
+                    class="campo"
+                    id="domPais"
+                    name="pais"
+                    [(ngModel)]="domicilio.pais"
+                    (ngModelChange)="alCambiarPais()"
+                  >
+                    <option value="">— Seleccione —</option>
+                    @for (p of paisesOpciones(); track p) {
+                      <option [value]="p">{{ p }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label class="campo-etiqueta" for="domEstado">Estado</label>
+                  <select
+                    class="campo"
+                    id="domEstado"
+                    name="estado"
+                    [disabled]="!domicilio.pais"
+                    [(ngModel)]="domicilio.estado"
+                    (ngModelChange)="alCambiarEstado()"
+                  >
+                    <option value="">— Seleccione —</option>
+                    @for (e of estadosOpciones(); track e) {
+                      <option [value]="e">{{ e }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label class="campo-etiqueta" for="domMunicipio">Municipio</label>
+                  <select
+                    class="campo"
+                    id="domMunicipio"
+                    name="municipio"
+                    [disabled]="!domicilio.estado"
+                    [(ngModel)]="domicilio.municipio"
+                  >
+                    <option value="">— Seleccione —</option>
+                    @for (m of municipiosOpciones(); track m) {
+                      <option [value]="m">{{ m }}</option>
+                    }
+                  </select>
                 </div>
                 @if (errorDomicilio()) {
                   <p class="alerta-error md:col-span-3">{{ errorDomicilio() }}</p>
@@ -133,7 +227,35 @@
                     {{ [d.colonia, d.municipio, d.estado, d.pais].join(' · ') }}
                   </p>
                   @if (d.cruce1 || d.cruce2) {
-                    <p class="mt-1 text-xs text-slate-500">Entre {{ d.cruce1 || '—' }} y {{ d.cruce2 || '—' }}</p>
+                    <p class="mt-1 text-xs text-slate-500">
+                      Entre {{ d.cruce1 || '—' }} y {{ d.cruce2 || '—' }}
+                    </p>
+                  }
+                  @if (d.latitud != null && d.longitud != null) {
+                    <div class="mt-2 flex items-center gap-2">
+                      <span class="chip-apagado"
+                        >📍 {{ d.latitud | number: '1.5-6' }},
+                        {{ d.longitud | number: '1.5-6' }}</span
+                      >
+                      <button
+                        class="btn-secundario btn-mini"
+                        type="button"
+                        (click)="
+                          mapaAbierto.set(mapaAbierto() === d.idDomicilio ? null : d.idDomicilio!)
+                        "
+                      >
+                        {{ mapaAbierto() === d.idDomicilio ? 'Ocultar mapa' : 'Ver en mapa' }}
+                      </button>
+                    </div>
+                    @if (mapaAbierto() === d.idDomicilio) {
+                      <div class="mt-3">
+                        <rw-mapa-domicilio
+                          [lat]="d.latitud"
+                          [lng]="d.longitud"
+                          [interactivo]="false"
+                        />
+                      </div>
+                    }
                   }
                 </div>
               }
