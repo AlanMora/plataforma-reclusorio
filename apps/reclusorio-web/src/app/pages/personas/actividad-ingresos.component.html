@@ -64,11 +64,10 @@
       </div>
       <div>
         <label class="campo-etiqueta" for="ieAutoridad">Autoridad que pone a disposición</label>
-        <input
-          class="campo"
-          id="ieAutoridad"
+        <rw-select-buscable
+          idCampo="ieAutoridad"
           name="autoridad"
-          maxlength="255"
+          [opciones]="autoridadesOpciones()"
           [(ngModel)]="forma.autoridad"
         />
       </div>

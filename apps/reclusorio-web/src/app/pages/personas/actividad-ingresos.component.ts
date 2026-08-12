@@ -32,6 +32,17 @@ export class ActividadIngresosComponent implements OnInit {
   /** Adapta valores de catálogo a opciones del select buscable. */
   readonly aOpciones = aOpciones;
 
+  /**
+   * El modelo guarda la autoridad como TEXTO (Modelo de Datos §3.5), así que
+   * el select ofrece los NOMBRES del catálogo de autoridades; los valores
+   * libres ya guardados se conservan como opción.
+   */
+  autoridadesOpciones(): string[] {
+    const nombres = this.autoridades().map((a) => a.nombre);
+    const actual = this.forma['autoridad'];
+    return actual && !nombres.includes(actual) ? [actual, ...nombres] : nombres;
+  }
+
   private readonly api = inject(ApiService);
   private readonly catalogos = inject(CatalogosService);
   private readonly toast = inject(ToastService);
@@ -49,6 +60,7 @@ export class ActividadIngresosComponent implements OnInit {
   readonly tipos = signal<ValorCatalogo[]>([]);
   readonly centros = signal<ValorCatalogo[]>([]);
   readonly delitos = signal<ValorCatalogo[]>([]);
+  readonly autoridades = signal<ValorCatalogo[]>([]);
   private mapaTipos = new Map<string, string>();
   private mapaCentros = new Map<string, string>();
   private mapaDelitos = new Map<string, string>();
@@ -137,14 +149,16 @@ export class ActividadIngresosComponent implements OnInit {
 
   private async cargarCatalogos(): Promise<void> {
     try {
-      const [tipos, centros, delitos] = await Promise.all([
+      const [tipos, centros, delitos, autoridades] = await Promise.all([
         this.catalogos.valores('tipo_ingreso_egreso'),
         this.catalogos.valores('centros'),
         this.catalogos.valores('delitos'),
+        this.catalogos.valores('autoridad'),
       ]);
       this.tipos.set(tipos);
       this.centros.set(centros);
       this.delitos.set(delitos);
+      this.autoridades.set(autoridades);
       this.mapaTipos = new Map(tipos.map((v) => [v.id, v.nombre]));
       this.mapaCentros = new Map(centros.map((v) => [v.id, v.nombre]));
       this.mapaDelitos = new Map(delitos.map((v) => [v.id, v.nombre]));
