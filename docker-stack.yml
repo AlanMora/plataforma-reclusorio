@@ -38,6 +38,8 @@ x-service-env: &service-env
   RABBITMQ_URL: amqp://${RABBITMQ_USER:-icms}:${RABBITMQ_PASSWORD:-icms}@rabbitmq:5672
   RABBITMQ_EXCHANGE: icms.events
   S3_ENDPOINT: http://minio:9000
+  # Origen público del sitio (el nginx del web proxea /reclusorio-archivos/ a MinIO).
+  S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-}
   S3_REGION: us-east-1
   S3_ACCESS_KEY: ${S3_ACCESS_KEY:-icmsminio}
   S3_SECRET_KEY: ${S3_SECRET_KEY:-icmsminio123}

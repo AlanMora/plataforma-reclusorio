@@ -65,6 +65,10 @@ function clasificar(mimeType: string): string {
 export class ArchivosService {
   private readonly logger = new Logger(ArchivosService.name);
   private readonly client: S3Client;
+  /** Firma URLs con el endpoint PÚBLICO: la firma AWS V4 incluye el host,
+   *  así que debe calcularse con el host que usará el NAVEGADOR, no el
+   *  hostname interno de Docker (http://minio:9000). */
+  private readonly clientePublico: S3Client;
   private readonly bucket: string;
   private bucketListo = false;
 
@@ -73,14 +77,21 @@ export class ArchivosService {
     config: ConfigService,
   ) {
     this.bucket = config.get<string>('S3_BUCKET_RECLUSORIO', 'reclusorio-archivos');
-    this.client = new S3Client({
-      endpoint: config.get<string>('S3_ENDPOINT', 'http://localhost:9000'),
+    const opciones = {
       region: config.get<string>('S3_REGION', 'us-east-1'),
       forcePathStyle: parseBoolean(config.get<string>('S3_FORCE_PATH_STYLE'), true),
       credentials: {
         accessKeyId: config.get<string>('S3_ACCESS_KEY', 'icmsminio'),
         secretAccessKey: config.get<string>('S3_SECRET_KEY', 'icmsminio123'),
       },
+    };
+    const endpoint = config.get<string>('S3_ENDPOINT', 'http://localhost:9000');
+    this.client = new S3Client({ ...opciones, endpoint });
+    // S3_PUBLIC_ENDPOINT: cómo llega el navegador a los archivos (p. ej.
+    // http://localhost:9000 en dev, https://<dominio> en prod vía nginx).
+    this.clientePublico = new S3Client({
+      ...opciones,
+      endpoint: config.get<string>('S3_PUBLIC_ENDPOINT', '') || endpoint,
     });
   }
 
@@ -195,7 +206,7 @@ export class ArchivosService {
     const archivo = await this.obtener(idArchivo);
     if (!archivo.activo) throw new BusinessRuleException('El archivo está desactivado');
     const url = await getSignedUrl(
-      this.client,
+      this.clientePublico,
       new GetObjectCommand({ Bucket: this.bucket, Key: archivo.rutaAlmacenamiento }),
       { expiresIn: 300 },
     );
