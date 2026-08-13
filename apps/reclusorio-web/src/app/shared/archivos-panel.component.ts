@@ -7,6 +7,7 @@ import { PermisoDirective } from '../core/permiso.directive';
 import { Archivo, ReferenciaArchivo } from '../core/models';
 import { mensajeDe } from '../core/problem';
 import { VistaPreviaComponent, tipoVistaPrevia } from './vista-previa.component';
+import { ArchivoMiniaturaComponent } from './archivo-miniatura.component';
 
 /**
  * Expediente digital reutilizable (RF-ARC-001..007): lista, sube, descarga
@@ -16,7 +17,7 @@ import { VistaPreviaComponent, tipoVistaPrevia } from './vista-previa.component'
 @Component({
   selector: 'rw-archivos-panel',
   standalone: true,
-  imports: [DatePipe, FormsModule, PermisoDirective, VistaPreviaComponent],
+  imports: [DatePipe, FormsModule, PermisoDirective, VistaPreviaComponent, ArchivoMiniaturaComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './archivos-panel.component.html',
 })

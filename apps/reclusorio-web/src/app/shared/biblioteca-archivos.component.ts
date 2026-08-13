@@ -15,6 +15,7 @@ import { PermisoDirective } from '../core/permiso.directive';
 import { Archivo } from '../core/models';
 import { mensajeDe } from '../core/problem';
 import { VistaPreviaComponent, tipoVistaPrevia } from './vista-previa.component';
+import { ArchivoMiniaturaComponent } from './archivo-miniatura.component';
 
 type ArchivoBiblioteca = Archivo & { origen: string };
 
@@ -36,7 +37,13 @@ const GRUPOS: Array<{ clave: string; etiqueta: string }> = [
 @Component({
   selector: 'rw-biblioteca-archivos',
   standalone: true,
-  imports: [DatePipe, FormsModule, PermisoDirective, VistaPreviaComponent],
+  imports: [
+    DatePipe,
+    FormsModule,
+    PermisoDirective,
+    VistaPreviaComponent,
+    ArchivoMiniaturaComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './biblioteca-archivos.component.html',
 })
@@ -65,15 +72,6 @@ export class BibliotecaArchivosComponent {
       const id = this.idPersona();
       if (id) void this.cargar(id);
     });
-  }
-
-  iconoDe(archivo: Archivo): string {
-    const tipo = tipoVistaPrevia(archivo.mimeType);
-    if (tipo === 'imagen') return '🖼️';
-    if (tipo === 'video') return '🎬';
-    if (tipo === 'audio') return '🎵';
-    if (tipo === 'pdf' || tipo === 'texto') return '📄';
-    return '📎';
   }
 
   puedePrevisualizar(archivo: Archivo): boolean {

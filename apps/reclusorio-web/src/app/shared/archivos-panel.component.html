@@ -37,6 +37,7 @@
     <table class="tabla">
       <thead>
         <tr>
+          <th></th>
           <th>Nombre</th>
           <th>Tipo</th>
           <th>Tamaño</th>
@@ -48,6 +49,20 @@
       <tbody>
         @for (a of archivos(); track a.idArchivo) {
           <tr>
+            <td class="w-12">
+              @if (puedePrevisualizar(a)) {
+                <button
+                  class="block cursor-zoom-in transition-transform hover:scale-110"
+                  type="button"
+                  title="Vista previa"
+                  (click)="previsualizar(a, visor)"
+                >
+                  <rw-archivo-miniatura [archivo]="a" />
+                </button>
+              } @else {
+                <rw-archivo-miniatura [archivo]="a" />
+              }
+            </td>
             <td class="max-w-[220px] truncate" [title]="a.nombreOriginal">
               {{ a.nombreOriginal }}
             </td>
