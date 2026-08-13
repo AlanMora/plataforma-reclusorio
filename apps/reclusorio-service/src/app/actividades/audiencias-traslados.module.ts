@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Injectable, Module, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Injectable, Module, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -54,6 +54,12 @@ class CrearTrasladoDto {
 
 class AsociarElementoDto {
   @IsUUID() idElemento!: string;
+}
+
+/** Rango opcional para los traslados del mapa (P11). */
+class TrasladosMapaQuery {
+  @IsOptional() @IsDateString() desde?: string;
+  @IsOptional() @IsDateString() hasta?: string;
 }
 
 /** Audiencias (RF-AUD-001..008). */
@@ -134,6 +140,79 @@ export class TrasladosService {
   async porPersona(idPersona: string) {
     await this.personas.obtener(idPersona);
     return this.repo.find({ where: { idPersona }, order: { fecha: 'DESC' } });
+  }
+
+  /**
+   * Traslados recientes con la persona y su centro de ORIGEN (centro del
+   * último INGRESO) para dibujarlos en el mapa Penitenciarios (P11).
+   * Los DESCARTADOS (P10) no se muestran.
+   */
+  async paraMapa(query: TrasladosMapaQuery) {
+    const condiciones = [`t."estadoRevision" <> 'DESCARTADO'`];
+    const parametros: string[] = [];
+    if (query.desde) {
+      parametros.push(query.desde);
+      condiciones.push(`t.fecha >= $${parametros.length}`);
+    }
+    if (query.hasta) {
+      parametros.push(query.hasta);
+      condiciones.push(`t.fecha <= $${parametros.length}`);
+    }
+    const filas: Array<{
+      idTraslado: string;
+      fecha: Date;
+      idPersona: string;
+      idTipoTraslado: string;
+      idDestinoTraslado: string;
+      idEstatusTraslado: string;
+      unidades?: string;
+      descripcion?: string;
+      observaciones?: string;
+      estadoRevision: string;
+      primerNombre?: string;
+      apellidoPaterno?: string;
+      apellidoMaterno?: string;
+      alias?: string;
+      idCentroOrigen?: string;
+    }> = await this.repo.query(
+      `
+      SELECT t."idTraslado", t.fecha, t."idPersona", t."idTipoTraslado", t."idDestinoTraslado",
+             t."idEstatusTraslado", t.unidades, t.descripcion, t.observaciones, t."estadoRevision",
+             p."primerNombre", p."apellidoPaterno", p."apellidoMaterno", p.alias,
+             u."idCentroPenitenciario" AS "idCentroOrigen"
+      FROM traslados t
+      JOIN personas p ON p."idPersona" = t."idPersona"
+      LEFT JOIN (
+        SELECT DISTINCT ON (ie."idPersona") ie."idPersona", ie."idCentroPenitenciario", ie."idTipoIngresoEgreso"
+        FROM ingreso_egreso ie
+        ORDER BY ie."idPersona", ie.fecha DESC, ie."idIngresoEgreso" DESC
+      ) u ON u."idPersona" = t."idPersona"
+         AND u."idTipoIngresoEgreso" IN (
+           SELECT "idTipoIngresoEgreso" FROM tipo_ingreso_egreso WHERE nombre = 'INGRESO'
+         )
+      WHERE ${condiciones.join(' AND ')}
+      ORDER BY t.fecha DESC
+      LIMIT 100
+      `,
+      parametros,
+    );
+    return filas.map((f) => ({
+      idTraslado: f.idTraslado,
+      fecha: f.fecha,
+      idPersona: f.idPersona,
+      nombrePersona: [f.primerNombre, f.apellidoPaterno, f.apellidoMaterno]
+        .filter(Boolean)
+        .join(' '),
+      alias: f.alias ?? undefined,
+      idTipoTraslado: f.idTipoTraslado,
+      idDestinoTraslado: f.idDestinoTraslado,
+      idEstatusTraslado: f.idEstatusTraslado,
+      unidades: f.unidades ?? undefined,
+      descripcion: f.descripcion ?? undefined,
+      observaciones: f.observaciones ?? undefined,
+      estadoRevision: f.estadoRevision,
+      idCentroOrigen: f.idCentroOrigen ?? undefined,
+    }));
   }
 
   async obtener(idTraslado: string) {
@@ -225,6 +304,15 @@ export class TrasladosController {
   @ApiOperation({ summary: 'Registrar traslado con tipo, destino y estatus de catálogo (RF-TRA-001..005)' })
   crear(@Param('idPersona') idPersona: string, @Body() dto: CrearTrasladoDto) {
     return this.service.crear(idPersona, dto);
+  }
+
+  @Get('traslados/mapa')
+  @RequirePermissions('traslados:consultar')
+  @ApiOperation({
+    summary: 'Traslados recientes con persona y centro de origen para el mapa (P11)',
+  })
+  paraMapa(@Query() query: TrasladosMapaQuery) {
+    return this.service.paraMapa(query);
   }
 
   @Get('traslados/:id')

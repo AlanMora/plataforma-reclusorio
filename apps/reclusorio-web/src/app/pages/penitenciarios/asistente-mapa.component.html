@@ -1,0 +1,145 @@
+<!-- Lanzador flotante -->
+@if (!abierto()) {
+  <button
+    class="group flex items-center gap-2 rounded-full border border-neon/40 bg-panel/95 py-2.5 pl-3 pr-4 shadow-2xl shadow-black/60 backdrop-blur transition-colors hover:border-neon hover:bg-neon/10"
+    type="button"
+    title="Abrir asistente de voz del mapa"
+    (click)="alternarPanel()"
+  >
+    <span
+      class="grid h-8 w-8 place-items-center rounded-full bg-neon/15 text-base text-neon transition-transform group-hover:scale-110"
+      >🎙️</span
+    >
+    <span class="text-sm font-medium text-slate-200">Asistente</span>
+  </button>
+} @else {
+  <div
+    class="flex max-h-[62vh] w-[380px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-xl border border-borde bg-panel/95 shadow-2xl shadow-black/60 backdrop-blur"
+  >
+    <!-- Encabezado -->
+    <div class="flex items-center gap-2.5 border-b border-borde px-4 py-3">
+      <span class="relative grid h-8 w-8 place-items-center rounded-full bg-neon/15 text-neon">
+        🎙️
+        @if (escuchando()) {
+          <span class="absolute inset-0 animate-ping rounded-full border border-neon/60"></span>
+        }
+      </span>
+      <div class="min-w-0 grow">
+        <p class="text-sm font-semibold text-slate-100">Asistente del mapa</p>
+        <p class="font-mono text-[10px] uppercase tracking-widest">
+          @if (escuchando()) {
+            <span class="text-neon">● escuchando…</span>
+          } @else if (pensando()) {
+            <span class="animate-pulse text-alerta">● consultando…</span>
+          } @else if (hablando()) {
+            <span class="text-ok">● hablando</span>
+          } @else {
+            <span class="text-slate-500">● en espera</span>
+          }
+        </p>
+      </div>
+      <button
+        class="flex h-7 w-7 items-center justify-center rounded-md border border-borde text-xs text-slate-400 hover:border-neon/40 hover:text-neon"
+        type="button"
+        [title]="vozSalida() ? 'Silenciar respuestas' : 'Activar respuestas habladas'"
+        (click)="alternarVozSalida()"
+      >
+        {{ vozSalida() ? '🔊' : '🔇' }}
+      </button>
+      <button
+        class="flex h-7 w-7 items-center justify-center rounded-md border border-borde text-xs text-slate-400 hover:border-neon/40 hover:text-neon"
+        type="button"
+        title="Minimizar asistente"
+        (click)="alternarPanel()"
+      >
+        ─
+      </button>
+    </div>
+
+    <!-- Conversación -->
+    <div #historial class="grow space-y-2.5 overflow-y-auto px-4 py-3">
+      @for (m of mensajes(); track $index) {
+        <div class="flex" [class.justify-end]="m.rol === 'usuario'">
+          <p
+            class="max-w-[85%] rounded-xl px-3 py-2 text-sm leading-relaxed"
+            [class]="
+              m.rol === 'usuario'
+                ? 'rounded-br-sm bg-neon/15 text-slate-100'
+                : 'rounded-bl-sm border border-borde bg-panel-2/80 text-slate-300'
+            "
+          >
+            {{ m.texto }}
+          </p>
+        </div>
+      }
+      @if (parcial()) {
+        <div class="flex justify-end">
+          <p class="max-w-[85%] rounded-xl bg-neon/5 px-3 py-2 text-sm italic text-slate-500">
+            {{ parcial() }}…
+          </p>
+        </div>
+      }
+    </div>
+
+    <!-- Sugerencias -->
+    <div class="flex flex-wrap gap-1.5 border-t border-borde px-4 py-2.5">
+      @for (
+        s of [
+          'Llévame a Puente Grande',
+          'Incidencias de este mes',
+          'Traslados de la semana',
+          'Resumen'
+        ];
+        track s
+      ) {
+        <button
+          class="rounded-full border border-borde px-2.5 py-1 text-[11px] text-slate-400 transition-colors hover:border-neon/50 hover:text-neon"
+          type="button"
+          (click)="usarSugerencia(s)"
+        >
+          {{ s }}
+        </button>
+      }
+    </div>
+
+    <!-- Entrada -->
+    <div class="flex items-center gap-2 border-t border-borde px-3 py-2.5">
+      @if (soportaVoz()) {
+        <button
+          class="grid h-10 w-10 shrink-0 place-items-center rounded-full border transition-colors"
+          [class]="
+            escuchando()
+              ? 'border-peligro/60 bg-peligro/15 text-peligro'
+              : 'border-neon/50 bg-neon/10 text-neon hover:bg-neon/20'
+          "
+          type="button"
+          [title]="escuchando() ? 'Detener micrófono' : 'Hablar'"
+          (click)="alternarEscucha()"
+        >
+          {{ escuchando() ? '■' : '🎙️' }}
+        </button>
+      }
+      <input
+        class="campo grow"
+        name="fraseAsistente"
+        [(ngModel)]="texto"
+        [placeholder]="soportaVoz() ? 'o escribe tu consulta…' : 'Escribe tu consulta…'"
+        (keyup.enter)="enviarTexto()"
+      />
+      <button
+        class="btn-primario btn-mini shrink-0"
+        type="button"
+        [disabled]="!texto.trim()"
+        (click)="enviarTexto()"
+      >
+        Enviar
+      </button>
+    </div>
+    @if (!soportaVoz()) {
+      <p class="border-t border-borde px-4 py-2 text-[11px] text-slate-600">
+        Este navegador no soporta dictado por voz (usa Chrome o Edge); el asistente funciona por
+        texto.
+      </p>
+    }
+  </div>
+}

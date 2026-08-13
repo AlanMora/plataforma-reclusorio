@@ -27,6 +27,89 @@
   <div class="panel relative overflow-hidden p-0">
     <div #contenedor class="mapa-bn h-[78vh] w-full"></div>
 
+    <!-- Letreros de las capas activadas por el asistente -->
+    @if (capaIncidencias() !== null || capaTraslados() !== null) {
+      <div
+        class="absolute left-1/2 top-4 z-[1000] flex -translate-x-1/2 items-center gap-3 rounded-full border border-borde bg-panel/95 px-4 py-1.5 shadow-xl shadow-black/50 backdrop-blur"
+      >
+        @if (capaIncidencias() !== null) {
+          <span class="flex items-center gap-2">
+            <span class="h-2 w-2 rounded-full bg-peligro"></span>
+            <span class="text-xs text-slate-300">Incidencias ({{ etiquetaCapa() }})</span>
+          </span>
+        }
+        @if (capaTraslados() !== null) {
+          <span class="flex items-center gap-2">
+            <span class="h-0.5 w-4 rounded bg-neon-2"></span>
+            <span class="text-xs text-slate-300">Traslados ({{ etiquetaTraslados() }})</span>
+          </span>
+        }
+      </div>
+    }
+
+    <!-- Ficha de traslados de la capa activa (cuando no hay centro seleccionado) -->
+    @if (capaTraslados(); as traslados) {
+      @if (!detalle()) {
+        <div class="absolute bottom-4 right-4 z-[1000] w-96 max-w-[calc(100%-2rem)]">
+          <div
+            class="flex max-h-[58vh] flex-col overflow-hidden rounded-xl border border-borde bg-panel/95 shadow-2xl shadow-black/60 backdrop-blur"
+          >
+            <div class="flex items-center gap-2 border-b border-borde px-4 py-3">
+              <div class="min-w-0 grow">
+                <p class="etiqueta">Traslados ({{ etiquetaTraslados() }})</p>
+                <p class="text-xs text-slate-500">
+                  {{ traslados.length }} registro(s) — toca uno para trazarlo y oír el detalle
+                </p>
+              </div>
+              <button
+                class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-borde text-xs text-slate-400 hover:border-neon/40 hover:text-neon"
+                type="button"
+                title="Quitar capa de traslados"
+                (click)="limpiarTraslados()"
+              >
+                ✕
+              </button>
+            </div>
+            <div class="grow divide-y divide-borde/60 overflow-y-auto">
+              @for (t of traslados; track t.idTraslado) {
+                <button
+                  [class]="
+                    'block w-full px-4 py-3 text-left transition-colors hover:bg-neon/5' +
+                    (trasladoSeleccionado() === t.idTraslado ? ' bg-neon/10' : '')
+                  "
+                  type="button"
+                  (click)="seleccionarTraslado(t.idTraslado)"
+                >
+                  <div class="flex items-baseline justify-between gap-2">
+                    <p class="truncate text-sm font-medium text-slate-100">
+                      {{ t.nombrePersona }}
+                    </p>
+                    <span class="shrink-0 font-mono text-[10px] text-slate-500">
+                      {{ t.fecha | date: 'dd/MM/yy HH:mm' }}
+                    </span>
+                  </div>
+                  <p class="mt-0.5 truncate text-[11px] text-slate-400">
+                    {{ nombreCentro(t.idCentroOrigen) }} → {{ nombreDestino(t.idDestinoTraslado) }}
+                  </p>
+                  <div class="mt-1 flex flex-wrap gap-1.5">
+                    <span class="chip-neon">{{ nombreTipoTraslado(t.idTipoTraslado) }}</span>
+                    <span class="chip-alerta">{{
+                      nombreEstatusTraslado(t.idEstatusTraslado)
+                    }}</span>
+                  </div>
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    }
+
+    <!-- Asistente de voz del mapa (P11) -->
+    <div class="absolute bottom-4 left-4 z-[1000]">
+      <rw-asistente-mapa (comando)="ejecutarComando($event)" />
+    </div>
+
     <!-- Listado flotante de centros -->
     <div class="absolute left-4 top-4 z-[1000] w-80 max-w-[calc(100%-2rem)]">
       @if (panelAbierto()) {
@@ -121,14 +204,82 @@
             </button>
           </div>
 
-          @if (poblacion() === null) {
+          <!-- Pestañas: población e incidencias del centro -->
+          <div class="flex border-b border-borde">
+            <button
+              class="grow px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] transition-colors"
+              [class]="
+                fichaTab() === 'poblacion'
+                  ? 'border-b-2 border-neon text-neon'
+                  : 'text-slate-500 hover:text-slate-300'
+              "
+              type="button"
+              (click)="fichaTab.set('poblacion')"
+            >
+              Población ({{ d.personas.length }})
+            </button>
+            <button
+              class="grow px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] transition-colors"
+              [class]="
+                fichaTab() === 'incidencias'
+                  ? 'border-b-2 border-peligro text-peligro'
+                  : 'text-slate-500 hover:text-slate-300'
+              "
+              type="button"
+              (click)="fichaTab.set('incidencias')"
+            >
+              Incidencias @if (incidenciasCentro(); as inc) {
+                ({{ inc.length }})
+              }
+            </button>
+          </div>
+
+          @if (fichaTab() === 'incidencias') {
+            @if (incidenciasCentro(); as incidencias) {
+              @if (incidencias.length === 0) {
+                <p class="px-4 py-4 text-xs text-slate-600">
+                  Sin incidencias registradas en este centro.
+                </p>
+              } @else {
+                <div class="grow divide-y divide-borde/60 overflow-y-auto">
+                  @for (i of incidencias; track i.idIncidencia) {
+                    <div class="px-4 py-3">
+                      <div class="flex flex-wrap items-center gap-2">
+                        <span class="chip-alerta">{{
+                          nombreTipoIncidencia(i.idTipoIncidencia)
+                        }}</span>
+                        <span class="font-mono text-[10px] text-slate-500">
+                          {{ i.fecha | date: 'dd/MM/yyyy HH:mm' }}
+                        </span>
+                        @if (i.iph) {
+                          <span class="chip-apagado">IPH {{ i.iph }}</span>
+                        }
+                      </div>
+                      <p class="mt-1.5 text-sm text-slate-200">{{ i.descripcion }}</p>
+                      @if (i.narrativa) {
+                        <p class="mt-1 line-clamp-3 text-[11px] leading-relaxed text-slate-500">
+                          {{ i.narrativa }}
+                        </p>
+                      }
+                      @if (i.primerRespondiente) {
+                        <p class="mt-1 text-[11px] text-slate-500">
+                          1er respondiente: {{ i.primerRespondiente }}
+                        </p>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            } @else {
+              <p class="px-4 py-4 text-xs text-slate-500">
+                Cargando incidencias… (requiere incidencias:consultar)
+              </p>
+            }
+          } @else if (poblacion() === null) {
             <p class="px-4 py-4 text-xs text-slate-500">
               Sin permiso para consultar la población (personas:consultar).
             </p>
           } @else {
-            <div class="flex items-center gap-2 border-b border-borde px-4 py-2.5">
-              <span class="chip-neon">{{ d.personas.length }} persona(s) en el centro</span>
-            </div>
             <div class="grow divide-y divide-borde/60 overflow-y-auto">
               @if (d.personas.length === 0) {
                 <p class="px-4 py-4 text-xs text-slate-600">

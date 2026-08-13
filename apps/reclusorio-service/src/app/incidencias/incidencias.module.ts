@@ -1,7 +1,13 @@
 import { Body, Controller, Get, Injectable, Module, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  Between,
+  FindOptionsWhere,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Repository,
+} from 'typeorm';
 import { IsBoolean, IsDateString, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { DatabaseModule } from '@icms/database';
 import { BusinessRuleException, EntityNotFoundException, PaginationQueryDto, paginate } from '@icms/common';
@@ -33,6 +39,19 @@ class AsociarPersonaDto {
   @IsUUID() idPersona!: string;
 }
 
+/** Rango opcional para el resumen del mapa (P11). */
+class ResumenIncidenciasQuery {
+  @IsOptional() @IsDateString() desde?: string;
+  @IsOptional() @IsDateString() hasta?: string;
+}
+
+/** Listado con filtros opcionales por centro y rango (mapa, P11). */
+class FiltroIncidenciasQuery extends PaginationQueryDto {
+  @IsOptional() @IsUUID() idCentroPenitenciario?: string;
+  @IsOptional() @IsDateString() desde?: string;
+  @IsOptional() @IsDateString() hasta?: string;
+}
+
 class AsociarAutoridadDto {
   @IsUUID() idAutoridad!: string;
 }
@@ -62,14 +81,51 @@ export class IncidenciasService {
     return this.repo.save(this.repo.create(dto));
   }
 
-  /** RF-INC-009: consulta paginada (DP-010). */
-  async listar(query: PaginationQueryDto) {
+  /** RF-INC-009: consulta paginada (DP-010), con filtros del mapa (P11). */
+  async listar(query: FiltroIncidenciasQuery) {
+    const where: FindOptionsWhere<Incidencia> = {};
+    if (query.idCentroPenitenciario) where.idCentroPenitenciario = query.idCentroPenitenciario;
+    if (query.desde && query.hasta) {
+      where.fecha = Between(new Date(query.desde), new Date(query.hasta));
+    } else if (query.desde) {
+      where.fecha = MoreThanOrEqual(new Date(query.desde));
+    } else if (query.hasta) {
+      where.fecha = LessThanOrEqual(new Date(query.hasta));
+    }
     const [items, total] = await this.repo.findAndCount({
+      where,
       skip: (query.page - 1) * query.limit,
       take: query.limit,
       order: { fecha: 'DESC' },
     });
     return paginate(items, total, query);
+  }
+
+  /**
+   * Conteo de incidencias por centro para el mapa del módulo Penitenciarios
+   * (P11). Los registros DESCARTADOS (P10) no cuentan.
+   */
+  async resumenPorCentro(query: ResumenIncidenciasQuery) {
+    const qb = this.repo
+      .createQueryBuilder('i')
+      .select('i.idCentroPenitenciario', 'idCentroPenitenciario')
+      .addSelect('COUNT(*)', 'total')
+      .addSelect('MAX(i.fecha)', 'ultimaFecha')
+      .where('i.estadoRevision <> :descartado', { descartado: 'DESCARTADO' })
+      .groupBy('i.idCentroPenitenciario')
+      .orderBy('total', 'DESC');
+    if (query.desde) qb.andWhere('i.fecha >= :desde', { desde: query.desde });
+    if (query.hasta) qb.andWhere('i.fecha <= :hasta', { hasta: query.hasta });
+    const filas = await qb.getRawMany<{
+      idCentroPenitenciario: string;
+      total: string;
+      ultimaFecha: Date;
+    }>();
+    return filas.map((f) => ({
+      idCentroPenitenciario: f.idCentroPenitenciario,
+      total: Number(f.total),
+      ultimaFecha: f.ultimaFecha,
+    }));
   }
 
   /** RF-INC-009: detalle con TODAS las asociaciones. */
@@ -144,9 +200,18 @@ export class IncidenciasController {
 
   @Get()
   @RequirePermissions('incidencias:consultar')
-  @ApiOperation({ summary: 'Consultar incidencias (paginado, RF-INC-009)' })
-  listar(@Query() query: PaginationQueryDto) {
+  @ApiOperation({ summary: 'Consultar incidencias (paginado, RF-INC-009; filtros del mapa P11)' })
+  listar(@Query() query: FiltroIncidenciasQuery) {
     return this.service.listar(query);
+  }
+
+  @Get('resumen-por-centro')
+  @RequirePermissions('incidencias:consultar')
+  @ApiOperation({
+    summary: 'Conteo de incidencias por centro, con rango de fechas opcional (mapa, P11)',
+  })
+  resumenPorCentro(@Query() query: ResumenIncidenciasQuery) {
+    return this.service.resumenPorCentro(query);
   }
 
   @Get(':id')
