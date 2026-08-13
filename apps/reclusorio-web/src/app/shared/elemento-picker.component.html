@@ -1,10 +1,16 @@
 <div class="space-y-2 rounded-lg border border-borde bg-panel-2/60 p-3">
-  <p class="etiqueta">Buscar elemento del padrón</p>
+  <div class="flex items-center justify-between">
+    <p class="etiqueta">Buscar elemento del padrón</p>
+    @if (buscando()) {
+      <span class="etiqueta animate-pulse text-neon">Buscando…</span>
+    }
+  </div>
   <div class="flex flex-wrap gap-2">
     <input
       class="campo max-w-[160px]"
       name="numeroElemento"
       [(ngModel)]="numero"
+      (ngModelChange)="alTeclear()"
       placeholder="No. de elemento"
       (keyup.enter)="buscar()"
     />
@@ -12,6 +18,7 @@
       class="campo max-w-[220px]"
       name="nombreElemento"
       [(ngModel)]="nombre"
+      (ngModelChange)="alTeclear()"
       placeholder="Nombre"
       (keyup.enter)="buscar()"
     />
@@ -19,30 +26,116 @@
       class="campo max-w-[200px]"
       name="adscripcionElemento"
       [(ngModel)]="adscripcion"
+      (ngModelChange)="alTeclear()"
       placeholder="Adscripción"
       (keyup.enter)="buscar()"
     />
-    <button class="btn-secundario" type="button" [disabled]="buscando()" (click)="buscar()">
-      {{ buscando() ? 'Buscando…' : 'Buscar' }}
-    </button>
   </div>
+  <p class="text-[11px] text-slate-600">
+    Escribe para ver coincidencias al instante (RF-ELE-001: primero por número; si no, por nombre y
+    adscripción).
+  </p>
 
   @if (error()) {
     <p class="alerta-error">{{ error() }}</p>
   }
-  @if (buscado() && resultados().length === 0) {
-    <p class="text-sm text-slate-500">Sin coincidencias en el padrón.</p>
-  }
+
   @for (e of resultados(); track e.idElemento) {
     <button
       type="button"
-      class="flex w-full items-center justify-between rounded-lg border border-borde px-3 py-2 text-left text-sm hover:border-neon/50 hover:bg-neon/5"
+      class="flex w-full items-center justify-between gap-3 rounded-lg border border-borde px-3 py-2 text-left text-sm hover:border-neon/50 hover:bg-neon/5"
       (click)="elegir(e)"
     >
-      <span class="text-slate-200">{{ nombreDe(e) }}</span>
-      <span class="font-mono text-xs text-slate-500">
-        {{ e.numeroElemento || 's/n' }} · {{ e.adscripcion || 'sin adscripción' }}
+      <span class="min-w-0">
+        <span class="block truncate text-slate-200">{{ nombreDe(e) }}</span>
+        <span class="block truncate font-mono text-[11px] text-slate-500">
+          No. {{ e.numeroElemento || 's/n' }} · {{ e.adscripcion || 'sin adscripción' }}
+        </span>
       </span>
+      <span class="chip-neon shrink-0">Asociar</span>
     </button>
+  }
+
+  @if (buscado() && !mostrarAlta()) {
+    @if (resultados().length === 0) {
+      <p class="text-sm text-slate-500">Sin coincidencias en el padrón.</p>
+    }
+    <div *rwPermiso="'elementos:crear'">
+      <button class="btn-secundario btn-mini" type="button" (click)="abrirAlta()">
+        {{
+          resultados().length === 0
+            ? 'Registrar elemento nuevo y asociarlo'
+            : 'Ninguna coincidencia corresponde — registrar elemento nuevo'
+        }}
+      </button>
+    </div>
+  }
+
+  @if (mostrarAlta()) {
+    <div class="space-y-3 rounded-lg border border-neon/30 bg-neon/5 p-3">
+      <p class="etiqueta">Alta condicionada al padrón (RF-ELE-002) — se asocia al guardar</p>
+      <div class="grid gap-2 md:grid-cols-3">
+        <input
+          class="campo"
+          name="altaGrado"
+          maxlength="50"
+          placeholder="Grado"
+          [(ngModel)]="forma['grado']"
+        />
+        <input
+          class="campo"
+          name="altaPrimerNombre"
+          maxlength="100"
+          required
+          placeholder="Nombre(s) *"
+          [(ngModel)]="forma['primerNombre']"
+        />
+        <input
+          class="campo"
+          name="altaApellidoPaterno"
+          maxlength="100"
+          required
+          placeholder="Apellido paterno *"
+          [(ngModel)]="forma['apellidoPaterno']"
+        />
+        <input
+          class="campo"
+          name="altaApellidoMaterno"
+          maxlength="100"
+          placeholder="Apellido materno"
+          [(ngModel)]="forma['apellidoMaterno']"
+        />
+        <input
+          class="campo font-mono"
+          name="altaNumeroElemento"
+          maxlength="50"
+          placeholder="No. de elemento"
+          [(ngModel)]="forma['numeroElemento']"
+        />
+        <input
+          class="campo"
+          name="altaAdscripcion"
+          maxlength="255"
+          placeholder="Adscripción"
+          [(ngModel)]="forma['adscripcion']"
+        />
+      </div>
+      @if (errorAlta()) {
+        <p class="alerta-error">{{ errorAlta() }}</p>
+      }
+      <div class="flex justify-end gap-2">
+        <button class="btn-secundario btn-mini" type="button" (click)="cancelarAlta()">
+          Cancelar
+        </button>
+        <button
+          class="btn-primario btn-mini"
+          type="button"
+          [disabled]="guardando() || !forma['primerNombre'].trim() || !forma['apellidoPaterno'].trim()"
+          (click)="registrarYAsociar()"
+        >
+          {{ guardando() ? 'Guardando…' : 'Registrar y asociar' }}
+        </button>
+      </div>
+    </div>
   }
 </div>

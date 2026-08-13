@@ -227,9 +227,9 @@
                     @if (elementosAsociados().length === 0) {
                       <p class="text-sm text-slate-600">Sin elementos asociados.</p>
                     }
-                    <div class="flex flex-wrap gap-2">
+                    <div class="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                       @for (e of elementosAsociados(); track e.idElemento) {
-                        <span class="chip-neon">{{ nombreDeElemento(e) }}</span>
+                        <rw-elemento-card [elemento]="e" />
                       }
                     </div>
                     <div *rwPermiso="'audiencias:asociar'" class="mt-3">

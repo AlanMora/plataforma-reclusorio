@@ -7,7 +7,8 @@ import { CatalogosService } from '../../core/catalogos.service';
 import { ToastService } from '../../core/toast.service';
 import { PermisoDirective } from '../../core/permiso.directive';
 import { ArchivosPanelComponent } from '../../shared/archivos-panel.component';
-import { ElementoPickerComponent, nombreElemento } from '../../shared/elemento-picker.component';
+import { ElementoPickerComponent } from '../../shared/elemento-picker.component';
+import { ElementoCardComponent } from '../../shared/elemento-card.component';
 import { nombreCompleto } from '../personas/personas-list.component';
 import { Elemento, IncidenciaDetalle, Paginado, Persona, ValorCatalogo } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
@@ -23,6 +24,7 @@ import { mensajeDe } from '../../core/problem';
     PermisoDirective,
     ArchivosPanelComponent,
     ElementoPickerComponent,
+    ElementoCardComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './incidencia-detail.component.html',
@@ -37,9 +39,7 @@ export class IncidenciaDetailComponent {
   readonly incidencia = signal<IncidenciaDetalle | null>(null);
   readonly error = signal<string | null>(null);
   readonly personasAsociadas = signal<Persona[]>([]);
-  readonly elementosAsociados = signal<
-    { idElemento: string; nombre: string; primerRespondiente: boolean }[]
-  >([]);
+  readonly elementosAsociados = signal<{ elemento: Elemento; primerRespondiente: boolean }[]>([]);
   readonly candidatasPersonas = signal<Persona[]>([]);
   readonly autoridades = signal<ValorCatalogo[]>([]);
 
@@ -162,21 +162,17 @@ export class IncidenciaDetailComponent {
     }
     try {
       const elementos = await Promise.all(
-        detalle.elementos.map(async (e) => {
-          const dato = await this.api.get<Elemento>(`/api/v1/elementos/${e.idElemento}`);
-          return {
-            idElemento: e.idElemento,
-            nombre: nombreElemento(dato),
-            primerRespondiente: e.primerRespondiente,
-          };
-        }),
+        detalle.elementos.map(async (e) => ({
+          elemento: await this.api.get<Elemento>(`/api/v1/elementos/${e.idElemento}`),
+          primerRespondiente: e.primerRespondiente,
+        })),
       );
       this.elementosAsociados.set(elementos);
     } catch {
+      // sin permiso elementos:consultar solo se conoce el identificador
       this.elementosAsociados.set(
         detalle.elementos.map((e) => ({
-          idElemento: e.idElemento,
-          nombre: e.idElemento.slice(0, 8),
+          elemento: { idElemento: e.idElemento, primerNombre: e.idElemento.slice(0, 8) },
           primerRespondiente: e.primerRespondiente,
         })),
       );

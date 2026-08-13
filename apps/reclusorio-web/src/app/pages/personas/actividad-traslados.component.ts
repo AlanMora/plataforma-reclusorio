@@ -9,6 +9,7 @@ import { ArchivosPanelComponent } from '../../shared/archivos-panel.component';
 import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
 import { SelectBuscableComponent, aOpciones } from '../../shared/select-buscable.component';
 import { ElementoPickerComponent, nombreElemento } from '../../shared/elemento-picker.component';
+import { ElementoCardComponent } from '../../shared/elemento-card.component';
 import { Elemento, Traslado, ValorCatalogo } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
 import { RevisionRegistroComponent } from '../../shared/revision-registro.component';
@@ -23,6 +24,7 @@ import { RevisionRegistroComponent } from '../../shared/revision-registro.compon
     PermisoDirective,
     ArchivosPanelComponent,
     ElementoPickerComponent,
+    ElementoCardComponent,
     SelectorFechaComponent,
     SelectBuscableComponent,
     RevisionRegistroComponent,

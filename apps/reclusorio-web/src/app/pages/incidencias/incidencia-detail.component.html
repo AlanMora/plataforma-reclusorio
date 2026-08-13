@@ -112,14 +112,12 @@
           @if (elementosAsociados().length === 0) {
             <p class="text-sm text-slate-600">Sin elementos asociados.</p>
           }
-          <div class="flex flex-wrap gap-2">
-            @for (e of elementosAsociados(); track e.idElemento) {
-              <span [class]="e.primerRespondiente ? 'chip-ok' : 'chip-neon'">
-                {{ e.nombre }}
-                @if (e.primerRespondiente) {
-                  · 1er respondiente
-                }
-              </span>
+          <div class="grid gap-2">
+            @for (x of elementosAsociados(); track x.elemento.idElemento) {
+              <rw-elemento-card
+                [elemento]="x.elemento"
+                [insignia]="x.primerRespondiente ? '1er respondiente' : ''"
+              />
             }
           </div>
           <div *rwPermiso="'incidencias:asociar'">
