@@ -226,9 +226,10 @@ export class UsersService {
 
     user.permissions = permisos;
     const guardado = await this.users.save(user);
-    // Los permisos viajan en el JWT: se revocan las sesiones para que el
-    // usuario entre de nuevo con los claims actualizados.
-    await this.auth.revokeAllForUser(id, 'revocacion-administrativa');
+    // Sin cerrar sesiones: los claims se actualizan solos en la siguiente
+    // renovación del access token (TTL 10m; refresh() relee al usuario de la
+    // BD). El propio usuario puede aplicar el cambio al instante refrescando
+    // su token — el frontend lo hace automáticamente al editarse a sí mismo.
     await this.audit.record({
       userId: actor.id,
       action: 'usuario.permisos-asignados',
@@ -304,7 +305,9 @@ export class UsersController {
 
   @Put(':id/permissions')
   @RequirePermissions('permissions:write')
-  @ApiOperation({ summary: 'Asignar permisos (revoca sesiones para refrescar el JWT)' })
+  @ApiOperation({
+    summary: 'Asignar permisos (sin cerrar sesión: aplican en la siguiente renovación del token)',
+  })
   asignarPermisos(
     @Param('id') id: string,
     @Body() dto: AsignarPermisosDto,

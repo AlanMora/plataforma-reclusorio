@@ -6,6 +6,7 @@ import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { PermisoDirective } from '../../core/permiso.directive';
 import { PaginadorComponent } from '../../shared/paginador.component';
+import { ModuloPermisos, PermisosMatrizComponent } from './permisos-matriz.component';
 import { Paginado } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
 
@@ -19,22 +20,21 @@ interface UsuarioAcceso {
   createdAt: string;
 }
 
-interface ModuloPermisos {
-  modulo: string;
-  permisos: string[];
-}
-
 /**
  * Administración de usuarios de acceso: alta, activar/desactivar,
  * restablecer contraseña y asignación de permisos por módulo — todo desde
- * el sistema, sin tocar la base de datos del servidor. Cambiar permisos,
- * contraseña o desactivar revoca las sesiones del usuario (RF-SES-009):
- * su siguiente login trae el JWT con los claims actualizados.
+ * el sistema, sin tocar la base de datos del servidor.
+ *
+ * Cambiar permisos NO cierra sesiones: si editas tu propia cuenta el token
+ * se refresca en silencio y el menú se actualiza al instante; para otros
+ * usuarios el cambio entra solo en su siguiente renovación de token (≤10
+ * minutos). Desactivar o restablecer contraseña sí revoca sesiones
+ * (RF-SES-009), porque ahí cortar el acceso es el objetivo.
  */
 @Component({
   selector: 'rw-usuarios',
   standalone: true,
-  imports: [DatePipe, FormsModule, PermisoDirective, PaginadorComponent],
+  imports: [DatePipe, FormsModule, PermisoDirective, PaginadorComponent, PermisosMatrizComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './usuarios.component.html',
 })
@@ -81,62 +81,6 @@ export class UsuariosComponent implements OnInit {
     void this.cargar(pagina);
   }
 
-  etiquetaAccion(permiso: string): string {
-    // Los permisos de plataforma comparten la acción "write": sin nombre
-    // propio se verían como dos "write" idénticos en la matriz.
-    const especiales: Record<string, string> = {
-      'users:read': 'ver usuarios',
-      'users:write': 'crear/editar usuarios',
-      'permissions:write': 'asignar permisos',
-    };
-    return especiales[permiso] ?? permiso.split(':')[1] ?? permiso;
-  }
-
-  // ---- selección de permisos (compartida por alta y edición) ----
-
-  private conjunto(deAlta: boolean): Set<string> {
-    return deAlta ? this.seleccionAlta() : this.seleccion();
-  }
-
-  private fijar(deAlta: boolean, nuevo: Set<string>): void {
-    (deAlta ? this.seleccionAlta : this.seleccion).set(nuevo);
-  }
-
-  tiene(permiso: string, deAlta = false): boolean {
-    return this.conjunto(deAlta).has(permiso);
-  }
-
-  alternar(permiso: string, deAlta = false): void {
-    const nuevo = new Set(this.conjunto(deAlta));
-    if (nuevo.has(permiso)) nuevo.delete(permiso);
-    else nuevo.add(permiso);
-    this.fijar(deAlta, nuevo);
-  }
-
-  moduloCompleto(modulo: ModuloPermisos, deAlta = false): boolean {
-    return modulo.permisos.every((p) => this.conjunto(deAlta).has(p));
-  }
-
-  alternarModulo(modulo: ModuloPermisos, deAlta = false): void {
-    const nuevo = new Set(this.conjunto(deAlta));
-    const completo = this.moduloCompleto(modulo, deAlta);
-    for (const p of modulo.permisos) {
-      if (completo) nuevo.delete(p);
-      else nuevo.add(p);
-    }
-    this.fijar(deAlta, nuevo);
-  }
-
-  seleccionarTodo(deAlta = false): void {
-    this.fijar(deAlta, new Set(this.catalogo().flatMap((m) => m.permisos)));
-  }
-
-  limpiarSeleccion(deAlta = false): void {
-    this.fijar(deAlta, new Set());
-  }
-
-  // ---- acciones ----
-
   abrirSeccion(usuario: UsuarioAcceso, seccion: 'permisos' | 'password'): void {
     const actual = this.expandido();
     if (actual?.id === usuario.id && actual.seccion === seccion) {
@@ -180,9 +124,16 @@ export class UsuariosComponent implements OnInit {
       await this.api.put(`/api/v1/users/${usuario.id}/permissions`, {
         permissions: [...this.seleccion()],
       });
-      this.toast.ok(
-        'Permisos guardados. Se cerraron las sesiones del usuario: al volver a entrar tendrá los permisos nuevos.',
-      );
+      if (this.esYo(usuario)) {
+        // Refresh silencioso: el token nuevo trae los claims actualizados y
+        // el menú/los guards reaccionan al instante, sin cerrar la sesión.
+        await this.auth.refrescar();
+        this.toast.ok('Permisos guardados y aplicados a tu sesión al instante.');
+      } else {
+        this.toast.ok(
+          'Permisos guardados. Se aplican solos en la siguiente renovación de su sesión (menos de 10 minutos), sin sacarlo del sistema.',
+        );
+      }
       this.expandido.set(null);
       await this.cargar(this.pagina().page);
     } catch (err) {
