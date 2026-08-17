@@ -63,5 +63,5 @@ echo "   Frontend:  https://<IP-del-servidor>/  (certificado autofirmado: el"
 echo "              navegador pedirá aceptar la excepción la primera vez)"
 echo "   Monitoreo: docker stack ps reclusorio | docker service logs reclusorio_<servicio>"
 echo
-echo "   Primer despliegue: crea usuarios con POST /api/v1/auth/register y"
-echo "   otorga permisos con UPDATE users SET permissions='...' en icms_auth."
+echo "   Usuarios y permisos se administran desde el módulo /usuarios del"
+echo "   sistema (requiere users:read/users:write/permissions:write)."

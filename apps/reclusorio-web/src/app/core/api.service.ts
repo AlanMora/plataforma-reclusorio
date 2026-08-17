@@ -35,6 +35,12 @@ export class ApiService {
     );
   }
 
+  put<T>(url: string, body: object): Promise<T> {
+    return firstValueFrom(this.http.put<ApiEnvelope<T>>(url, limpiarCuerpo(body))).then(
+      (r) => r.data,
+    );
+  }
+
   /** Para endpoints 204 sin cuerpo (logout, change-password). */
   postSinRespuesta(url: string, body: object): Promise<void> {
     return firstValueFrom(this.http.post(url, limpiarCuerpo(body))).then(() => undefined);

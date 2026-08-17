@@ -48,12 +48,14 @@ sobre una plataforma base reutilizable; el dominio vive en `apps/reclusorio-serv
 - Libs compartidas en `libs/` (@icms/*): errores RFC 9457, guards, outbox/inbox,
   idempotencia, paginación. Swagger por servicio en `/api/docs`; rutas `/api/v1`.
 - Permisos: claims `permissions` en el JWT (`modulo:accion`, p.ej.
-  `personas:crear`); cada endpoint usa `@RequirePermissions(...)`. Otorgar hoy:
-  `UPDATE users SET permissions='...'` en `icms_auth` (cableado roles→permisos
-  vía configuration-service aún no implementado).
+  `personas:crear`); cada endpoint usa `@RequirePermissions(...)`. Se
+  administran desde el módulo `/usuarios` del frontend (alta, permisos por
+  módulo, contraseñas, activar/desactivar — requiere `users:read`/`users:write`/
+  `permissions:write`); cambiar permisos revoca sesiones para refrescar el JWT.
+  El catálogo único vive en `CATALOGO_PERMISOS` (auth-service users.module.ts).
 - Usuario semilla DEV (`DevAdminSeeder` en auth-service, opt-in por
   `SEED_ADMIN_ENABLED=true`): `admin@reclusorio.mx` / `Reclusorio#Dev2026`
-  con los 23 permisos del dominio. Ya activo en docker-compose.dev.yml;
+  con los 26 permisos (dominio + administración). Ya activo en docker-compose.dev.yml;
   jamás en producción.
 
 ## Comandos

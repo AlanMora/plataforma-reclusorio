@@ -1,0 +1,250 @@
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-lg font-semibold">Usuarios de acceso</h1>
+      <p class="text-sm text-slate-500">
+        Altas, permisos por módulo, contraseñas y estado — sin tocar el servidor.
+      </p>
+    </div>
+    <button
+      *rwPermiso="'users:write'"
+      class="btn-primario btn-mini"
+      type="button"
+      (click)="mostrarForm.set(!mostrarForm())"
+    >
+      {{ mostrarForm() ? 'Cancelar' : '+ Crear usuario' }}
+    </button>
+  </div>
+
+  @if (mostrarForm()) {
+    <form class="panel space-y-4 p-4" (ngSubmit)="crear()">
+      <div class="grid gap-4 md:grid-cols-2">
+        <div>
+          <label class="campo-etiqueta obligatorio" for="usrEmail">Correo</label>
+          <input
+            class="campo"
+            id="usrEmail"
+            name="email"
+            type="email"
+            required
+            autocomplete="off"
+            [(ngModel)]="forma.email"
+          />
+        </div>
+        <div>
+          <label class="campo-etiqueta obligatorio" for="usrPass">Contraseña (mínimo 8)</label>
+          <input
+            class="campo"
+            id="usrPass"
+            name="password"
+            type="password"
+            required
+            minlength="8"
+            autocomplete="new-password"
+            [(ngModel)]="forma.password"
+          />
+        </div>
+      </div>
+
+      <div>
+        <div class="mb-2 flex items-center justify-between">
+          <p class="etiqueta">Permisos iniciales ({{ seleccionAlta().size }} de {{ totalCatalogo() }})</p>
+          <div class="flex gap-2">
+            <button class="btn-secundario btn-mini" type="button" (click)="seleccionarTodo(true)">
+              Todos
+            </button>
+            <button class="btn-secundario btn-mini" type="button" (click)="limpiarSeleccion(true)">
+              Ninguno
+            </button>
+          </div>
+        </div>
+        <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          @for (m of catalogo(); track m.modulo) {
+            <div class="rounded border border-slate-700/40 p-3">
+              <label class="mb-2 flex items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  [checked]="moduloCompleto(m, true)"
+                  (change)="alternarModulo(m, true)"
+                />
+                {{ m.modulo }}
+              </label>
+              <div class="flex flex-wrap gap-x-4 gap-y-1 pl-6">
+                @for (p of m.permisos; track p) {
+                  <label class="flex items-center gap-1 text-xs text-slate-400">
+                    <input type="checkbox" [checked]="tiene(p, true)" (change)="alternar(p, true)" />
+                    {{ etiquetaAccion(p) }}
+                  </label>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button class="btn-primario" type="submit" [disabled]="guardando()">
+          {{ guardando() ? 'Guardando…' : 'Crear usuario' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (error()) {
+    <p class="alerta-error">{{ error() }}</p>
+  } @else if (cargando()) {
+    <p class="etiqueta animate-pulse">Cargando usuarios…</p>
+  } @else {
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Correo</th>
+          <th>Estado</th>
+          <th>Permisos</th>
+          <th>Creado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (u of usuarios(); track u.id) {
+          <tr>
+            <td>
+              {{ u.email }}
+              @if (esYo(u)) {
+                <span class="chip-neon ml-1">tú</span>
+              }
+            </td>
+            <td>
+              @if (u.isActive) {
+                <span class="chip-neon">Activo</span>
+              } @else {
+                <span class="chip-alerta">Inactivo</span>
+              }
+            </td>
+            <td>{{ u.permissions.length }} de {{ totalCatalogo() }}</td>
+            <td class="font-mono text-xs">{{ u.createdAt | date: 'dd/MM/yy HH:mm' }}</td>
+            <td class="text-right">
+              <div class="flex justify-end gap-2">
+                <button
+                  *rwPermiso="'permissions:write'"
+                  class="btn-secundario btn-mini"
+                  type="button"
+                  (click)="abrirSeccion(u, 'permisos')"
+                >
+                  Permisos
+                </button>
+                <button
+                  *rwPermiso="'users:write'"
+                  class="btn-secundario btn-mini"
+                  type="button"
+                  (click)="abrirSeccion(u, 'password')"
+                >
+                  Contraseña
+                </button>
+                @if (!esYo(u)) {
+                  <button
+                    *rwPermiso="'users:write'"
+                    class="btn-secundario btn-mini"
+                    type="button"
+                    [disabled]="guardando()"
+                    (click)="alternarActivo(u)"
+                  >
+                    {{ u.isActive ? 'Desactivar' : 'Activar' }}
+                  </button>
+                }
+              </div>
+            </td>
+          </tr>
+
+          @if (expandido()?.id === u.id) {
+            <tr>
+              <td colspan="5" class="bg-panel-2/40 px-4 py-4">
+                @if (expandido()?.seccion === 'permisos') {
+                  <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                      <p class="etiqueta">
+                        Permisos de {{ u.email }} ({{ seleccion().size }} de {{ totalCatalogo() }})
+                      </p>
+                      <div class="flex gap-2">
+                        <button class="btn-secundario btn-mini" type="button" (click)="seleccionarTodo()">
+                          Todos
+                        </button>
+                        <button class="btn-secundario btn-mini" type="button" (click)="limpiarSeleccion()">
+                          Ninguno
+                        </button>
+                      </div>
+                    </div>
+                    <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                      @for (m of catalogo(); track m.modulo) {
+                        <div class="rounded border border-slate-700/40 p-3">
+                          <label class="mb-2 flex items-center gap-2 text-sm font-medium">
+                            <input
+                              type="checkbox"
+                              [checked]="moduloCompleto(m)"
+                              (change)="alternarModulo(m)"
+                            />
+                            {{ m.modulo }}
+                          </label>
+                          <div class="flex flex-wrap gap-x-4 gap-y-1 pl-6">
+                            @for (p of m.permisos; track p) {
+                              <label class="flex items-center gap-1 text-xs text-slate-400">
+                                <input type="checkbox" [checked]="tiene(p)" (change)="alternar(p)" />
+                                {{ etiquetaAccion(p) }}
+                              </label>
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
+                    <p class="text-xs text-slate-500">
+                      Al guardar se cierran las sesiones del usuario: entra de nuevo y su menú
+                      refleja los permisos nuevos.
+                      @if (esYo(u)) {
+                        Como es tu propia cuenta, no puedes quitarte los permisos de administración
+                        y tendrás que volver a iniciar sesión.
+                      }
+                    </p>
+                    <div class="flex justify-end">
+                      <button
+                        class="btn-primario btn-mini"
+                        type="button"
+                        [disabled]="guardando()"
+                        (click)="guardarPermisos(u)"
+                      >
+                        {{ guardando() ? 'Guardando…' : 'Guardar permisos' }}
+                      </button>
+                    </div>
+                  </div>
+                } @else {
+                  <form class="flex flex-wrap items-end gap-3" (ngSubmit)="restablecerPassword(u)">
+                    <div>
+                      <label class="campo-etiqueta obligatorio" for="passNueva">
+                        Nueva contraseña para {{ u.email }} (mínimo 8)
+                      </label>
+                      <input
+                        class="campo min-w-[280px]"
+                        id="passNueva"
+                        name="passwordNueva"
+                        type="password"
+                        required
+                        minlength="8"
+                        autocomplete="new-password"
+                        [(ngModel)]="passwordNueva"
+                      />
+                    </div>
+                    <button class="btn-primario btn-mini" type="submit" [disabled]="guardando()">
+                      {{ guardando() ? 'Guardando…' : 'Restablecer' }}
+                    </button>
+                    <p class="w-full text-xs text-slate-500">
+                      Se cierran sus sesiones activas; deberá entrar con la contraseña nueva.
+                    </p>
+                  </form>
+                }
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  }
+</div>

@@ -50,6 +50,14 @@ export const appRoutes: Route[] = [
           import('./pages/elementos/elementos.component').then((m) => m.ElementosComponent),
       },
       {
+        // Administración de usuarios de acceso (auth-service vía gateway).
+        path: 'usuarios',
+        canActivate: [permisoGuard],
+        data: { permiso: 'users:read' },
+        loadComponent: () =>
+          import('./pages/usuarios/usuarios.component').then((m) => m.UsuariosComponent),
+      },
+      {
         path: 'incidencias',
         canActivate: [permisoGuard],
         data: { permiso: 'incidencias:consultar' },

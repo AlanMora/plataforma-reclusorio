@@ -24,6 +24,7 @@ export class AuthService {
   readonly roles = computed(() => this.claims()?.roles ?? []);
   readonly email = computed(() => this.claims()?.email ?? '');
   readonly sid = computed(() => this.claims()?.sid ?? null);
+  readonly idUsuario = computed(() => this.claims()?.sub ?? null);
 
   /** Motivo mostrado en /login tras un cierre (expiración, revocación...). */
   readonly avisoLogout = signal<string | null>(null);
