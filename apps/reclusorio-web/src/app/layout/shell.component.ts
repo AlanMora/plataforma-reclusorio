@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
@@ -7,6 +7,7 @@ import { SessionService } from '../core/session.service';
 import { RealtimeService } from '../core/realtime.service';
 import { NotificacionesService } from '../core/notificaciones.service';
 import { ToastService } from '../core/toast.service';
+import { CATALOGOS_ADMINISTRABLES, CATALOGOS_FIJOS } from '../core/catalogos.service';
 
 interface ItemMenu {
   ruta: string;
@@ -58,6 +59,29 @@ export class ShellComponent {
     ),
     { initialValue: this.router.url },
   );
+
+  // --- Árbol de catálogos: Catálogos → (Administrables | Fijos) → slug ---
+  readonly catalogosAdministrables = CATALOGOS_ADMINISTRABLES;
+  readonly catalogosFijos = CATALOGOS_FIJOS;
+  readonly catalogosAbierto = signal(false);
+  readonly administrablesAbierto = signal(false);
+  readonly fijosAbierto = signal(false);
+
+  constructor() {
+    // Navegar a un catálogo (o recargar en uno) deja el árbol desplegado.
+    effect(() => {
+      const url = this.urlActual();
+      if (url.startsWith('/catalogos')) {
+        this.catalogosAbierto.set(true);
+        if (url.startsWith('/catalogos/administrables')) this.administrablesAbierto.set(true);
+        if (url.startsWith('/catalogos/fijos')) this.fijosAbierto.set(true);
+      }
+    });
+  }
+
+  esCatalogos(item: ItemMenu): boolean {
+    return item.ruta === '/catalogos';
+  }
 
   /** Título de la sección actual para la barra superior. */
   readonly tituloPagina = computed(() => {

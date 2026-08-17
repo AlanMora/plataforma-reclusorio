@@ -85,7 +85,14 @@ export const appRoutes: Route[] = [
           ),
       },
       {
+        // Entrada directa: cae al primer catálogo administrable.
         path: 'catalogos',
+        pathMatch: 'full',
+        redirectTo: 'catalogos/administrables/delitos',
+      },
+      {
+        // tipo = 'administrables' | 'fijos'; el sidebar despliega el árbol.
+        path: 'catalogos/:tipo/:slug',
         canActivate: [permisoGuard],
         data: { permiso: 'catalogos:administrar' },
         loadComponent: () =>

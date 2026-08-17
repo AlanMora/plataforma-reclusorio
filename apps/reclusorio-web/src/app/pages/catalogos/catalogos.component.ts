@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   CATALOGOS_ADMINISTRABLES,
@@ -6,7 +14,8 @@ import {
   CatalogosService,
 } from '../../core/catalogos.service';
 import { ToastService } from '../../core/toast.service';
-import { ValorCatalogo } from '../../core/models';
+import { PaginadorComponent } from '../../shared/paginador.component';
+import { Paginado, ValorCatalogo } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
 import {
   DomicilioGeocodificado,
@@ -16,29 +25,38 @@ import {
 /**
  * Administración de catálogos (RF-CAT-001..010): alta, corrección,
  * desactivar/reactivar (jamás borrar). Los fijos son SOLO lectura.
- * El dedup normalizado (espacios/mayúsculas/acentos) lo aplica el backend.
+ * El catálogo activo llega por la ruta (/catalogos/:tipo/:slug) — la
+ * selección vive en el árbol del sidebar; aquí solo el listado paginado
+ * y el formulario de alta. El dedup normalizado lo aplica el backend.
  */
 @Component({
   selector: 'rw-catalogos',
   standalone: true,
-  imports: [FormsModule, MapaDomicilioComponent],
+  imports: [FormsModule, MapaDomicilioComponent, PaginadorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './catalogos.component.html',
 })
-export class CatalogosComponent implements OnInit {
+export class CatalogosComponent {
   private readonly servicio = inject(CatalogosService);
   private readonly toast = inject(ToastService);
 
-  readonly administrables = CATALOGOS_ADMINISTRABLES;
-  readonly fijos = CATALOGOS_FIJOS;
+  /** Parámetros de la ruta (withComponentInputBinding). */
+  readonly tipo = input.required<string>();
+  readonly slug = input.required<string>();
 
-  readonly slug = signal(CATALOGOS_ADMINISTRABLES[0].slug);
-  readonly valores = signal<ValorCatalogo[]>([]);
+  readonly pagina = signal<Paginado<ValorCatalogo>>({
+    items: [],
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+  });
   readonly cargando = signal(false);
   readonly guardando = signal(false);
   readonly error = signal<string | null>(null);
   readonly incluirInactivos = signal(false);
   readonly enEdicion = signal<string | null>(null);
+  readonly mostrarForm = signal(false);
 
   nuevo = { nombre: '', descripcion: '' };
   edicion = {
@@ -47,6 +65,26 @@ export class CatalogosComponent implements OnInit {
     latitud: null as number | null,
     longitud: null as number | null,
   };
+
+  readonly esFijo = computed(() => this.tipo() === 'fijos');
+  readonly etiquetaActual = computed(
+    () =>
+      [...CATALOGOS_ADMINISTRABLES, ...CATALOGOS_FIJOS].find((c) => c.slug === this.slug())
+        ?.etiqueta ?? this.slug(),
+  );
+
+  constructor() {
+    // Cambiar de catálogo en el sidebar reinicia listado, edición y formulario.
+    effect(() => {
+      this.slug();
+      this.tipo();
+      this.enEdicion.set(null);
+      this.mostrarForm.set(false);
+      this.error.set(null);
+      this.nuevo = { nombre: '', descripcion: '' };
+      void this.cargar(1);
+    });
+  }
 
   /** El catálogo de centros penitenciarios se edita con mapa (P9). */
   esCentros(): boolean {
@@ -59,30 +97,13 @@ export class CatalogosComponent implements OnInit {
     this.edicion.longitud = dom.longitud;
   }
 
-  ngOnInit(): void {
-    void this.cargar();
-  }
-
-  esFijo(): boolean {
-    return this.servicio.esFijo(this.slug());
-  }
-
-  etiquetaActual(): string {
-    return (
-      [...this.administrables, ...this.fijos].find((c) => c.slug === this.slug())?.etiqueta ?? ''
-    );
-  }
-
-  seleccionar(slug: string): void {
-    this.slug.set(slug);
-    this.enEdicion.set(null);
-    this.error.set(null);
-    void this.cargar();
+  irAPagina(pagina: number): void {
+    void this.cargar(pagina);
   }
 
   alternarInactivos(valor: boolean): void {
     this.incluirInactivos.set(valor);
-    void this.cargar();
+    void this.cargar(1);
   }
 
   async crear(): Promise<void> {
@@ -96,7 +117,8 @@ export class CatalogosComponent implements OnInit {
       });
       this.toast.ok('Valor agregado al catálogo.');
       this.nuevo = { nombre: '', descripcion: '' };
-      await this.cargar();
+      this.mostrarForm.set(false);
+      await this.cargar(1);
     } catch (err) {
       this.error.set(mensajeDe(err));
     } finally {
@@ -127,7 +149,7 @@ export class CatalogosComponent implements OnInit {
       });
       this.toast.ok('Valor corregido (conserva su identificador).');
       this.enEdicion.set(null);
-      await this.cargar();
+      await this.cargar(this.pagina().page);
     } catch (err) {
       this.error.set(mensajeDe(err));
     } finally {
@@ -139,7 +161,7 @@ export class CatalogosComponent implements OnInit {
     try {
       await this.servicio.desactivar(this.slug(), v.id);
       this.toast.ok(`"${v.nombre}" desactivado; los registros históricos lo conservan.`);
-      await this.cargar();
+      await this.cargar(this.pagina().page);
     } catch (err) {
       this.toast.error(mensajeDe(err));
     }
@@ -149,21 +171,34 @@ export class CatalogosComponent implements OnInit {
     try {
       await this.servicio.reactivar(this.slug(), v.id);
       this.toast.ok(`"${v.nombre}" reactivado.`);
-      await this.cargar();
+      await this.cargar(this.pagina().page);
     } catch (err) {
       this.toast.error(mensajeDe(err));
     }
   }
 
-  private async cargar(): Promise<void> {
+  private async cargar(paginaNum: number): Promise<void> {
     this.cargando.set(true);
     this.error.set(null);
     try {
       if (this.esFijo()) {
-        this.valores.set(await this.servicio.valores(this.slug()));
+        // Los fijos son pocos y de solo lectura: listado completo sin paginar.
+        const valores = await this.servicio.valores(this.slug());
+        this.pagina.set({
+          items: valores,
+          total: valores.length,
+          page: 1,
+          limit: valores.length || 1,
+          totalPages: 1,
+        });
       } else {
-        this.valores.set(
-          await this.servicio.listarAdministrable(this.slug(), this.incluirInactivos()),
+        this.pagina.set(
+          await this.servicio.listarAdministrablePaginado(
+            this.slug(),
+            this.incluirInactivos(),
+            paginaNum,
+            10,
+          ),
         );
       }
     } catch (err) {

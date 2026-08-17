@@ -12,10 +12,10 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, ObjectType } from 'typeorm';
-import { IsBoolean, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { IsBoolean, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
 import { DatabaseModule } from '@icms/database';
-import { BusinessRuleException, EntityNotFoundException } from '@icms/common';
+import { BusinessRuleException, EntityNotFoundException, paginate } from '@icms/common';
 import { RequirePermissions } from '@icms/auth';
 import {
   Autoridad,
@@ -88,6 +88,14 @@ class ListarQuery {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   incluirInactivos?: boolean;
+
+  /**
+   * Paginación OPCIONAL (pantalla de administración): con page+limit la
+   * respuesta es el sobre paginado estándar; sin ellos se conserva el
+   * arreglo completo que consumen los selectores del frontend.
+   */
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit?: number;
 }
 
 /** Normalización para dedup (RF-CAT-006): trim + minúsculas + sin acentos. */
@@ -116,13 +124,22 @@ export class CatalogosService {
   }
 
   /** RF-CAT-001: lista identificando el estado; por defecto solo activos (selectores). */
-  listar(catalogo: string, incluirInactivos = false) {
+  async listar(catalogo: string, incluirInactivos = false, page?: number, limit?: number) {
     const { entidad } = this.admin(catalogo);
     const repo = this.dataSource.getRepository(entidad);
-    return repo.find({
-      where: incluirInactivos ? {} : { activo: true },
-      order: { nombre: 'ASC' } as never,
-    });
+    const where = incluirInactivos ? {} : { activo: true };
+    const order = { nombre: 'ASC' } as never;
+
+    if (page && limit) {
+      const [items, total] = await repo.findAndCount({
+        where,
+        order,
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+      return paginate(items, total, { page, limit });
+    }
+    return repo.find({ where, order });
   }
 
   /** RF-CAT-010: los formularios consumen los fijos por UUID; solo valores activos. */
@@ -223,9 +240,9 @@ export class CatalogosController {
 
   @Get(':catalogo')
   @ApiParam({ name: 'catalogo', enum: Object.keys(ADMINISTRABLES) })
-  @ApiOperation({ summary: 'Valores de un catálogo administrable (RF-CAT-001)' })
+  @ApiOperation({ summary: 'Valores de un catálogo administrable (RF-CAT-001; paginado opcional)' })
   listar(@Param('catalogo') catalogo: string, @Query() query: ListarQuery) {
-    return this.service.listar(catalogo, query.incluirInactivos ?? false);
+    return this.service.listar(catalogo, query.incluirInactivos ?? false, query.page, query.limit);
   }
 
   @Post(':catalogo')

@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { ValorCatalogo } from './models';
+import { Paginado, ValorCatalogo } from './models';
 
 /**
  * Catálogos del dominio (RF-CAT-*): identificados por slug en la ruta;
@@ -91,6 +91,22 @@ export class CatalogosService {
         incluirInactivos: incluirInactivos || undefined,
       })
       .then((filas) => filas.map((f) => normalizar(slug, f)));
+  }
+
+  /** Listado de administración paginado desde el backend (pantalla de catálogos). */
+  listarAdministrablePaginado(
+    slug: string,
+    incluirInactivos: boolean,
+    page: number,
+    limit: number,
+  ): Promise<Paginado<ValorCatalogo>> {
+    return this.api
+      .get<Paginado<Record<string, unknown>>>(`/api/v1/catalogos/${slug}`, {
+        incluirInactivos: incluirInactivos || undefined,
+        page,
+        limit,
+      })
+      .then((pagina) => ({ ...pagina, items: pagina.items.map((f) => normalizar(slug, f)) }));
   }
 
   crear(

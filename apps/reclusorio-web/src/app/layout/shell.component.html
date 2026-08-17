@@ -15,20 +15,94 @@
 
     <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4">
       @for (item of menuVisible(); track item.ruta) {
-        <a
-          class="nav-item"
-          [routerLink]="item.ruta"
-          routerLinkActive="activo"
-          [routerLinkActiveOptions]="{ exact: item.exacto ?? false }"
-        >
-          <span class="w-4 text-center text-neon/70">{{ item.icono }}</span>
-          <span>{{ item.etiqueta }}</span>
-          @if (item.ruta === '/notificaciones' && notificaciones.noLeidas() > 0) {
-            <span class="ml-auto rounded-full bg-neon/20 px-2 font-mono text-[10px] text-neon">
-              {{ notificaciones.noLeidas() }}
-            </span>
+        @if (esCatalogos(item)) {
+          <!-- Catálogos: árbol desplegable (Fijos / Administrables → catálogo) -->
+          <button
+            class="nav-item w-full"
+            type="button"
+            [class.activo]="catalogosAbierto()"
+            (click)="catalogosAbierto.set(!catalogosAbierto())"
+          >
+            <span class="w-4 text-center text-neon/70">{{ item.icono }}</span>
+            <span>{{ item.etiqueta }}</span>
+            <span
+              class="ml-auto text-[10px] text-slate-500 transition-transform duration-200"
+              [class.rotate-90]="catalogosAbierto()"
+              >▸</span
+            >
+          </button>
+          @if (catalogosAbierto()) {
+            <div class="ml-4 space-y-0.5 border-l border-borde/60 pl-2">
+              <button
+                class="nav-item w-full py-1.5 text-[13px]"
+                type="button"
+                (click)="administrablesAbierto.set(!administrablesAbierto())"
+              >
+                <span class="w-3 text-center text-neon/60">✎</span>
+                <span>Administrables</span>
+                <span
+                  class="ml-auto text-[10px] text-slate-500 transition-transform duration-200"
+                  [class.rotate-90]="administrablesAbierto()"
+                  >▸</span
+                >
+              </button>
+              @if (administrablesAbierto()) {
+                <div class="ml-3 space-y-0.5 border-l border-borde/40 pl-2">
+                  @for (c of catalogosAdministrables; track c.slug) {
+                    <a
+                      class="nav-item py-1 text-xs"
+                      [routerLink]="['/catalogos', 'administrables', c.slug]"
+                      routerLinkActive="activo"
+                    >
+                      {{ c.etiqueta }}
+                    </a>
+                  }
+                </div>
+              }
+              <button
+                class="nav-item w-full py-1.5 text-[13px]"
+                type="button"
+                (click)="fijosAbierto.set(!fijosAbierto())"
+              >
+                <span class="w-3 text-center text-neon/60">▣</span>
+                <span>Fijos</span>
+                <span
+                  class="ml-auto text-[10px] text-slate-500 transition-transform duration-200"
+                  [class.rotate-90]="fijosAbierto()"
+                  >▸</span
+                >
+              </button>
+              @if (fijosAbierto()) {
+                <div class="ml-3 space-y-0.5 border-l border-borde/40 pl-2">
+                  @for (c of catalogosFijos; track c.slug) {
+                    <a
+                      class="nav-item py-1 text-xs"
+                      [routerLink]="['/catalogos', 'fijos', c.slug]"
+                      routerLinkActive="activo"
+                    >
+                      {{ c.etiqueta }}
+                    </a>
+                  }
+                </div>
+              }
+            </div>
           }
-        </a>
+        } @else {
+          <a
+            class="nav-item"
+            [routerLink]="item.ruta"
+            routerLinkActive="activo"
+            [routerLinkActiveOptions]="{ exact: item.exacto ?? false }"
+          >
+            <span class="w-4 text-center text-neon/70">{{ item.icono }}</span>
+            <span>{{ item.etiqueta }}</span>
+            @if (item.ruta === '/notificaciones' && notificaciones.noLeidas() > 0) {
+              <span class="ml-auto rounded-full bg-neon/20 px-2 font-mono text-[10px] text-neon">
+                {{ notificaciones.noLeidas() }}
+              </span>
+            }
+          </a>
+        }
       }
     </nav>
 
