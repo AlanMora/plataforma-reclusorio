@@ -145,7 +145,13 @@ export class UsuariosComponent implements OnInit {
     }
     this.expandido.set({ id: usuario.id, seccion });
     this.passwordNueva = '';
-    if (seccion === 'permisos') this.seleccion.set(new Set(usuario.permissions));
+    if (seccion === 'permisos') {
+      // Solo permisos reconocidos del catálogo: si la columna trae residuos
+      // (p.ej. de ediciones manuales por SQL), se descartan aquí y guardar
+      // deja la lista limpia — el backend rechaza cualquier valor extraño.
+      const conocidos = new Set(this.catalogo().flatMap((m) => m.permisos));
+      this.seleccion.set(new Set(usuario.permissions.filter((p) => conocidos.has(p))));
+    }
   }
 
   async crear(): Promise<void> {

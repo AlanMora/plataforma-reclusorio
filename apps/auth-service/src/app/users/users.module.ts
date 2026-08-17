@@ -91,7 +91,10 @@ class CambiarPasswordAdminDto {
 class AsignarPermisosDto {
   @IsArray()
   @ArrayNotEmpty()
-  @Matches(/^[a-z]+:[a-z]+$/, { each: true })
+  @Matches(/^[a-z]+:[a-z]+$/, {
+    each: true,
+    message: 'Cada permiso debe tener el formato modulo:accion (p. ej. personas:crear)',
+  })
   permissions!: string[];
 }
 
