@@ -70,7 +70,14 @@ export class UsuariosComponent implements OnInit {
   }
 
   etiquetaAccion(permiso: string): string {
-    return permiso.split(':')[1] ?? permiso;
+    // Los permisos de plataforma comparten la acción "write": sin nombre
+    // propio se verían como dos "write" idénticos en la matriz.
+    const especiales: Record<string, string> = {
+      'users:read': 'ver usuarios',
+      'users:write': 'crear/editar usuarios',
+      'permissions:write': 'asignar permisos',
+    };
+    return especiales[permiso] ?? permiso.split(':')[1] ?? permiso;
   }
 
   // ---- selección de permisos (compartida por alta y edición) ----
