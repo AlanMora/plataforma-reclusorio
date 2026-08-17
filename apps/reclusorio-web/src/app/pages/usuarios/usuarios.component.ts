@@ -5,6 +5,7 @@ import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { PermisoDirective } from '../../core/permiso.directive';
+import { PaginadorComponent } from '../../shared/paginador.component';
 import { Paginado } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
 
@@ -33,7 +34,7 @@ interface ModuloPermisos {
 @Component({
   selector: 'rw-usuarios',
   standalone: true,
-  imports: [DatePipe, FormsModule, PermisoDirective],
+  imports: [DatePipe, FormsModule, PermisoDirective, PaginadorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './usuarios.component.html',
 })
@@ -42,7 +43,14 @@ export class UsuariosComponent implements OnInit {
   private readonly toast = inject(ToastService);
   readonly auth = inject(AuthService);
 
-  readonly usuarios = signal<UsuarioAcceso[]>([]);
+  /** Paginación server-side estándar de la plataforma (DP-010). */
+  readonly pagina = signal<Paginado<UsuarioAcceso>>({
+    items: [],
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+  });
   readonly catalogo = signal<ModuloPermisos[]>([]);
   readonly cargando = signal(false);
   readonly error = signal<string | null>(null);
@@ -62,11 +70,15 @@ export class UsuariosComponent implements OnInit {
   );
 
   ngOnInit(): void {
-    void this.cargar();
+    void this.cargar(1);
     void this.api
       .get<ModuloPermisos[]>('/api/v1/users/permisos-disponibles')
       .then((c) => this.catalogo.set(c))
       .catch((err) => this.error.set(mensajeDe(err)));
+  }
+
+  irAPagina(pagina: number): void {
+    void this.cargar(pagina);
   }
 
   etiquetaAccion(permiso: string): string {
@@ -148,7 +160,7 @@ export class UsuariosComponent implements OnInit {
       this.mostrarForm.set(false);
       this.forma = { email: '', password: '' };
       this.seleccionAlta.set(new Set());
-      await this.cargar();
+      await this.cargar(this.pagina().page);
     } catch (err) {
       this.toast.error(mensajeDe(err));
     } finally {
@@ -166,7 +178,7 @@ export class UsuariosComponent implements OnInit {
         'Permisos guardados. Se cerraron las sesiones del usuario: al volver a entrar tendrá los permisos nuevos.',
       );
       this.expandido.set(null);
-      await this.cargar();
+      await this.cargar(this.pagina().page);
     } catch (err) {
       this.toast.error(mensajeDe(err));
     } finally {
@@ -199,7 +211,7 @@ export class UsuariosComponent implements OnInit {
           ? 'Usuario desactivado; sus sesiones fueron revocadas.'
           : 'Usuario activado.',
       );
-      await this.cargar();
+      await this.cargar(this.pagina().page);
     } catch (err) {
       this.toast.error(mensajeDe(err));
     } finally {
@@ -211,15 +223,17 @@ export class UsuariosComponent implements OnInit {
     return this.auth.idUsuario() === usuario.id;
   }
 
-  private async cargar(): Promise<void> {
+  private async cargar(pagina: number): Promise<void> {
     this.cargando.set(true);
     this.error.set(null);
+    this.expandido.set(null);
     try {
-      const pagina = await this.api.get<Paginado<UsuarioAcceso>>('/api/v1/users', {
-        page: 1,
-        limit: 100,
-      });
-      this.usuarios.set(pagina.items);
+      this.pagina.set(
+        await this.api.get<Paginado<UsuarioAcceso>>('/api/v1/users', {
+          page: pagina,
+          limit: 10,
+        }),
+      );
     } catch (err) {
       this.error.set(mensajeDe(err));
     } finally {

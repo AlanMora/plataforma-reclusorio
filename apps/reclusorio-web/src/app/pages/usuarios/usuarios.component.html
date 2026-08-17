@@ -106,7 +106,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (u of usuarios(); track u.id) {
+        @for (u of pagina().items; track u.id) {
           <tr>
             <td>
               {{ u.email }}
@@ -246,5 +246,11 @@
         }
       </tbody>
     </table>
+    <rw-paginador
+      [page]="pagina().page"
+      [totalPages]="pagina().totalPages"
+      [total]="pagina().total"
+      (cambiar)="irAPagina($event)"
+    />
   }
 </div>
