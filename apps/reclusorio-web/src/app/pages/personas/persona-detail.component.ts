@@ -11,6 +11,7 @@ import { ActividadIngresosComponent } from './actividad-ingresos.component';
 import { ActividadMovimientosComponent } from './actividad-movimientos.component';
 import { ActividadAudienciasComponent } from './actividad-audiencias.component';
 import { ActividadTrasladosComponent } from './actividad-traslados.component';
+import { ActividadIncidenciasComponent } from './actividad-incidencias.component';
 import { nombreCompleto } from './personas-list.component';
 import { Domicilio, Persona, PersonaDetalle } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
@@ -27,6 +28,7 @@ const PESTANAS: { clave: Pestana; etiqueta: string }[] = [
   { clave: 'movimientos', etiqueta: 'Movimientos' },
   { clave: 'audiencias', etiqueta: 'Audiencias' },
   { clave: 'traslados', etiqueta: 'Traslados' },
+  { clave: 'incidencias', etiqueta: 'Incidencias' },
   { clave: 'archivos', etiqueta: 'Archivos' },
 ];
 
@@ -46,6 +48,7 @@ const PESTANAS: { clave: Pestana; etiqueta: string }[] = [
     ActividadMovimientosComponent,
     ActividadAudienciasComponent,
     ActividadTrasladosComponent,
+    ActividadIncidenciasComponent,
     MapaDomicilioComponent,
     DomicilioFormComponent,
   ],

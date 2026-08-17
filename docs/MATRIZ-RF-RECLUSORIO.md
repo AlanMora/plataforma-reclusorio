@@ -40,7 +40,7 @@ restricción verificada en la base de datos.
 | RF-MOV-001..005 | `personas/:id/movimientos` (tipo/motivo fijos, origen/destino centros) | E2E |
 | RF-AUD-001..008 | `personas/:id/audiencias`, coherencia próxima audiencia, `audiencias/:id/elementos` | E2E (NO+fecha → 422; duplicado → 422) |
 | RF-TRA-001..007 | `personas/:id/traslados` (tipo/destino/estatus), `traslados/:id/elementos` | E2E |
-| RF-INC-001..009 | `POST /incidencias` sin personas + asociaciones (personas/autoridades/elementos con `primerRespondiente`) | E2E completo |
+| RF-INC-001..009 | `POST /incidencias` sin personas + asociaciones (personas/autoridades/elementos con `primerRespondiente`); `GET /incidencias?idPersona=` alimenta el tab Incidencias del expediente (consulta + asociación de elementos desde ahí) | E2E completo |
 | RF-ARC-001..002 | Subida a MinIO, metadatos completos, SHA-256 | E2E (hash local = hash servidor) |
 | RF-ARC-005..007 | Listado por entidad, URL presignada, desactivación bloquea | E2E |
 | RF-CAT-001..007 | CRUD catálogos administrables, dedup normalizado, semillas completas (284 valores) | E2E + UT (`normalizar`) |

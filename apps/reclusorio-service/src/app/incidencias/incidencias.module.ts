@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import {
   Between,
   FindOptionsWhere,
+  In,
   LessThanOrEqual,
   MoreThanOrEqual,
   Repository,
@@ -45,11 +46,13 @@ class ResumenIncidenciasQuery {
   @IsOptional() @IsDateString() hasta?: string;
 }
 
-/** Listado con filtros opcionales por centro y rango (mapa, P11). */
+/** Listado con filtros opcionales por centro, rango (mapa, P11) y persona. */
 class FiltroIncidenciasQuery extends PaginationQueryDto {
   @IsOptional() @IsUUID() idCentroPenitenciario?: string;
   @IsOptional() @IsDateString() desde?: string;
   @IsOptional() @IsDateString() hasta?: string;
+  /** Incidencias donde la persona está asociada (tab del expediente). */
+  @IsOptional() @IsUUID() idPersona?: string;
 }
 
 class AsociarAutoridadDto {
@@ -85,6 +88,11 @@ export class IncidenciasService {
   async listar(query: FiltroIncidenciasQuery) {
     const where: FindOptionsWhere<Incidencia> = {};
     if (query.idCentroPenitenciario) where.idCentroPenitenciario = query.idCentroPenitenciario;
+    if (query.idPersona) {
+      const vinculos = await this.rePersonas.find({ where: { idPersona: query.idPersona } });
+      if (vinculos.length === 0) return paginate([], 0, query);
+      where.idIncidencia = In(vinculos.map((v) => v.idIncidencia));
+    }
     if (query.desde && query.hasta) {
       where.fecha = Between(new Date(query.desde), new Date(query.hasta));
     } else if (query.desde) {

@@ -1,0 +1,107 @@
+<div class="space-y-4">
+  @if (error()) {
+    <p class="alerta-error">{{ error() }}</p>
+  } @else if (cargando()) {
+    <p class="etiqueta animate-pulse">Cargando incidencias…</p>
+  } @else if (registros().length === 0) {
+    <p class="py-6 text-center text-sm text-slate-600">
+      La persona no está asociada a ninguna incidencia. Las incidencias se
+      registran en el módulo Incidencias y ahí se asocian personas.
+    </p>
+  } @else {
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Centro</th>
+          <th>Descripción</th>
+          <th>Revisión</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of registros(); track r.idIncidencia) {
+          <tr>
+            <td class="font-mono text-xs">{{ r.fecha | date: 'dd/MM/yy HH:mm' }}</td>
+            <td>
+              <span class="chip-alerta">{{ nombre(mapaTipos, r.idTipoIncidencia) }}</span>
+            </td>
+            <td class="max-w-[200px] truncate">
+              {{ nombre(mapaCentros, r.idCentroPenitenciario) }}
+            </td>
+            <td class="max-w-[320px] truncate" [title]="r.descripcion">{{ r.descripcion }}</td>
+            <td>
+              <rw-revision-registro
+                recurso="incidencias"
+                [id]="r.idIncidencia"
+                [estado]="r.estadoRevision"
+                permiso="incidencias:crear"
+              />
+            </td>
+            <td class="text-right">
+              <button
+                class="btn-secundario btn-mini"
+                type="button"
+                (click)="alternarExpandido(r.idIncidencia)"
+              >
+                {{ expandido() === r.idIncidencia ? 'Ocultar' : 'Detalle' }}
+              </button>
+            </td>
+          </tr>
+          @if (expandido() === r.idIncidencia) {
+            <tr>
+              <td colspan="6" class="bg-panel-2/40 px-4 py-4">
+                <div class="space-y-5">
+                  <div class="text-sm text-slate-400">
+                    <p><span class="etiqueta">Descripción:</span> {{ r.descripcion }}</p>
+                    @if (r.narrativa) {
+                      <p class="mt-1"><span class="etiqueta">Narrativa:</span> {{ r.narrativa }}</p>
+                    }
+                    <p class="mt-2">
+                      <a
+                        class="etiqueta hover:text-neon"
+                        [routerLink]="['/incidencias', r.idIncidencia]"
+                      >
+                        Abrir la incidencia completa (personas y autoridades) →
+                      </a>
+                    </p>
+                  </div>
+                  <div>
+                    <p class="etiqueta mb-2">Elementos participantes (RF-INC-005/007)</p>
+                    @if (elementosAsociados().length === 0) {
+                      <p class="text-sm text-slate-600">Sin elementos asociados.</p>
+                    }
+                    <div class="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                      @for (e of elementosAsociados(); track e.elemento.idElemento) {
+                        <rw-elemento-card
+                          [elemento]="e.elemento"
+                          [insignia]="e.primerRespondiente ? 'Primer respondiente' : ''"
+                        />
+                      }
+                    </div>
+                    <div *rwPermiso="'incidencias:asociar'" class="mt-3 space-y-2">
+                      <label class="flex items-center gap-2 text-xs text-slate-400">
+                        <input
+                          type="checkbox"
+                          name="primerRespondiente"
+                          [(ngModel)]="marcarPrimerRespondiente"
+                        />
+                        Marcar como primer respondiente al asociar
+                      </label>
+                      <rw-elemento-picker (elegido)="asociarElemento(r.idIncidencia, $event)" />
+                    </div>
+                  </div>
+                  <div>
+                    <p class="etiqueta mb-2">Expediente digital</p>
+                    <rw-archivos-panel referencia="idIncidencia" [id]="r.idIncidencia" />
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  }
+</div>
