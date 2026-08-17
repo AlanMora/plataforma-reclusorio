@@ -29,6 +29,11 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   }
 
   canActivate(context: ExecutionContext) {
+    // Solo aplica a HTTP: los manejadores de RabbitMQ (@RabbitSubscribe) no
+    // traen request y el broker ya está detrás de credenciales propias.
+    if (context.getType<string>() !== 'http') {
+      return true;
+    }
     // Endpoints de infraestructura siempre accesibles (healthchecks / scraping).
     const req = context.switchToHttp().getRequest();
     const path: string = (req?.path ?? req?.url ?? '').split('?')[0];

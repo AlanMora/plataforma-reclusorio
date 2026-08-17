@@ -59,6 +59,7 @@ export class CatalogosComponent {
   readonly mostrarForm = signal(false);
 
   nuevo = { nombre: '', descripcion: '' };
+  texto = '';
   edicion = {
     nombre: '',
     descripcion: '',
@@ -82,6 +83,7 @@ export class CatalogosComponent {
       this.mostrarForm.set(false);
       this.error.set(null);
       this.nuevo = { nombre: '', descripcion: '' };
+      this.texto = '';
       void this.cargar(1);
     });
   }
@@ -99,6 +101,10 @@ export class CatalogosComponent {
 
   irAPagina(pagina: number): void {
     void this.cargar(pagina);
+  }
+
+  buscarTexto(): void {
+    void this.cargar(1);
   }
 
   alternarInactivos(valor: boolean): void {
@@ -198,6 +204,7 @@ export class CatalogosComponent {
             this.incluirInactivos(),
             paginaNum,
             10,
+            this.texto.trim() || undefined,
           ),
         );
       }

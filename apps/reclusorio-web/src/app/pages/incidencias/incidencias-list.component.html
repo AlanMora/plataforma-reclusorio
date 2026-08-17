@@ -13,6 +13,21 @@
     >
   </div>
 
+  <form class="panel flex flex-wrap items-end gap-3 p-4" (ngSubmit)="buscar()">
+    <div class="grow">
+      <label class="campo-etiqueta" for="buscarInc">Descripción o IPH</label>
+      <input
+        class="campo"
+        id="buscarInc"
+        name="buscar"
+        maxlength="150"
+        [(ngModel)]="texto"
+        placeholder="Texto libre"
+      />
+    </div>
+    <button class="btn-primario" type="submit" [disabled]="cargando()">Buscar</button>
+  </form>
+
   @if (error()) {
     <p class="alerta-error">{{ error() }}</p>
   }

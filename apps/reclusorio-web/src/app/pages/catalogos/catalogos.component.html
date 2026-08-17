@@ -47,6 +47,23 @@
     </form>
   }
 
+  @if (!esFijo()) {
+    <form class="panel flex flex-wrap items-end gap-3 p-4" (ngSubmit)="buscarTexto()">
+      <div class="grow">
+        <label class="campo-etiqueta" for="buscarCat">Nombre</label>
+        <input
+          class="campo"
+          id="buscarCat"
+          name="buscar"
+          maxlength="150"
+          [(ngModel)]="texto"
+          placeholder="Texto libre"
+        />
+      </div>
+      <button class="btn-primario" type="submit" [disabled]="cargando()">Buscar</button>
+    </form>
+  }
+
   <div class="panel space-y-4 p-5">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <p class="etiqueta">{{ pagina().total }} valor(es)</p>

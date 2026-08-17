@@ -1,6 +1,8 @@
 import { effect, inject, Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { AuthService } from './auth.service';
+import { NotificacionesService } from './notificaciones.service';
+import { ToastService } from './toast.service';
 
 interface EventoRevocacion {
   sessionId: string;
@@ -21,6 +23,8 @@ const MOTIVOS: Record<string, string> = {
 @Injectable({ providedIn: 'root' })
 export class RealtimeService {
   private readonly auth = inject(AuthService);
+  private readonly notificaciones = inject(NotificacionesService);
+  private readonly toast = inject(ToastService);
   private socket: Socket | null = null;
 
   constructor() {
@@ -38,6 +42,15 @@ export class RealtimeService {
       auth: (cb) => cb({ token: this.auth.tokens()?.accessToken }),
       reconnectionDelayMax: 10_000,
     });
+    // Campana en vivo: el notification-service persistió una notificación
+    // para este usuario y el realtime la empuja a su sala.
+    this.socket.on(
+      'notification.created',
+      (n: { id: string; titulo?: string; mensaje: string; url?: string }) => {
+        this.notificaciones.recibirEnVivo(n);
+        this.toast.info(`${n.titulo ?? 'Notificación'}: ${n.mensaje}`);
+      },
+    );
     this.socket.on('session.revoked', (evento: EventoRevocacion) => {
       const propia = !evento?.sessionId || evento.sessionId === this.auth.sid();
       if (!propia) return;

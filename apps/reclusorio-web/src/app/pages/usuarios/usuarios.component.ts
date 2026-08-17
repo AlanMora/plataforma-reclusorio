@@ -64,6 +64,7 @@ export class UsuariosComponent implements OnInit {
   readonly seleccionAlta = signal<Set<string>>(new Set());
   forma = { email: '', password: '' };
   passwordNueva = '';
+  texto = '';
 
   readonly totalCatalogo = computed(() =>
     this.catalogo().reduce((n, m) => n + m.permisos.length, 0),
@@ -79,6 +80,10 @@ export class UsuariosComponent implements OnInit {
 
   irAPagina(pagina: number): void {
     void this.cargar(pagina);
+  }
+
+  buscar(): void {
+    void this.cargar(1);
   }
 
   abrirSeccion(usuario: UsuarioAcceso, seccion: 'permisos' | 'password'): void {
@@ -189,6 +194,7 @@ export class UsuariosComponent implements OnInit {
         await this.api.get<Paginado<UsuarioAcceso>>('/api/v1/users', {
           page: pagina,
           limit: 10,
+          buscar: this.texto.trim() || undefined,
         }),
       );
     } catch (err) {

@@ -13,6 +13,8 @@ export class NotificacionesService {
   private readonly auth = inject(AuthService);
 
   readonly noLeidas = signal(0);
+  /** Última notificación llegada por socket: refresca campana y dispara toast. */
+  readonly ultimaEnVivo = signal<Notificacion | null>(null);
   private sondeo: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
@@ -35,6 +37,19 @@ export class NotificacionesService {
   async marcarLeida(id: string): Promise<void> {
     await this.api.post(`/api/v1/notifications/inbox/${id}/leida`, {});
     void this.refrescarContador();
+  }
+
+  /** Notificación empujada por el realtime (evento notification.created). */
+  recibirEnVivo(n: { id: string; titulo?: string; mensaje: string; url?: string }): void {
+    this.noLeidas.update((v) => v + 1);
+    this.ultimaEnVivo.set({
+      id: n.id,
+      titulo: n.titulo ?? 'Notificación',
+      mensaje: n.mensaje,
+      url: n.url,
+      leida: false,
+      createdAt: new Date().toISOString(),
+    });
   }
 
   async refrescarContador(): Promise<void> {

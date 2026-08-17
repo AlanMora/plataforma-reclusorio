@@ -243,4 +243,6 @@ export interface Notificacion {
   mensaje: string;
   leida: boolean;
   createdAt: string;
+  /** Destino dentro del sistema (botón "Ver" de la campana). */
+  url?: string;
 }

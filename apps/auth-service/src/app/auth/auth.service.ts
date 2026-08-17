@@ -112,6 +112,11 @@ export class AuthService {
     }
     // Auditoría obligatoria de inicio de sesión: usuario, fecha/hora e IP (DP-003).
     await this.audit.record({ userId: user.id, action: 'login', outcome: 'exitoso', ipAddress });
+    // Alimenta la proyección de destinatarios del notification-service: quien
+    // ha iniciado sesión alguna vez recibe las notificaciones de difusión.
+    await this.events
+      .publish(EventNames.UserLoggedIn, { userId: user.id, email: user.email })
+      .catch(() => undefined);
     // TODO(proyecto): si user.twoFactorEnabled, validar dto.otp antes de emitir tokens.
     return this.issueTokens(user);
   }

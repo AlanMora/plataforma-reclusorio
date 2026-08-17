@@ -137,20 +137,7 @@
         ⏱ {{ cuentaRegresiva() }}
       </span>
 
-      <a
-        routerLink="/notificaciones"
-        class="relative text-lg text-slate-400 transition-colors hover:text-neon"
-        title="Notificaciones"
-      >
-        ◎
-        @if (notificaciones.noLeidas() > 0) {
-          <span
-            class="absolute -right-2 -top-1 rounded-full bg-neon px-1.5 font-mono text-[9px] font-bold text-fondo"
-          >
-            {{ notificaciones.noLeidas() }}
-          </span>
-        }
-      </a>
+      <rw-campana />
 
       <div class="hidden items-center gap-2.5 border-l border-borde pl-5 sm:flex">
         <span

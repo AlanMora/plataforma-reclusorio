@@ -9,8 +9,10 @@ import { MessagingModule, OutboxModule, OutboxEvent, InboxEvent } from '@icms/me
 import { RedisModule, IdempotencyInterceptor } from '@icms/redis';
 import { NotificationDelivery } from './delivery.entity';
 import { UserNotification } from './user-notification.entity';
+import { NotificationRecipient } from './notification-recipient.entity';
 import { NotificationsModule } from './notifications.module';
 import { Init1786404412159 } from '../migrations/1786404412159-Init';
+import { UrlYDestinatarios1787300000000 } from '../migrations/1787300000000-UrlYDestinatarios';
 
 @Module({
   imports: [
@@ -22,9 +24,9 @@ import { Init1786404412159 } from '../migrations/1786404412159-Init';
     MessagingModule.forRoot(),
     DatabaseModule.forRoot({
       database: 'icms_notification',
-      entities: [NotificationDelivery, UserNotification, OutboxEvent, InboxEvent],
-      // Clase importada para que webpack la empaquete; corre al arrancar en producción.
-      migrations: [Init1786404412159],
+      entities: [NotificationDelivery, UserNotification, NotificationRecipient, OutboxEvent, InboxEvent],
+      // Clases importadas para que webpack las empaquete; corren al arrancar en producción.
+      migrations: [Init1786404412159, UrlYDestinatarios1787300000000],
     }),
     // Sin relay: este servicio consume eventos (usa Inbox para dedup), no publica.
     OutboxModule.forRoot({ withRelay: false }),

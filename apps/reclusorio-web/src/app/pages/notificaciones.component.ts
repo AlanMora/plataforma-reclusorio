@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NotificacionesService } from '../core/notificaciones.service';
 import { ToastService } from '../core/toast.service';
@@ -18,6 +19,7 @@ import { mensajeDe } from '../core/problem';
 export class NotificacionesComponent implements OnInit {
   private readonly servicio = inject(NotificacionesService);
   private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
 
   readonly pagina = signal<Paginado<Notificacion>>({ items: [], total: 0, page: 1, limit: 10, totalPages: 0 });
   readonly cargando = signal(false);
@@ -30,6 +32,12 @@ export class NotificacionesComponent implements OnInit {
 
   buscar(): void {
     void this.cargar(1);
+  }
+
+  /** Marca leída y navega al registro que originó la notificación. */
+  async ver(n: Notificacion): Promise<void> {
+    if (!n.leida) await this.marcarLeida(n);
+    if (n.url) void this.router.navigateByUrl(n.url);
   }
 
   async marcarLeida(n: Notificacion): Promise<void> {

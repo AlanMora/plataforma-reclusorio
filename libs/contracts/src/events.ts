@@ -40,9 +40,13 @@ export interface DomainEvent<T = unknown> {
 export const EventNames = {
   UserRegistered: 'user.registered',
   UserPasswordChanged: 'user.password_changed',
+  /** Login exitoso: alimenta la proyección de destinatarios de notificaciones. */
+  UserLoggedIn: 'user.logged_in',
   SessionRevoked: 'session.revoked',
   ConfigurationPublished: 'configuration.published',
   NotificationRequested: 'notification.requested',
+  /** Fila nueva en la bandeja de un usuario: realtime la empuja a su campana. */
+  NotificationCreated: 'notification.created',
   FileUploaded: 'file.uploaded',
   IntegrationInbound: 'integration.inbound',
 } as const;
@@ -53,9 +57,24 @@ export type EventName = (typeof EventNames)[keyof typeof EventNames];
 
 export interface NotificationRequestedPayload {
   channel: 'email' | 'sms' | 'push' | 'internal';
+  /** userId destino, o '*' para difundir a todos los usuarios conocidos. */
   to: string;
   template: string;
   variables?: Record<string, unknown>;
+}
+
+export interface UserLoggedInPayload {
+  userId: string;
+  email: string;
+}
+
+/** Notificación persistida en la bandeja; realtime la emite a `user:{userId}`. */
+export interface NotificationCreatedPayload {
+  id: string;
+  userId: string;
+  titulo?: string;
+  mensaje: string;
+  url?: string;
 }
 
 export interface FileUploadedPayload {

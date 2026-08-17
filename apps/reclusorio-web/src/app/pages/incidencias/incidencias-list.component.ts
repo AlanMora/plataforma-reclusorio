@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { CatalogosService } from '../../core/catalogos.service';
@@ -20,7 +21,7 @@ import { RevisionRegistroComponent } from '../../shared/revision-registro.compon
 @Component({
   selector: 'rw-incidencias-list',
   standalone: true,
-  imports: [DatePipe, RouterLink, PermisoDirective, PaginadorComponent, RevisionRegistroComponent],
+  imports: [DatePipe, FormsModule, RouterLink, PermisoDirective, PaginadorComponent, RevisionRegistroComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './incidencias-list.component.html',
 })
@@ -63,12 +64,22 @@ export class IncidenciasListComponent implements OnInit {
     return this.mapaCentros.get(id) ?? '…';
   }
 
+  texto = '';
+
+  buscar(): void {
+    void this.cargar(1);
+  }
+
   async cargar(page: number): Promise<void> {
     this.cargando.set(true);
     this.error.set(null);
     try {
       this.pagina.set(
-        await this.api.get<Paginado<Incidencia>>('/api/v1/incidencias', { page, limit: 10 }),
+        await this.api.get<Paginado<Incidencia>>('/api/v1/incidencias', {
+          page,
+          limit: 10,
+          buscar: this.texto.trim() || undefined,
+        }),
       );
     } catch (err) {
       this.error.set(mensajeDe(err));

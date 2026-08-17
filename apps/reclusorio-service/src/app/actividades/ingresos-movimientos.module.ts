@@ -11,6 +11,7 @@ import { Centro, Delito } from '../entities/catalogos-administrables.entities';
 import { MotivoMovimiento, TipoIngresoEgreso, TipoMovimiento } from '../entities/catalogos-fijos.entities';
 import { PersonasModule, PersonasService } from '../personas/personas.module';
 import { ValidadorCatalogos } from './validador-catalogos.service';
+import { NotificadorDominio } from '../notificaciones/notificador-dominio';
 import { EstadoRevision, marcarRevision } from './revision';
 
 class CrearIngresoEgresoDto {
@@ -38,6 +39,7 @@ export class IngresosEgresosService {
     @InjectRepository(IngresoEgreso) private readonly repo: Repository<IngresoEgreso>,
     private readonly personas: PersonasService,
     private readonly catalogos: ValidadorCatalogos,
+    private readonly notificador: NotificadorDominio,
   ) {}
 
   /** RF-IEG-001/002/003: se registra desde una persona; catálogos activos por UUID. */
@@ -46,7 +48,13 @@ export class IngresosEgresosService {
     await this.catalogos.asegurarActivo(TipoIngresoEgreso, 'idTipoIngresoEgreso', dto.idTipoIngresoEgreso, 'Tipo de ingreso/egreso');
     await this.catalogos.asegurarActivo(Centro, 'idCentro', dto.idCentroPenitenciario, 'Centro penitenciario');
     if (dto.idDelito) await this.catalogos.asegurarActivo(Delito, 'idDelito', dto.idDelito, 'Delito');
-    return this.repo.save(this.repo.create({ ...dto, idPersona }));
+    const registro = await this.repo.save(this.repo.create({ ...dto, idPersona }));
+    this.notificador.difundir(
+      'Ingreso/egreso registrado',
+      'Se registró un ingreso/egreso en el expediente de una persona.',
+      `/personas/${idPersona}`,
+    );
+    return registro;
   }
 
   /** RF-IEG-004: historial filtrado por idPersona. */
@@ -152,6 +160,7 @@ export class MovimientosService {
     @InjectRepository(Movimiento) private readonly repo: Repository<Movimiento>,
     private readonly personas: PersonasService,
     private readonly catalogos: ValidadorCatalogos,
+    private readonly notificador: NotificadorDominio,
   ) {}
 
   async crear(idPersona: string, dto: CrearMovimientoDto) {
@@ -160,7 +169,13 @@ export class MovimientosService {
     await this.catalogos.asegurarActivo(MotivoMovimiento, 'idMotivoMovimiento', dto.idMotivoMovimiento, 'Motivo de movimiento');
     await this.catalogos.asegurarActivo(Centro, 'idCentro', dto.idCentroOrigen, 'Centro de origen');
     await this.catalogos.asegurarActivo(Centro, 'idCentro', dto.idCentroDestino, 'Centro de destino');
-    return this.repo.save(this.repo.create({ ...dto, idPersona }));
+    const registro = await this.repo.save(this.repo.create({ ...dto, idPersona }));
+    this.notificador.difundir(
+      'Movimiento registrado',
+      'Se registró un movimiento entre centros.',
+      `/personas/${idPersona}`,
+    );
+    return registro;
   }
 
   async porPersona(idPersona: string) {

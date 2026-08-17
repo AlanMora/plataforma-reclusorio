@@ -99,12 +99,14 @@ export class CatalogosService {
     incluirInactivos: boolean,
     page: number,
     limit: number,
+    buscar?: string,
   ): Promise<Paginado<ValorCatalogo>> {
     return this.api
       .get<Paginado<Record<string, unknown>>>(`/api/v1/catalogos/${slug}`, {
         incluirInactivos: incluirInactivos || undefined,
         page,
         limit,
+        buscar: buscar || undefined,
       })
       .then((pagina) => ({ ...pagina, items: pagina.items.map((f) => normalizar(slug, f)) }));
   }

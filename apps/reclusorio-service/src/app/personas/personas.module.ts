@@ -28,6 +28,7 @@ import { EntityNotFoundException, PaginationQueryDto, paginate } from '@icms/com
 import { RequirePermissions } from '@icms/auth';
 import { Idempotent } from '@icms/redis';
 import { Domicilio, Persona } from '../entities/persona.entities';
+import { NotificadorDominio } from '../notificaciones/notificador-dominio';
 
 /**
  * DTO de alta (RF-PER-003). Obligatoriedad según DP-007: primerNombre, curp
@@ -119,6 +120,7 @@ export class PersonasService {
   constructor(
     @InjectRepository(Persona) private readonly personas: Repository<Persona>,
     @InjectRepository(Domicilio) private readonly domicilios: Repository<Domicilio>,
+    private readonly notificador: NotificadorDominio,
   ) {}
 
   /** RF-PER-001/002: listado con búsqueda por nombre, apellidos, alias y CURP; paginado (DP-010). */
@@ -147,10 +149,16 @@ export class PersonasService {
   }
 
   /** RF-PER-003: alta con idPersona UUID; la edad nunca se persiste. */
-  crear(dto: CrearPersonaDto) {
-    return this.personas
-      .save(this.personas.create({ ...dto, curp: dto.curp.toUpperCase() }))
-      .then(conEdad);
+  async crear(dto: CrearPersonaDto) {
+    const persona = await this.personas.save(
+      this.personas.create({ ...dto, curp: dto.curp.toUpperCase() }),
+    );
+    this.notificador.difundir(
+      'Persona registrada',
+      `Se registró a ${persona.primerNombre} ${persona.apellidoPaterno ?? ''}`.trim(),
+      `/personas/${persona.idPersona}`,
+    );
+    return conEdad(persona);
   }
 
   /** RF-PER-004: detalle con domicilios; las secciones operativas se consultan en sus módulos. */

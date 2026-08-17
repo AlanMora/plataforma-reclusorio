@@ -8,6 +8,7 @@ import { RealtimeService } from '../core/realtime.service';
 import { NotificacionesService } from '../core/notificaciones.service';
 import { ToastService } from '../core/toast.service';
 import { CATALOGOS_ADMINISTRABLES, CATALOGOS_FIJOS } from '../core/catalogos.service';
+import { CampanaComponent } from './campana.component';
 
 interface ItemMenu {
   ruta: string;
@@ -34,7 +35,7 @@ const MENU: ItemMenu[] = [
 @Component({
   selector: 'rw-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CampanaComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './shell.component.html',
 })

@@ -20,4 +20,8 @@ export class UserNotification extends BaseEntity {
 
   @Column({ default: false })
   leida!: boolean;
+
+  /** Destino dentro del sistema ("Ver" en la campana), p.ej. /personas/{id}. */
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  url?: string;
 }

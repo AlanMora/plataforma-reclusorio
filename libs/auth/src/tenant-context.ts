@@ -42,8 +42,9 @@ export const TenantContext = {
 @Injectable()
 export class TenantContextInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    // En contextos no-HTTP (manejadores de RabbitMQ) no hay request.
     const req = context.switchToHttp().getRequest();
-    const user = req.user as AuthenticatedUser | undefined;
+    const user = req?.user as AuthenticatedUser | undefined;
     const ctx: RequestContext = {
       userId: user?.id,
       tenantId: user?.tenantId,

@@ -36,11 +36,16 @@
             {{ n.createdAt | date: 'dd/MM/yyyy HH:mm' }}
           </p>
         </div>
-        @if (!n.leida) {
-          <button class="btn-secundario btn-mini shrink-0" type="button" (click)="marcarLeida(n)">
-            Marcar leída
-          </button>
-        }
+        <div class="flex shrink-0 gap-2">
+          @if (n.url) {
+            <button class="btn-primario btn-mini" type="button" (click)="ver(n)">Ver</button>
+          }
+          @if (!n.leida) {
+            <button class="btn-secundario btn-mini" type="button" (click)="marcarLeida(n)">
+              Marcar leída
+            </button>
+          }
+        </div>
       </div>
     }
   </div>

@@ -9,9 +9,14 @@ import { AuthenticatedUser, CurrentUser } from '@icms/auth';
 import { PaginationQueryDto, paginate } from '@icms/common';
 import { EntityNotFoundException } from '@icms/common';
 import { ILike } from 'typeorm';
-import { InboxService } from '@icms/messaging';
+import { EventPublisher, InboxService } from '@icms/messaging';
 import { Idempotent } from '@icms/redis';
-import { DomainEvent, EventNames, NotificationRequestedPayload } from '@icms/contracts';
+import {
+  DomainEvent,
+  EventNames,
+  NotificationRequestedPayload,
+  UserLoggedInPayload,
+} from '@icms/contracts';
 import {
   Channel,
   EmailChannel,
@@ -22,6 +27,7 @@ import {
 } from './channels';
 import { NotificationDelivery } from './delivery.entity';
 import { UserNotification } from './user-notification.entity';
+import { NotificationRecipient } from './notification-recipient.entity';
 
 class InboxQueryDto extends PaginationQueryDto {
   /** Texto a buscar en título y mensaje (RF-NOT-003). */
@@ -45,6 +51,9 @@ export class NotificationsService {
     private readonly deliveries: Repository<NotificationDelivery>,
     @InjectRepository(UserNotification)
     private readonly inboxRepo: Repository<UserNotification>,
+    @InjectRepository(NotificationRecipient)
+    private readonly recipients: Repository<NotificationRecipient>,
+    private readonly events: EventPublisher,
     email: EmailChannel,
     sms: SmsChannel,
     push: PushChannel,
@@ -53,19 +62,54 @@ export class NotificationsService {
     this.channels = { email, sms, push, internal };
   }
 
+  /**
+   * Guarda la notificación en la bandeja del usuario y publica
+   * `notification.created` para que realtime la empuje a su campana.
+   */
+  private async entregarEnBandeja(
+    userId: string,
+    titulo: string,
+    mensaje: string,
+    url?: string,
+  ): Promise<void> {
+    const fila = await this.inboxRepo.save(
+      this.inboxRepo.create({ userId, titulo, mensaje, url }),
+    );
+    await this.events
+      .publish(EventNames.NotificationCreated, {
+        id: fila.id,
+        userId,
+        titulo,
+        mensaje,
+        url,
+      })
+      .catch(() => undefined); // la campana en vivo es cortesía, la bandeja ya persiste
+  }
+
   /** Renderiza la plantilla (stub) y despacha por el canal correspondiente. */
   async dispatch(dto: SendNotificationDto): Promise<NotificationDelivery> {
     const delivery = await this.deliveries.save(
       this.deliveries.create({ channel: dto.channel, to: dto.to, template: dto.template }),
     );
     try {
-      const body = `[${dto.template}] ${JSON.stringify(dto.variables ?? {})}`;
-      await this.channels[dto.channel].send({ channel: dto.channel, to: dto.to, body });
-      // Canal interno: además de "enviarse", queda en la bandeja del usuario (RF-NOT-001).
+      const mensaje =
+        typeof dto.variables?.['mensaje'] === 'string'
+          ? (dto.variables['mensaje'] as string)
+          : `[${dto.template}] ${JSON.stringify(dto.variables ?? {})}`;
+      const url =
+        typeof dto.variables?.['url'] === 'string' ? (dto.variables['url'] as string) : undefined;
+      await this.channels[dto.channel].send({ channel: dto.channel, to: dto.to, body: mensaje });
+      // Canal interno: además de "enviarse", queda en la bandeja (RF-NOT-001).
+      // `to: '*'` difunde a todos los usuarios conocidos (proyección de logins).
       if (dto.channel === 'internal') {
-        await this.inboxRepo.save(
-          this.inboxRepo.create({ userId: dto.to, titulo: dto.template, mensaje: body }),
-        );
+        if (dto.to === '*') {
+          const destinatarios = await this.recipients.find();
+          for (const destinatario of destinatarios) {
+            await this.entregarEnBandeja(destinatario.userId, dto.template, mensaje, url);
+          }
+        } else {
+          await this.entregarEnBandeja(dto.to, dto.template, mensaje, url);
+        }
       }
       delivery.status = 'sent';
     } catch (err) {
@@ -75,6 +119,20 @@ export class NotificationsService {
     }
     delivery.attempts += 1;
     return this.deliveries.save(delivery);
+  }
+
+  /** Proyección de destinatarios: upsert por login (evento user.logged_in). */
+  async registrarDestinatario(userId: string, email?: string): Promise<void> {
+    const existente = await this.recipients.findOne({ where: { userId } });
+    if (existente) {
+      existente.email = email ?? existente.email;
+      existente.lastLoginAt = new Date();
+      await this.recipients.save(existente);
+      return;
+    }
+    await this.recipients.save(
+      this.recipients.create({ userId, email, lastLoginAt: new Date() }),
+    );
   }
 
   history() {
@@ -133,6 +191,17 @@ export class NotificationConsumer {
       await this.notifications.dispatch({ channel, to, template, variables });
     });
   }
+
+  @RabbitSubscribe({
+    exchange: process.env.RABBITMQ_EXCHANGE ?? 'icms.events',
+    routingKey: EventNames.UserLoggedIn,
+    queue: 'notification-service.logins',
+  })
+  async onUserLoggedIn(event: DomainEvent<UserLoggedInPayload>): Promise<void> {
+    await this.inbox.processOnce(event.eventId, 'notification-service.logins', async () => {
+      await this.notifications.registrarDestinatario(event.payload.userId, event.payload.email);
+    });
+  }
 }
 
 @ApiTags('notifications')
@@ -175,7 +244,9 @@ export class NotificationsController {
 }
 
 @Module({
-  imports: [DatabaseModule.forFeature([NotificationDelivery, UserNotification])],
+  imports: [
+    DatabaseModule.forFeature([NotificationDelivery, UserNotification, NotificationRecipient]),
+  ],
   controllers: [NotificationsController],
   providers: [
     NotificationsService,

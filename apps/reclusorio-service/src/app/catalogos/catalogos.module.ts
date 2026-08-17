@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, ObjectType } from 'typeorm';
+import { DataSource, ILike, ObjectType } from 'typeorm';
 import { IsBoolean, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { DatabaseModule } from '@icms/database';
@@ -96,6 +96,9 @@ class ListarQuery {
    */
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit?: number;
+
+  /** Búsqueda por nombre (homologación de listados). */
+  @IsOptional() @IsString() buscar?: string;
 }
 
 /** Normalización para dedup (RF-CAT-006): trim + minúsculas + sin acentos. */
@@ -124,10 +127,19 @@ export class CatalogosService {
   }
 
   /** RF-CAT-001: lista identificando el estado; por defecto solo activos (selectores). */
-  async listar(catalogo: string, incluirInactivos = false, page?: number, limit?: number) {
+  async listar(
+    catalogo: string,
+    incluirInactivos = false,
+    page?: number,
+    limit?: number,
+    buscar?: string,
+  ) {
     const { entidad } = this.admin(catalogo);
     const repo = this.dataSource.getRepository(entidad);
-    const where = incluirInactivos ? {} : { activo: true };
+    const where = {
+      ...(incluirInactivos ? {} : { activo: true }),
+      ...(buscar ? { nombre: ILike(`%${buscar.trim()}%`) } : {}),
+    };
     const order = { nombre: 'ASC' } as never;
 
     if (page && limit) {
@@ -242,7 +254,13 @@ export class CatalogosController {
   @ApiParam({ name: 'catalogo', enum: Object.keys(ADMINISTRABLES) })
   @ApiOperation({ summary: 'Valores de un catálogo administrable (RF-CAT-001; paginado opcional)' })
   listar(@Param('catalogo') catalogo: string, @Query() query: ListarQuery) {
-    return this.service.listar(catalogo, query.incluirInactivos ?? false, query.page, query.limit);
+    return this.service.listar(
+      catalogo,
+      query.incluirInactivos ?? false,
+      query.page,
+      query.limit,
+      query.buscar,
+    );
   }
 
   @Post(':catalogo')

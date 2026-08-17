@@ -16,7 +16,7 @@ import { ConfigService } from '@nestjs/config';
 import { hash as argon2Hash } from '@node-rs/argon2';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import {
   ArrayNotEmpty,
   IsArray,
@@ -74,6 +74,11 @@ const PERMISOS_VALIDOS = new Set(CATALOGO_PERMISOS.flatMap((m) => m.permisos));
 /** Permisos que un administrador no puede quitarse a sí mismo (anti-bloqueo). */
 const PERMISOS_ANTIBLOQUEO = ['users:read', 'users:write', 'permissions:write'];
 
+class ListarUsuariosQuery extends PaginationQueryDto {
+  /** Búsqueda por correo (homologación de listados). */
+  @IsOptional() @IsString() buscar?: string;
+}
+
 class CrearUsuarioDto {
   @IsEmail() email!: string;
   @IsString() @MinLength(8) password!: string;
@@ -112,9 +117,13 @@ export class UsersService {
     return toSafeUser(user);
   }
 
-  async list(query: PaginationQueryDto, tenantId?: string) {
+  async list(query: PaginationQueryDto, tenantId?: string, buscar?: string) {
+    const filtro = {
+      ...(tenantId ? { tenantId } : {}),
+      ...(buscar ? { email: ILike(`%${buscar.trim()}%`) } : {}),
+    };
     const [items, total] = await this.users.findAndCount({
-      where: tenantId ? { tenantId } : {},
+      where: filtro,
       skip: (query.page - 1) * query.limit,
       take: query.limit,
       order: { createdAt: 'DESC' },
@@ -262,9 +271,9 @@ export class UsersController {
 
   @Get()
   @RequirePermissions('users:read')
-  @ApiOperation({ summary: 'Listar usuarios del tenant (paginado)' })
-  list(@Query() query: PaginationQueryDto, @CurrentUser() user: AuthenticatedUser) {
-    return this.users.list(query, user.tenantId);
+  @ApiOperation({ summary: 'Listar usuarios del tenant (paginado, con búsqueda por correo)' })
+  list(@Query() query: ListarUsuariosQuery, @CurrentUser() user: AuthenticatedUser) {
+    return this.users.list(query, user.tenantId, query.buscar);
   }
 
   @Get(':id')

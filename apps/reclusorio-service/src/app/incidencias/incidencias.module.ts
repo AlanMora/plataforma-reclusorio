@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import {
   Between,
   FindOptionsWhere,
+  ILike,
   In,
   LessThanOrEqual,
   MoreThanOrEqual,
@@ -24,6 +25,7 @@ import { Autoridad, Centro, TipoIncidencia } from '../entities/catalogos-adminis
 import { PersonasModule, PersonasService } from '../personas/personas.module';
 import { ElementosModule, ElementosService } from '../elementos/elementos.module';
 import { ValidadorCatalogos } from '../actividades/validador-catalogos.service';
+import { NotificadorDominio } from '../notificaciones/notificador-dominio';
 
 class CrearIncidenciaDto {
   @IsUUID() idCentroPenitenciario!: string;
@@ -53,6 +55,8 @@ class FiltroIncidenciasQuery extends PaginationQueryDto {
   @IsOptional() @IsDateString() hasta?: string;
   /** Incidencias donde la persona está asociada (tab del expediente). */
   @IsOptional() @IsUUID() idPersona?: string;
+  /** Búsqueda por descripción o IPH (homologación de listados). */
+  @IsOptional() @IsString() buscar?: string;
 }
 
 class AsociarAutoridadDto {
@@ -75,13 +79,20 @@ export class IncidenciasService {
     private readonly personas: PersonasService,
     private readonly elementos: ElementosService,
     private readonly catalogos: ValidadorCatalogos,
+    private readonly notificador: NotificadorDominio,
   ) {}
 
   /** RF-INC-001/002: registro INDEPENDIENTE — puede persistir sin personas. */
   async crear(dto: CrearIncidenciaDto) {
     await this.catalogos.asegurarActivo(Centro, 'idCentro', dto.idCentroPenitenciario, 'Centro penitenciario');
     await this.catalogos.asegurarActivo(TipoIncidencia, 'idTipoIncidencia', dto.idTipoIncidencia, 'Tipo de incidencia');
-    return this.repo.save(this.repo.create(dto));
+    const incidencia = await this.repo.save(this.repo.create(dto));
+    this.notificador.difundir(
+      'Incidencia registrada',
+      incidencia.descripcion?.slice(0, 180) ?? 'Se registró una incidencia.',
+      `/incidencias/${incidencia.idIncidencia}`,
+    );
+    return incidencia;
   }
 
   /** RF-INC-009: consulta paginada (DP-010), con filtros del mapa (P11). */
@@ -100,8 +111,14 @@ export class IncidenciasService {
     } else if (query.hasta) {
       where.fecha = LessThanOrEqual(new Date(query.hasta));
     }
+    const filtros: FindOptionsWhere<Incidencia>[] = query.buscar
+      ? [
+          { ...where, descripcion: ILike(`%${query.buscar.trim()}%`) },
+          { ...where, iph: ILike(`%${query.buscar.trim()}%`) },
+        ]
+      : [where];
     const [items, total] = await this.repo.findAndCount({
-      where,
+      where: filtros,
       skip: (query.page - 1) * query.limit,
       take: query.limit,
       order: { fecha: 'DESC' },

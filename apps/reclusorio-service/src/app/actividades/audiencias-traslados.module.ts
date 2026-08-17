@@ -24,6 +24,7 @@ import {
 import { PersonasModule, PersonasService } from '../personas/personas.module';
 import { ElementosModule, ElementosService } from '../elementos/elementos.module';
 import { ValidadorCatalogos } from './validador-catalogos.service';
+import { NotificadorDominio } from '../notificaciones/notificador-dominio';
 import { EstadoRevision, marcarRevision } from './revision';
 
 class CrearAudienciaDto {
@@ -71,6 +72,7 @@ export class AudienciasService {
     private readonly personas: PersonasService,
     private readonly elementos: ElementosService,
     private readonly catalogos: ValidadorCatalogos,
+    private readonly notificador: NotificadorDominio,
   ) {}
 
   async crear(idPersona: string, dto: CrearAudienciaDto) {
@@ -88,7 +90,13 @@ export class AudienciasService {
     if (proxima.nombre === 'NO' && dto.fechaSiguienteAudiencia) {
       throw new BusinessRuleException('fechaSiguienteAudiencia debe permanecer vacía cuando próxima audiencia es NO');
     }
-    return this.repo.save(this.repo.create({ ...dto, idPersona }));
+    const registro = await this.repo.save(this.repo.create({ ...dto, idPersona }));
+    this.notificador.difundir(
+      'Audiencia registrada',
+      'Se registró una audiencia en el expediente de una persona.',
+      `/personas/${idPersona}`,
+    );
+    return registro;
   }
 
   async porPersona(idPersona: string) {
@@ -127,6 +135,7 @@ export class TrasladosService {
     private readonly personas: PersonasService,
     private readonly elementos: ElementosService,
     private readonly catalogos: ValidadorCatalogos,
+    private readonly notificador: NotificadorDominio,
   ) {}
 
   async crear(idPersona: string, dto: CrearTrasladoDto) {
@@ -134,7 +143,13 @@ export class TrasladosService {
     await this.catalogos.asegurarActivo(TipoTraslado, 'idTipoTraslado', dto.idTipoTraslado, 'Tipo de traslado');
     await this.catalogos.asegurarActivo(DestinoTraslado, 'idDestinoTraslado', dto.idDestinoTraslado, 'Destino de traslado');
     await this.catalogos.asegurarActivo(EstatusTraslado, 'idEstatusTraslado', dto.idEstatusTraslado, 'Estatus de traslado');
-    return this.repo.save(this.repo.create({ ...dto, idPersona }));
+    const registro = await this.repo.save(this.repo.create({ ...dto, idPersona }));
+    this.notificador.difundir(
+      'Traslado registrado',
+      'Se registró un traslado en el expediente de una persona.',
+      `/personas/${idPersona}`,
+    );
+    return registro;
   }
 
   async porPersona(idPersona: string) {
