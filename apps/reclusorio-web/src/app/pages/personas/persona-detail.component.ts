@@ -19,7 +19,14 @@ import { MapaDomicilioComponent } from '../../shared/mapa-domicilio.component';
 import { DomicilioFormComponent } from '../../shared/domicilio-form.component';
 
 type Pestana =
-  'datos' | 'domicilios' | 'ingresos' | 'movimientos' | 'audiencias' | 'traslados' | 'archivos';
+  | 'datos'
+  | 'domicilios'
+  | 'ingresos'
+  | 'movimientos'
+  | 'audiencias'
+  | 'traslados'
+  | 'incidencias'
+  | 'archivos';
 
 const PESTANAS: { clave: Pestana; etiqueta: string }[] = [
   { clave: 'datos', etiqueta: 'Datos generales' },
