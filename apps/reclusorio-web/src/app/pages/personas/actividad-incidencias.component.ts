@@ -7,9 +7,17 @@ import { CatalogosService } from '../../core/catalogos.service';
 import { ToastService } from '../../core/toast.service';
 import { PermisoDirective } from '../../core/permiso.directive';
 import { ArchivosPanelComponent } from '../../shared/archivos-panel.component';
-import { ElementoPickerComponent } from '../../shared/elemento-picker.component';
+import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
+import { SelectBuscableComponent, aOpciones } from '../../shared/select-buscable.component';
+import { ElementoPickerComponent, nombreElemento } from '../../shared/elemento-picker.component';
 import { ElementoCardComponent } from '../../shared/elemento-card.component';
-import { Elemento, Incidencia, IncidenciaDetalle, Paginado } from '../../core/models';
+import {
+  Elemento,
+  Incidencia,
+  IncidenciaDetalle,
+  Paginado,
+  ValorCatalogo,
+} from '../../core/models';
 import { mensajeDe } from '../../core/problem';
 import { RevisionRegistroComponent } from '../../shared/revision-registro.component';
 
@@ -17,8 +25,9 @@ import { RevisionRegistroComponent } from '../../shared/revision-registro.compon
  * Tab de incidencias del expediente: incidencias donde la persona está
  * asociada (RF-INC-003), con elementos participantes consultables y
  * asociables desde aquí (RF-INC-005/007), igual que en audiencias/traslados.
- * Las incidencias se REGISTRAN en su propio módulo (son independientes,
- * RF-INC-001/002); este tab consulta y complementa.
+ * También permite REGISTRAR una incidencia desde aquí (permiso
+ * incidencias:crear): al crearla, la persona del expediente queda asociada
+ * automáticamente (RF-INC-003) y los elementos elegidos se asocian de una vez.
  */
 @Component({
   selector: 'rw-actividad-incidencias',
@@ -29,6 +38,8 @@ import { RevisionRegistroComponent } from '../../shared/revision-registro.compon
     FormsModule,
     PermisoDirective,
     ArchivosPanelComponent,
+    SelectorFechaComponent,
+    SelectBuscableComponent,
     ElementoPickerComponent,
     ElementoCardComponent,
     RevisionRegistroComponent,
@@ -37,6 +48,9 @@ import { RevisionRegistroComponent } from '../../shared/revision-registro.compon
   templateUrl: './actividad-incidencias.component.html',
 })
 export class ActividadIncidenciasComponent implements OnInit {
+  /** Adapta valores de catálogo a opciones del select buscable. */
+  readonly aOpciones = aOpciones;
+
   private readonly api = inject(ApiService);
   private readonly catalogos = inject(CatalogosService);
   private readonly toast = inject(ToastService);
@@ -45,14 +59,33 @@ export class ActividadIncidenciasComponent implements OnInit {
 
   readonly registros = signal<Incidencia[]>([]);
   readonly cargando = signal(false);
+  readonly guardando = signal(false);
   readonly error = signal<string | null>(null);
+  readonly errorForm = signal<string | null>(null);
+  readonly mostrarForm = signal(false);
   readonly expandido = signal<string | null>(null);
   readonly elementosAsociados = signal<{ elemento: Elemento; primerRespondiente: boolean }[]>([]);
+  /** Elementos elegidos durante la captura; se asocian al crear (RF-INC-005/007). */
+  readonly elementosCaptura = signal<{ elemento: Elemento; primerRespondiente: boolean }[]>([]);
+
+  readonly centros = signal<ValorCatalogo[]>([]);
+  readonly tipos = signal<ValorCatalogo[]>([]);
 
   marcarPrimerRespondiente = false;
+  marcarPrimerRespondienteCaptura = false;
 
   mapaTipos = new Map<string, string>();
   mapaCentros = new Map<string, string>();
+
+  forma: Record<string, string> = {
+    idCentroPenitenciario: '',
+    idTipoIncidencia: '',
+    fecha: '',
+    descripcion: '',
+    iph: '',
+    primerRespondiente: '',
+    narrativa: '',
+  };
 
   ngOnInit(): void {
     void this.cargarCatalogos();
@@ -69,6 +102,81 @@ export class ActividadIncidenciasComponent implements OnInit {
     this.elementosAsociados.set([]);
     this.marcarPrimerRespondiente = false;
     if (nuevo) void this.cargarElementos(nuevo);
+  }
+
+  /** Abre/cierra la captura descartando elementos elegidos en un intento previo. */
+  alternarForm(): void {
+    this.mostrarForm.set(!this.mostrarForm());
+    this.elementosCaptura.set([]);
+    this.marcarPrimerRespondienteCaptura = false;
+    this.errorForm.set(null);
+  }
+
+  agregarElementoCaptura(elemento: Elemento): void {
+    if (this.elementosCaptura().some((e) => e.elemento.idElemento === elemento.idElemento)) {
+      this.toast.error('Ese elemento ya está en la lista de la captura.');
+      return;
+    }
+    this.elementosCaptura.update((lista) => [
+      ...lista,
+      { elemento, primerRespondiente: this.marcarPrimerRespondienteCaptura },
+    ]);
+    this.marcarPrimerRespondienteCaptura = false;
+  }
+
+  quitarElementoCaptura(idElemento: string): void {
+    this.elementosCaptura.update((lista) =>
+      lista.filter((e) => e.elemento.idElemento !== idElemento),
+    );
+  }
+
+  /** Asocia lo elegido a la incidencia recién creada; un fallo no revierte la captura. */
+  private async asociarElementosCaptura(idIncidencia: string): Promise<void> {
+    for (const { elemento, primerRespondiente } of this.elementosCaptura()) {
+      try {
+        await this.api.post(`/api/v1/incidencias/${idIncidencia}/elementos`, {
+          idElemento: elemento.idElemento,
+          primerRespondiente: primerRespondiente || undefined,
+        });
+      } catch (err) {
+        this.toast.error(
+          `La incidencia se guardó, pero "${nombreElemento(elemento)}" no se pudo asociar: ${mensajeDe(err)}`,
+        );
+      }
+    }
+    this.elementosCaptura.set([]);
+  }
+
+  /**
+   * RF-INC-001/003: crea la incidencia y asocia de inmediato a la persona del
+   * expediente (para que aparezca en este tab) y a los elementos elegidos.
+   */
+  async crear(): Promise<void> {
+    this.guardando.set(true);
+    this.errorForm.set(null);
+    try {
+      const incidencia = await this.api.post<Incidencia>('/api/v1/incidencias', {
+        ...this.forma,
+        fecha: new Date(this.forma['fecha']).toISOString(),
+      });
+      try {
+        await this.api.post(`/api/v1/incidencias/${incidencia.idIncidencia}/personas`, {
+          idPersona: this.idPersona(),
+        });
+      } catch (err) {
+        this.toast.error(
+          `La incidencia se guardó, pero no se pudo asociar a la persona (asóciala desde el módulo Incidencias): ${mensajeDe(err)}`,
+        );
+      }
+      await this.asociarElementosCaptura(incidencia.idIncidencia);
+      this.toast.ok('Incidencia registrada.');
+      this.mostrarForm.set(false);
+      await this.cargar();
+    } catch (err) {
+      this.errorForm.set(mensajeDe(err));
+    } finally {
+      this.guardando.set(false);
+    }
   }
 
   async asociarElemento(idIncidencia: string, elemento: Elemento): Promise<void> {
@@ -103,11 +211,13 @@ export class ActividadIncidenciasComponent implements OnInit {
   private async cargarCatalogos(): Promise<void> {
     try {
       const [tipos, centros] = await Promise.all([
-        this.catalogos.mapa('tipo_incidencia'),
-        this.catalogos.mapa('centros'),
+        this.catalogos.valores('tipo_incidencia'),
+        this.catalogos.valores('centros'),
       ]);
-      this.mapaTipos = tipos;
-      this.mapaCentros = centros;
+      this.tipos.set(tipos);
+      this.centros.set(centros);
+      this.mapaTipos = new Map(tipos.map((v) => [v.id, v.nombre]));
+      this.mapaCentros = new Map(centros.map((v) => [v.id, v.nombre]));
     } catch (err) {
       this.error.set(mensajeDe(err));
     }

@@ -3,7 +3,8 @@
     <a routerLink="/incidencias" class="etiqueta hover:text-neon">← Incidencias</a>
     <h2 class="mt-1 text-2xl font-bold text-slate-100">Registrar incidencia</h2>
     <p class="mt-1 text-sm text-slate-500">
-      Las asociaciones (personas, autoridades, elementos) se agregan después, desde el detalle.
+      Los elementos participantes pueden asociarse aquí mismo; personas y autoridades se agregan
+      después, desde el detalle.
     </p>
   </div>
 
@@ -72,8 +73,8 @@
         [(ngModel)]="forma.primerRespondiente"
       />
       <p class="mt-1 text-[11px] text-slate-600">
-        Úsalo cuando el elemento NO está en el padrón (RF-INC-007); si está registrado, asócialo en
-        el detalle.
+        Úsalo cuando el elemento NO está en el padrón (RF-INC-007); si está registrado (o lo das de
+        alta), asócialo abajo en «Elementos participantes».
       </p>
     </div>
     <div class="md:col-span-2">
@@ -85,6 +86,46 @@
         rows="4"
         [(ngModel)]="forma.narrativa"
       ></textarea>
+    </div>
+    <!-- keydown.enter: evita el submit implícito del form al buscar en el picker -->
+    <div
+      *rwPermiso="'incidencias:asociar'"
+      class="md:col-span-2"
+      (keydown.enter)="$event.preventDefault()"
+    >
+      <p class="campo-etiqueta">
+        Elementos participantes (opcional, se asocian al registrar — RF-INC-005/007)
+      </p>
+      @if (elementosCaptura().length > 0) {
+        <div class="mb-2 grid gap-2 md:grid-cols-2">
+          @for (e of elementosCaptura(); track e.elemento.idElemento) {
+            <div class="flex items-center gap-2">
+              <div class="min-w-0 flex-1">
+                <rw-elemento-card
+                  [elemento]="e.elemento"
+                  [insignia]="e.primerRespondiente ? 'Primer respondiente' : ''"
+                />
+              </div>
+              <button
+                class="btn-secundario btn-mini shrink-0"
+                type="button"
+                (click)="quitarElementoCaptura(e.elemento.idElemento)"
+              >
+                Quitar
+              </button>
+            </div>
+          }
+        </div>
+      }
+      <label class="mb-2 flex items-center gap-2 text-xs text-slate-400">
+        <input
+          type="checkbox"
+          name="marcarPrimerRespondiente"
+          [(ngModel)]="marcarPrimerRespondiente"
+        />
+        Marcar como primer respondiente al elegirlo
+      </label>
+      <rw-elemento-picker (elegido)="agregarElementoCaptura($event)" />
     </div>
     @if (error()) {
       <p class="alerta-error md:col-span-2">{{ error() }}</p>

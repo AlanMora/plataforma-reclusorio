@@ -50,6 +50,8 @@ export class ActividadTrasladosComponent implements OnInit {
   readonly mostrarForm = signal(false);
   readonly expandido = signal<string | null>(null);
   readonly elementosAsociados = signal<Elemento[]>([]);
+  /** Elementos elegidos durante la captura; se asocian al crear (RF-TRA-006). */
+  readonly elementosCaptura = signal<Elemento[]>([]);
 
   readonly tipos = signal<ValorCatalogo[]>([]);
   readonly destinos = signal<ValorCatalogo[]>([]);
@@ -84,6 +86,41 @@ export class ActividadTrasladosComponent implements OnInit {
     this.expandido.set(nuevo);
     this.elementosAsociados.set([]);
     if (nuevo) void this.cargarElementos(nuevo);
+  }
+
+  /** Abre/cierra la captura descartando elementos elegidos en un intento previo. */
+  alternarForm(): void {
+    this.mostrarForm.set(!this.mostrarForm());
+    this.elementosCaptura.set([]);
+    this.errorForm.set(null);
+  }
+
+  agregarElementoCaptura(elemento: Elemento): void {
+    if (this.elementosCaptura().some((e) => e.idElemento === elemento.idElemento)) {
+      this.toast.error('Ese elemento ya está en la lista de la captura.');
+      return;
+    }
+    this.elementosCaptura.update((lista) => [...lista, elemento]);
+  }
+
+  quitarElementoCaptura(idElemento: string): void {
+    this.elementosCaptura.update((lista) => lista.filter((e) => e.idElemento !== idElemento));
+  }
+
+  /** Asocia lo elegido al registro recién creado; un fallo no revierte la captura. */
+  private async asociarElementosCaptura(idTraslado: string): Promise<void> {
+    for (const elemento of this.elementosCaptura()) {
+      try {
+        await this.api.post(`/api/v1/traslados/${idTraslado}/elementos`, {
+          idElemento: elemento.idElemento,
+        });
+      } catch (err) {
+        this.toast.error(
+          `El traslado se guardó, pero "${nombreElemento(elemento)}" no se pudo asociar: ${mensajeDe(err)}`,
+        );
+      }
+    }
+    this.elementosCaptura.set([]);
   }
 
   /** Archivos elegidos durante la captura (carga integrada, req. 11/08/2026). */
@@ -122,6 +159,7 @@ export class ActividadTrasladosComponent implements OnInit {
         },
       );
       await this.subirArchivosCaptura('idTraslado', creado['idTraslado']);
+      await this.asociarElementosCaptura(creado['idTraslado']);
       this.toast.ok('Traslado registrado.');
       this.mostrarForm.set(false);
       await this.cargar();

@@ -4,7 +4,7 @@
       *rwPermiso="'traslados:crear'"
       class="btn-primario btn-mini"
       type="button"
-      (click)="mostrarForm.set(!mostrarForm())"
+      (click)="alternarForm()"
     >
       {{ mostrarForm() ? 'Cancelar' : '+ Registrar traslado' }}
     </button>
@@ -83,6 +83,33 @@
           maxlength="2000"
           [(ngModel)]="forma.observaciones"
         ></textarea>
+      </div>
+      <!-- keydown.enter: evita el submit implícito del form al buscar en el picker -->
+      <div
+        *rwPermiso="'traslados:asociar'"
+        class="md:col-span-3"
+        (keydown.enter)="$event.preventDefault()"
+      >
+        <p class="campo-etiqueta">
+          Elementos participantes (opcional, se asocian al registrar — RF-TRA-006)
+        </p>
+        @if (elementosCaptura().length > 0) {
+          <div class="mb-2 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            @for (e of elementosCaptura(); track e.idElemento) {
+              <div class="flex items-center gap-2">
+                <div class="min-w-0 flex-1"><rw-elemento-card [elemento]="e" /></div>
+                <button
+                  class="btn-secundario btn-mini shrink-0"
+                  type="button"
+                  (click)="quitarElementoCaptura(e.idElemento)"
+                >
+                  Quitar
+                </button>
+              </div>
+            }
+          </div>
+        }
+        <rw-elemento-picker (elegido)="agregarElementoCaptura($event)" />
       </div>
       <div class="md:col-span-3">
         <label class="campo-etiqueta" for="traArchivos"

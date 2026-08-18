@@ -54,6 +54,8 @@ export class ActividadAudienciasComponent implements OnInit {
   readonly mostrarForm = signal(false);
   readonly expandido = signal<string | null>(null);
   readonly elementosAsociados = signal<Elemento[]>([]);
+  /** Elementos elegidos durante la captura; se asocian al crear (RF-AUD-006). */
+  readonly elementosCaptura = signal<Elemento[]>([]);
   readonly proximaEsNo = signal(false);
 
   readonly formasIngreso = signal<ValorCatalogo[]>([]);
@@ -111,6 +113,41 @@ export class ActividadAudienciasComponent implements OnInit {
     if (nuevo) void this.cargarElementos(nuevo);
   }
 
+  /** Abre/cierra la captura descartando elementos elegidos en un intento previo. */
+  alternarForm(): void {
+    this.mostrarForm.set(!this.mostrarForm());
+    this.elementosCaptura.set([]);
+    this.errorForm.set(null);
+  }
+
+  agregarElementoCaptura(elemento: Elemento): void {
+    if (this.elementosCaptura().some((e) => e.idElemento === elemento.idElemento)) {
+      this.toast.error('Ese elemento ya está en la lista de la captura.');
+      return;
+    }
+    this.elementosCaptura.update((lista) => [...lista, elemento]);
+  }
+
+  quitarElementoCaptura(idElemento: string): void {
+    this.elementosCaptura.update((lista) => lista.filter((e) => e.idElemento !== idElemento));
+  }
+
+  /** Asocia lo elegido al registro recién creado; un fallo no revierte la captura. */
+  private async asociarElementosCaptura(idAudiencia: string): Promise<void> {
+    for (const elemento of this.elementosCaptura()) {
+      try {
+        await this.api.post(`/api/v1/audiencias/${idAudiencia}/elementos`, {
+          idElemento: elemento.idElemento,
+        });
+      } catch (err) {
+        this.toast.error(
+          `La audiencia se guardó, pero "${nombreElemento(elemento)}" no se pudo asociar: ${mensajeDe(err)}`,
+        );
+      }
+    }
+    this.elementosCaptura.set([]);
+  }
+
   /** Archivos elegidos durante la captura (carga integrada, req. 11/08/2026). */
   private archivosCaptura: File[] = [];
 
@@ -150,6 +187,7 @@ export class ActividadAudienciasComponent implements OnInit {
         },
       );
       await this.subirArchivosCaptura('idAudiencia', creado['idAudiencia']);
+      await this.asociarElementosCaptura(creado['idAudiencia']);
       this.toast.ok('Audiencia registrada.');
       this.mostrarForm.set(false);
       await this.cargar();
