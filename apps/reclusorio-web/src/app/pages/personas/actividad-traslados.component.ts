@@ -88,9 +88,24 @@ export class ActividadTrasladosComponent implements OnInit {
     if (nuevo) void this.cargarElementos(nuevo);
   }
 
-  /** Abre/cierra la captura descartando elementos elegidos en un intento previo. */
+  /** Abre/cierra la captura descartando lo tecleado en un intento previo. */
   alternarForm(): void {
     this.mostrarForm.set(!this.mostrarForm());
+    this.limpiarCaptura();
+  }
+
+  /** Deja el formulario en blanco para la siguiente captura. */
+  private limpiarCaptura(): void {
+    this.forma = {
+      fecha: '',
+      idTipoTraslado: '',
+      idDestinoTraslado: '',
+      idEstatusTraslado: '',
+      descripcion: '',
+      unidades: '',
+      observaciones: '',
+    };
+    this.archivosCaptura = [];
     this.elementosCaptura.set([]);
     this.errorForm.set(null);
   }
@@ -162,6 +177,7 @@ export class ActividadTrasladosComponent implements OnInit {
       await this.asociarElementosCaptura(creado['idTraslado']);
       this.toast.ok('Traslado registrado.');
       this.mostrarForm.set(false);
+      this.limpiarCaptura();
       await this.cargar();
     } catch (err) {
       this.errorForm.set(mensajeDe(err));

@@ -83,6 +83,26 @@ export class ActividadIngresosComponent implements OnInit {
     this.expandido.set(this.expandido() === id ? null : id);
   }
 
+  /** Abre/cierra la captura descartando lo tecleado en un intento previo. */
+  alternarForm(): void {
+    this.mostrarForm.set(!this.mostrarForm());
+    this.limpiarCaptura();
+  }
+
+  /** Deja el formulario en blanco para la siguiente captura. */
+  private limpiarCaptura(): void {
+    this.forma = {
+      idTipoIngresoEgreso: '',
+      fecha: '',
+      idCentroPenitenciario: '',
+      idDelito: '',
+      ubicacion: '',
+      autoridad: '',
+    };
+    this.archivosCaptura = [];
+    this.errorForm.set(null);
+  }
+
   nombreTipo(id: string): string {
     return this.mapaTipos.get(id) ?? '…';
   }
@@ -131,14 +151,7 @@ export class ActividadIngresosComponent implements OnInit {
       await this.subirArchivosCaptura('idIngresoEgreso', creado['idIngresoEgreso']);
       this.toast.ok('Ingreso/libertad registrado.');
       this.mostrarForm.set(false);
-      this.forma = {
-        idTipoIngresoEgreso: '',
-        fecha: '',
-        idCentroPenitenciario: '',
-        idDelito: '',
-        ubicacion: '',
-        autoridad: '',
-      };
+      this.limpiarCaptura();
       await this.cargar();
     } catch (err) {
       this.errorForm.set(mensajeDe(err));

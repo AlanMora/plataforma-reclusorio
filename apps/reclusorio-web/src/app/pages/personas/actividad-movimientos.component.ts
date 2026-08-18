@@ -75,6 +75,26 @@ export class ActividadMovimientosComponent implements OnInit {
     this.expandido.set(this.expandido() === id ? null : id);
   }
 
+  /** Abre/cierra la captura descartando lo tecleado en un intento previo. */
+  alternarForm(): void {
+    this.mostrarForm.set(!this.mostrarForm());
+    this.limpiarCaptura();
+  }
+
+  /** Deja el formulario en blanco para la siguiente captura. */
+  private limpiarCaptura(): void {
+    this.forma = {
+      idTipoMovimiento: '',
+      idMotivoMovimiento: '',
+      fecha: '',
+      idCentroOrigen: '',
+      idCentroDestino: '',
+      ubicacion: '',
+    };
+    this.archivosCaptura = [];
+    this.errorForm.set(null);
+  }
+
   /** Archivos elegidos durante la captura (carga integrada, req. 11/08/2026). */
   private archivosCaptura: File[] = [];
 
@@ -113,14 +133,7 @@ export class ActividadMovimientosComponent implements OnInit {
       await this.subirArchivosCaptura('idMovimiento', creado['idMovimiento']);
       this.toast.ok('Movimiento registrado.');
       this.mostrarForm.set(false);
-      this.forma = {
-        idTipoMovimiento: '',
-        idMotivoMovimiento: '',
-        fecha: '',
-        idCentroOrigen: '',
-        idCentroDestino: '',
-        ubicacion: '',
-      };
+      this.limpiarCaptura();
       await this.cargar();
     } catch (err) {
       this.errorForm.set(mensajeDe(err));

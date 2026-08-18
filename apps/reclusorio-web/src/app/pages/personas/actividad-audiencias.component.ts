@@ -113,10 +113,32 @@ export class ActividadAudienciasComponent implements OnInit {
     if (nuevo) void this.cargarElementos(nuevo);
   }
 
-  /** Abre/cierra la captura descartando elementos elegidos en un intento previo. */
+  /** Abre/cierra la captura descartando lo tecleado en un intento previo. */
   alternarForm(): void {
     this.mostrarForm.set(!this.mostrarForm());
+    this.limpiarCaptura();
+  }
+
+  /** Deja el formulario en blanco para la siguiente captura. */
+  private limpiarCaptura(): void {
+    this.forma = {
+      fecha: '',
+      ca: '',
+      ci: '',
+      idFormaIngresoAudiencia: '',
+      idJuzgado: '',
+      idJuezJuzgado: '',
+      nombreJuez: '',
+      idTipoAudiencia: '',
+      idModalidadAudiencia: '',
+      idResolucionAudiencia: '',
+      observaciones: '',
+      idProximaAudiencia: '',
+      fechaSiguienteAudiencia: '',
+    };
+    this.archivosCaptura = [];
     this.elementosCaptura.set([]);
+    this.proximaEsNo.set(false);
     this.errorForm.set(null);
   }
 
@@ -190,6 +212,7 @@ export class ActividadAudienciasComponent implements OnInit {
       await this.asociarElementosCaptura(creado['idAudiencia']);
       this.toast.ok('Audiencia registrada.');
       this.mostrarForm.set(false);
+      this.limpiarCaptura();
       await this.cargar();
     } catch (err) {
       this.errorForm.set(mensajeDe(err));

@@ -164,7 +164,8 @@
         }
         <rw-elemento-picker (elegido)="agregarElementoCaptura($event)" />
       </div>
-      <div class="md:col-span-3">
+      <!-- La subida exige archivos:crear en el backend; sin él, el campo no se ofrece -->
+      <div *rwPermiso="'archivos:crear'" class="md:col-span-3">
         <label class="campo-etiqueta" for="audArchivos"
           >Archivos (opcional, se suben con el registro)</label
         >

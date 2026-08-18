@@ -4,7 +4,7 @@
       *rwPermiso="'movimientos:crear'"
       class="btn-primario btn-mini"
       type="button"
-      (click)="mostrarForm.set(!mostrarForm())"
+      (click)="alternarForm()"
     >
       {{ mostrarForm() ? 'Cancelar' : '+ Registrar movimiento' }}
     </button>
@@ -72,7 +72,8 @@
           [(ngModel)]="forma.ubicacion"
         />
       </div>
-      <div class="md:col-span-3">
+      <!-- La subida exige archivos:crear en el backend; sin él, el campo no se ofrece -->
+      <div *rwPermiso="'archivos:crear'" class="md:col-span-3">
         <label class="campo-etiqueta" for="movArchivos"
           >Archivos (opcional, se suben con el registro)</label
         >
