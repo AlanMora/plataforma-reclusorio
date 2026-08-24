@@ -7,9 +7,10 @@ import { MessagingModule } from '@icms/messaging';
 import { RealtimeGateway } from './realtime.gateway';
 import { SessionRevokedConsumer } from './session-revoked.consumer';
 import { NotificationCreatedConsumer } from './notification-created.consumer';
+import { PermissionsUpdatedConsumer } from './permissions-updated.consumer';
 
 @Module({
   imports: [AppConfigModule, LoggingModule, ObservabilityModule, JwtModule.register({}), MessagingModule.forRoot()],
-  providers: [RealtimeGateway, SessionRevokedConsumer, NotificationCreatedConsumer],
+  providers: [RealtimeGateway, SessionRevokedConsumer, NotificationCreatedConsumer, PermissionsUpdatedConsumer],
 })
 export class AppModule {}

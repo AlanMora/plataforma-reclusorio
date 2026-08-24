@@ -59,6 +59,17 @@ export class RealtimeService {
         this.auth.forzarLogout(MOTIVOS[evento?.motivo ?? ''] ?? 'Tu sesión fue revocada.');
       }
     });
+    // Actualización de permisos en tiempo real (RF-SES-009 / DP-009):
+    // el superusuario modificó los permisos; rotamos el token silenciosamente
+    // para que la interfaz se actualice de inmediato sin cerrar sesión.
+    this.socket.on('permissions.updated', async () => {
+      try {
+        await this.auth.refrescar();
+        this.toast.info('Tus permisos de acceso fueron actualizados.');
+      } catch {
+        this.auth.forzarLogout('Tus permisos cambiaron. Inicia sesión nuevamente.');
+      }
+    });
     this.socket.on('connect_error', (err) => {
       const msg = err?.message?.toLowerCase() ?? '';
       if (msg.includes('unauthorized') || msg.includes('jwt') || msg.includes('forbidden')) {

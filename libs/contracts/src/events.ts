@@ -40,6 +40,7 @@ export interface DomainEvent<T = unknown> {
 export const EventNames = {
   UserRegistered: 'user.registered',
   UserPasswordChanged: 'user.password_changed',
+  UserPermissionsUpdated: 'user.permissions_updated',
   /** Login exitoso: alimenta la proyección de destinatarios de notificaciones. */
   UserLoggedIn: 'user.logged_in',
   SessionRevoked: 'session.revoked',
@@ -54,6 +55,11 @@ export const EventNames = {
 export type EventName = (typeof EventNames)[keyof typeof EventNames];
 
 // ---- Payloads de ejemplo (extiéndelos por proyecto) --------------------------
+
+export interface UserPermissionsUpdatedPayload {
+  userId: string;
+  permissions: string[];
+}
 
 export interface NotificationRequestedPayload {
   channel: 'email' | 'sms' | 'push' | 'internal';

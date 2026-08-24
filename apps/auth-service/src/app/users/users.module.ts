@@ -29,6 +29,8 @@ import {
 } from 'class-validator';
 import { AuthenticatedUser, CurrentUser, RequirePermissions } from '@icms/auth';
 import { DatabaseModule } from '@icms/database';
+import { EventPublisher } from '@icms/messaging';
+import { EventNames } from '@icms/contracts';
 import {
   BusinessRuleException,
   EntityNotFoundException,
@@ -109,6 +111,7 @@ export class UsersService {
     @InjectRepository(User) private readonly users: Repository<User>,
     private readonly auth: AuthService,
     private readonly audit: AuditService,
+    private readonly events: EventPublisher,
   ) {}
 
   async findById(id: string): Promise<SafeUser> {
@@ -235,10 +238,14 @@ export class UsersService {
 
     user.permissions = permisos;
     const guardado = await this.users.save(user);
-    // Sin cerrar sesiones: los claims se actualizan solos en la siguiente
-    // renovación del access token (TTL 10m; refresh() relee al usuario de la
-    // BD). El propio usuario puede aplicar el cambio al instante refrescando
-    // su token — el frontend lo hace automáticamente al editarse a sí mismo.
+
+    // Notificación en TIEMPO REAL vía WebSocket / RabbitMQ (RF-SES-009 / DP-009):
+    // el cliente conectado refresca inmediatamente sus claims y actualiza la UI.
+    await this.events.publish(EventNames.UserPermissionsUpdated, {
+      userId: id,
+      permissions: guardado.permissions,
+    });
+
     await this.audit.record({
       userId: actor.id,
       action: 'usuario.permisos-asignados',
