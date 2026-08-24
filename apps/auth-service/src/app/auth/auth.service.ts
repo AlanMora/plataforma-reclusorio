@@ -232,8 +232,12 @@ export class AuthService {
     ipAddress?: string,
   ): Promise<string[]> {
     const sids = await this.sessions.revokeAllForUser(userId);
-    for (const sessionId of sids) {
-      await this.events.publish(EventNames.SessionRevoked, { sessionId, userId, motivo });
+    if (sids.length === 0) {
+      await this.events.publish(EventNames.SessionRevoked, { sessionId: '', userId, motivo });
+    } else {
+      for (const sessionId of sids) {
+        await this.events.publish(EventNames.SessionRevoked, { sessionId, userId, motivo });
+      }
     }
     await this.audit.record({
       userId,
