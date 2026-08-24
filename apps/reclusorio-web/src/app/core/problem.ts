@@ -17,6 +17,12 @@ export function problemaDe(err: unknown): ProblemDetails {
     }
     return { status: err.status, detail: `Error ${err.status} del servidor` };
   }
+  if (err instanceof Error) {
+    return { detail: err.message || 'No fue posible completar la operación' };
+  }
+  if (err && typeof err === 'object' && ('detail' in err || 'title' in err)) {
+    return err as ProblemDetails;
+  }
   return { detail: 'Ocurrió un error inesperado' };
 }
 

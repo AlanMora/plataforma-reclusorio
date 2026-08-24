@@ -22,6 +22,7 @@ import { AudienciasTrasladosModule } from './actividades/audiencias-traslados.mo
 import { IncidenciasModule } from './incidencias/incidencias.module';
 import { ArchivosModule } from './archivos/archivos.module';
 import { ReportesModule } from './reportes/reportes.module';
+import { NotificadorDominioModule } from './notificaciones/notificador-dominio';
 import { CatalogSeederService } from './seeds/seeder.service';
 import { Init1786043245489 } from '../migrations/1786043245489-Init';
 import { DomicilioCoordenadas1786457865399 } from '../migrations/1786457865399-DomicilioCoordenadas';
@@ -55,6 +56,7 @@ import { EstadoRevision1786500000000 } from '../migrations/1786500000000-EstadoR
       ],
     }),
     OutboxModule.forRoot({ withRelay: true }),
+    NotificadorDominioModule,
     CatalogosModule,
     PersonasModule,
     ElementosModule,

@@ -1,8 +1,9 @@
-<form class="space-y-8" (ngSubmit)="guardar()">
-  @if (error()) {
-    <p class="alerta-error whitespace-pre-line">{{ error() }}</p>
-  }
-
+<form
+  #formularioPersona="ngForm"
+  [id]="idFormulario()"
+  class="space-y-8"
+  (ngSubmit)="guardar(formularioPersona, $event)"
+>
   <!-- ===== 01 · Identificación ===== -->
   <section>
     <header class="mb-4 flex items-center gap-3">
@@ -199,14 +200,17 @@
   }
 
   <!-- ===== Acciones ===== -->
-  <div class="flex flex-wrap items-center gap-3 border-t border-borde pt-5">
-    <p class="mr-auto text-[11px] text-slate-600">
-      Los campos marcados con <span class="text-neon">*</span> son obligatorios (DP-007).
-    </p>
-    <button class="btn-primario" type="submit" [disabled]="guardando()">
-      {{
-        guardando() ? 'Guardando…' : modo() === 'crear' ? 'Registrar persona' : 'Guardar cambios'
-      }}
-    </button>
-  </div>
+  @if (mostrarAcciones()) {
+    <div class="flex flex-wrap items-center gap-3 border-t border-borde pt-5">
+      <p class="mr-auto text-[11px] text-slate-600">
+        Los campos marcados con <span class="text-neon">*</span> son obligatorios (DP-007).
+      </p>
+      <button class="btn-primario" type="submit" [disabled]="guardando()">
+        <rw-icono [nombre]="guardando() ? 'cargando' : 'guardar'" [tamano]="15" />
+        {{
+          guardando() ? 'Guardando…' : modo() === 'crear' ? 'Registrar persona' : 'Guardar cambios'
+        }}
+      </button>
+    </div>
+  }
 </form>

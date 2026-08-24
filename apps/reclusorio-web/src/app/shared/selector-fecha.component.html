@@ -9,7 +9,7 @@
     <span class="truncate" [class.text-slate-600]="!valor()">
       {{ textoVisible() || (conHora() ? 'dd/mm/aaaa hh:mm' : 'dd/mm/aaaa') }}
     </span>
-    <span class="shrink-0 text-xs text-slate-500" aria-hidden="true">▦</span>
+    <rw-icono class="text-slate-500" nombre="calendario" [tamano]="16" />
   </button>
 
   @if (abierto()) {
@@ -24,7 +24,7 @@
           title="Mes anterior"
           (click)="mesAnterior()"
         >
-          ‹
+          <rw-icono nombre="anterior" [tamano]="15" />
         </button>
         <select
           class="campo grow px-2 py-1 text-xs"
@@ -50,7 +50,7 @@
           title="Mes siguiente"
           (click)="mesSiguiente()"
         >
-          ›
+          <rw-icono nombre="siguiente" [tamano]="15" />
         </button>
       </div>
 
@@ -117,6 +117,7 @@
         <button class="btn-secundario btn-mini" type="button" (click)="limpiar()">Limpiar</button>
         @if (conHora()) {
           <button class="btn-primario btn-mini ml-auto" type="button" (click)="cerrar()">
+            <rw-icono nombre="correcto" [tamano]="14" />
             Listo
           </button>
         }

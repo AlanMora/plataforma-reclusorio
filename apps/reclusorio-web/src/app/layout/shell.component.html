@@ -1,8 +1,6 @@
 <div class="flex min-h-screen">
   <!-- ===================== SIDEBAR ===================== -->
-  <aside
-    class="fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r border-borde bg-panel/95 backdrop-blur"
-  >
+  <aside class="glass-sidebar fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r">
     <div class="border-b border-borde px-5 py-5">
       <p class="font-mono text-[10px] uppercase tracking-[0.3em] text-neon">Plataforma</p>
       <h1 class="mt-1 text-lg font-bold leading-tight tracking-wide text-slate-100">
@@ -23,13 +21,13 @@
             [class.activo]="catalogosAbierto()"
             (click)="catalogosAbierto.set(!catalogosAbierto())"
           >
-            <span class="w-4 text-center text-neon/70">{{ item.icono }}</span>
+            <rw-icono class="w-4 text-neon/70" [nombre]="item.icono" [tamano]="17" />
             <span>{{ item.etiqueta }}</span>
             <span
               class="ml-auto text-[10px] text-slate-500 transition-transform duration-200"
               [class.rotate-90]="catalogosAbierto()"
-              >▸</span
-            >
+              ><rw-icono nombre="siguiente" [tamano]="14" />
+            </span>
           </button>
           @if (catalogosAbierto()) {
             <div class="ml-4 space-y-0.5 border-l border-borde/60 pl-2">
@@ -38,13 +36,13 @@
                 type="button"
                 (click)="administrablesAbierto.set(!administrablesAbierto())"
               >
-                <span class="w-3 text-center text-neon/60">✎</span>
+                <rw-icono class="w-3 text-neon/60" nombre="editar" [tamano]="14" />
                 <span>Administrables</span>
                 <span
                   class="ml-auto text-[10px] text-slate-500 transition-transform duration-200"
                   [class.rotate-90]="administrablesAbierto()"
-                  >▸</span
-                >
+                  ><rw-icono nombre="siguiente" [tamano]="13" />
+                </span>
               </button>
               @if (administrablesAbierto()) {
                 <div class="ml-3 space-y-0.5 border-l border-borde/40 pl-2">
@@ -64,13 +62,13 @@
                 type="button"
                 (click)="fijosAbierto.set(!fijosAbierto())"
               >
-                <span class="w-3 text-center text-neon/60">▣</span>
+                <rw-icono class="w-3 text-neon/60" nombre="cuadricula" [tamano]="14" />
                 <span>Fijos</span>
                 <span
                   class="ml-auto text-[10px] text-slate-500 transition-transform duration-200"
                   [class.rotate-90]="fijosAbierto()"
-                  >▸</span
-                >
+                  ><rw-icono nombre="siguiente" [tamano]="13" />
+                </span>
               </button>
               @if (fijosAbierto()) {
                 <div class="ml-3 space-y-0.5 border-l border-borde/40 pl-2">
@@ -94,7 +92,7 @@
             routerLinkActive="activo"
             [routerLinkActiveOptions]="{ exact: item.exacto ?? false }"
           >
-            <span class="w-4 text-center text-neon/70">{{ item.icono }}</span>
+            <rw-icono class="w-4 text-neon/70" [nombre]="item.icono" [tamano]="17" />
             <span>{{ item.etiqueta }}</span>
             @if (item.ruta === '/notificaciones' && notificaciones.noLeidas() > 0) {
               <span class="ml-auto rounded-full bg-neon/20 px-2 font-mono text-[10px] text-neon">
@@ -114,6 +112,7 @@
         class="btn-secundario btn-mini mt-3 w-full justify-center"
         (click)="auth.cerrarSesion()"
       >
+        <rw-icono nombre="salir" [tamano]="15" />
         Cerrar sesión
       </button>
     </div>
@@ -121,9 +120,7 @@
 
   <!-- ===================== CONTENIDO ===================== -->
   <div class="ml-60 flex min-h-screen flex-1 flex-col">
-    <header
-      class="sticky top-0 z-20 flex items-center gap-5 border-b border-borde bg-fondo/80 px-6 py-2.5 backdrop-blur"
-    >
+    <header class="glass-topbar sticky top-0 z-20 flex items-center gap-5 border-b px-6 py-2.5">
       <div class="min-w-0 grow">
         <p class="font-mono text-[9px] uppercase tracking-[0.28em] text-slate-600">
           Consola operativa
@@ -134,7 +131,8 @@
       </div>
 
       <span class="chip" [class]="claseSesion()" title="Tiempo restante de la sesión (RF-SES-002)">
-        ⏱ {{ cuentaRegresiva() }}
+        <rw-icono nombre="temporizador" [tamano]="14" />
+        {{ cuentaRegresiva() }}
       </span>
 
       <rw-campana />
@@ -177,30 +175,46 @@
         [disabled]="session.extendiendo()"
         (click)="session.extender()"
       >
+        <rw-icono nombre="recargar" [tamano]="16" />
         {{ session.extendiendo() ? 'Extendiendo…' : 'Extender sesión' }}
       </button>
-      <button class="btn-secundario" (click)="auth.cerrarSesion()">Salir</button>
+      <button class="btn-secundario" (click)="auth.cerrarSesion()">
+        <rw-icono nombre="salir" [tamano]="16" />
+        Salir
+      </button>
     </div>
   </div>
 }
 
 <!-- ===================== TOASTS ===================== -->
-<div class="fixed right-6 top-16 z-50 flex w-96 flex-col gap-2">
+<div class="toast-stack" aria-live="polite" aria-atomic="false">
   @for (t of toast.toasts(); track t.id) {
     <div
-      class="panel flex items-start gap-3 p-4 text-sm"
-      [class]="t.tipo === 'ok' ? 'border-ok/50' : t.tipo === 'error' ? 'border-peligro/50' : ''"
+      class="toast-card"
+      [class.toast-card--ok]="t.tipo === 'ok'"
+      [class.toast-card--error]="t.tipo === 'error'"
+      role="alert"
     >
       <span
-        class="mt-0.5 font-mono text-xs"
+        class="toast-icon"
         [class.text-ok]="t.tipo === 'ok'"
         [class.text-peligro]="t.tipo === 'error'"
         [class.text-neon]="t.tipo === 'info'"
       >
-        {{ t.tipo === 'ok' ? '✓' : t.tipo === 'error' ? '✕' : 'ℹ' }}
+        <rw-icono
+          [nombre]="t.tipo === 'ok' ? 'correcto' : t.tipo === 'error' ? 'alerta' : 'informacion'"
+          [tamano]="18"
+        />
       </span>
-      <p class="grow text-slate-200">{{ t.texto }}</p>
-      <button class="text-slate-500 hover:text-slate-200" (click)="toast.cerrar(t.id)">✕</button>
+      <p class="toast-text">{{ t.texto }}</p>
+      <button
+        class="toast-close"
+        type="button"
+        aria-label="Cerrar notificación"
+        (click)="toast.cerrar(t.id)"
+      >
+        <rw-icono nombre="cerrar" [tamano]="15" />
+      </button>
     </div>
   }
 </div>

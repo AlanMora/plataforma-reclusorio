@@ -9,7 +9,7 @@
     <span class="truncate" [class.text-slate-600]="!valor()">{{
       etiquetaSeleccionada() || placeholder()
     }}</span>
-    <span class="shrink-0 text-[9px] text-slate-500">▼</span>
+    <rw-icono class="text-slate-500" nombre="seleccionar" [tamano]="15" />
   </button>
 
   @if (abierto()) {

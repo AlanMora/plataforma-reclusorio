@@ -1,14 +1,24 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { PermisoDirective } from '../../core/permiso.directive';
 import { PaginadorComponent } from '../../shared/paginador.component';
+import { ModalFormulario } from '../../shared/modal-formulario/modal-formulario';
 import { ModuloPermisos, PermisosMatrizComponent } from './permisos-matriz.component';
 import { Paginado } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
+import { presentarErrorFormulario, validarFormulario } from '../../core/validacion-formulario';
+import { IconoComponent } from '../../shared/icono.component';
 
 /** Usuario de acceso tal como lo devuelve auth-service (sin hash). */
 interface UsuarioAcceso {
@@ -34,7 +44,15 @@ interface UsuarioAcceso {
 @Component({
   selector: 'rw-usuarios',
   standalone: true,
-  imports: [DatePipe, FormsModule, PermisoDirective, PaginadorComponent, PermisosMatrizComponent],
+  imports: [
+    DatePipe,
+    FormsModule,
+    PermisoDirective,
+    PaginadorComponent,
+    PermisosMatrizComponent,
+    ModalFormulario,
+    IconoComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './usuarios.component.html',
 })
@@ -54,6 +72,7 @@ export class UsuariosComponent implements OnInit {
   readonly catalogo = signal<ModuloPermisos[]>([]);
   readonly cargando = signal(false);
   readonly error = signal<string | null>(null);
+  readonly errorForm = signal<string | null>(null);
   readonly guardando = signal(false);
 
   /** Panel expandido por usuario ('permisos' | 'password') y selección. */
@@ -62,6 +81,12 @@ export class UsuariosComponent implements OnInit {
 
   readonly mostrarForm = signal(false);
   readonly seleccionAlta = signal<Set<string>>(new Set());
+  readonly usuarioExpandido = computed(() => {
+    const expandido = this.expandido();
+    return expandido
+      ? (this.pagina().items.find((usuario) => usuario.id === expandido.id) ?? null)
+      : null;
+  });
   forma = { email: '', password: '' };
   passwordNueva = '';
   texto = '';
@@ -78,6 +103,19 @@ export class UsuariosComponent implements OnInit {
       .catch((err) => this.error.set(mensajeDe(err)));
   }
 
+  get hayFiltros(): boolean {
+    return Boolean(this.texto.trim());
+  }
+
+  limpiarFiltros(): void {
+    this.texto = '';
+    void this.cargar(1);
+  }
+
+  readonly relleno = computed(() =>
+    Array.from({ length: Math.max(0, 10 - this.pagina().items.length) }),
+  );
+
   irAPagina(pagina: number): void {
     void this.cargar(pagina);
   }
@@ -92,6 +130,7 @@ export class UsuariosComponent implements OnInit {
       this.expandido.set(null);
       return;
     }
+    this.mostrarForm.set(false);
     this.expandido.set({ id: usuario.id, seccion });
     this.passwordNueva = '';
     if (seccion === 'permisos') {
@@ -103,8 +142,33 @@ export class UsuariosComponent implements OnInit {
     }
   }
 
-  async crear(): Promise<void> {
+  abrirAlta(): void {
+    this.expandido.set(null);
+    this.forma = { email: '', password: '' };
+    this.seleccionAlta.set(new Set());
+    this.mostrarForm.set(true);
+  }
+
+  cerrarAlta(): void {
+    this.mostrarForm.set(false);
+    this.forma = { email: '', password: '' };
+    this.seleccionAlta.set(new Set());
+  }
+
+  cerrarEdicion(): void {
+    this.expandido.set(null);
+    this.passwordNueva = '';
+  }
+
+  async crear(formulario: NgForm, evento: SubmitEvent): Promise<void> {
+    const errorValidacion = validarFormulario(formulario, evento);
+    if (errorValidacion) {
+      this.errorForm.set(null);
+      this.toast.error(errorValidacion);
+      return;
+    }
     this.guardando.set(true);
+    this.errorForm.set(null);
     try {
       await this.api.post('/api/v1/users', {
         email: this.forma.email.trim(),
@@ -112,12 +176,10 @@ export class UsuariosComponent implements OnInit {
         permissions: [...this.seleccionAlta()],
       });
       this.toast.ok('Usuario creado.');
-      this.mostrarForm.set(false);
-      this.forma = { email: '', password: '' };
-      this.seleccionAlta.set(new Set());
+      this.cerrarAlta();
       await this.cargar(this.pagina().page);
     } catch (err) {
-      this.toast.error(mensajeDe(err));
+      this.toast.error(presentarErrorFormulario(formulario, evento, err));
     } finally {
       this.guardando.set(false);
     }
@@ -148,8 +210,19 @@ export class UsuariosComponent implements OnInit {
     }
   }
 
-  async restablecerPassword(usuario: UsuarioAcceso): Promise<void> {
+  async restablecerPassword(
+    usuario: UsuarioAcceso,
+    formulario: NgForm,
+    evento: SubmitEvent,
+  ): Promise<void> {
+    const errorValidacion = validarFormulario(formulario, evento);
+    if (errorValidacion) {
+      this.errorForm.set(null);
+      this.toast.error(errorValidacion);
+      return;
+    }
     this.guardando.set(true);
+    this.errorForm.set(null);
     try {
       await this.api.patch(`/api/v1/users/${usuario.id}/password`, {
         password: this.passwordNueva,
@@ -158,7 +231,7 @@ export class UsuariosComponent implements OnInit {
       this.expandido.set(null);
       this.passwordNueva = '';
     } catch (err) {
-      this.toast.error(mensajeDe(err));
+      this.toast.error(presentarErrorFormulario(formulario, evento, err));
     } finally {
       this.guardando.set(false);
     }

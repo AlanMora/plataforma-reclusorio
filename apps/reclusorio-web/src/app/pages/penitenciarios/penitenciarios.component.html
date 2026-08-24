@@ -16,6 +16,9 @@
       @if (sinUbicacion().length > 0) {
         <span class="chip-alerta">{{ sinUbicacion().length }} sin ubicación</span>
       }
+      @if (fueraDeJalisco().length > 0) {
+        <span class="chip-alerta">{{ fueraDeJalisco().length }} fuera de Jalisco</span>
+      }
     </div>
   </div>
 
@@ -25,89 +28,24 @@
 
   <!-- Mapa a todo lo ancho con el listado y la ficha flotando encima -->
   <div class="panel relative overflow-hidden p-0">
-    <div #contenedor class="mapa-bn h-[78vh] w-full"></div>
-
-    <!-- Letreros de las capas activadas por el asistente -->
-    @if (capaIncidencias() !== null || capaTraslados() !== null) {
+    <div
+      class="mapa-mapbox mapa-penitenciarios relative h-[78vh] w-full"
+      [class.mapa-intro-activa]="introduccionMapa()"
+    >
+      <div #contenedor class="absolute inset-0"></div>
       <div
-        class="absolute left-1/2 top-4 z-[1000] flex -translate-x-1/2 items-center gap-3 rounded-full border border-borde bg-panel/95 px-4 py-1.5 shadow-xl shadow-black/50 backdrop-blur"
+        class="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full border border-cyan-200/15 bg-slate-950/70 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.18em] text-cyan-100/70 backdrop-blur-md"
       >
-        @if (capaIncidencias() !== null) {
-          <span class="flex items-center gap-2">
-            <span class="h-2 w-2 rounded-full bg-peligro"></span>
-            <span class="text-xs text-slate-300">Incidencias ({{ etiquetaCapa() }})</span>
-          </span>
-        }
-        @if (capaTraslados() !== null) {
-          <span class="flex items-center gap-2">
-            <span class="h-0.5 w-4 rounded bg-neon-2"></span>
-            <span class="text-xs text-slate-300">Traslados ({{ etiquetaTraslados() }})</span>
-          </span>
+        <span
+          class="size-1.5 animate-pulse rounded-full bg-cyan-300 shadow-[0_0_9px_#67e8f9]"
+        ></span>
+        @if (introduccionMapa()) {
+          <rw-icono nombre="localizar" [tamano]="13" />
+          Enfocando Jalisco
+        } @else {
+          Mapbox · Red penitenciaria de Jalisco
         }
       </div>
-    }
-
-    <!-- Ficha de traslados de la capa activa (cuando no hay centro seleccionado) -->
-    @if (capaTraslados(); as traslados) {
-      @if (!detalle()) {
-        <div class="absolute bottom-4 right-4 z-[1000] w-96 max-w-[calc(100%-2rem)]">
-          <div
-            class="flex max-h-[58vh] flex-col overflow-hidden rounded-xl border border-borde bg-panel/95 shadow-2xl shadow-black/60 backdrop-blur"
-          >
-            <div class="flex items-center gap-2 border-b border-borde px-4 py-3">
-              <div class="min-w-0 grow">
-                <p class="etiqueta">Traslados ({{ etiquetaTraslados() }})</p>
-                <p class="text-xs text-slate-500">
-                  {{ traslados.length }} registro(s) — toca uno para trazarlo y oír el detalle
-                </p>
-              </div>
-              <button
-                class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-borde text-xs text-slate-400 hover:border-neon/40 hover:text-neon"
-                type="button"
-                title="Quitar capa de traslados"
-                (click)="limpiarTraslados()"
-              >
-                ✕
-              </button>
-            </div>
-            <div class="grow divide-y divide-borde/60 overflow-y-auto">
-              @for (t of traslados; track t.idTraslado) {
-                <button
-                  [class]="
-                    'block w-full px-4 py-3 text-left transition-colors hover:bg-neon/5' +
-                    (trasladoSeleccionado() === t.idTraslado ? ' bg-neon/10' : '')
-                  "
-                  type="button"
-                  (click)="seleccionarTraslado(t.idTraslado)"
-                >
-                  <div class="flex items-baseline justify-between gap-2">
-                    <p class="truncate text-sm font-medium text-slate-100">
-                      {{ t.nombrePersona }}
-                    </p>
-                    <span class="shrink-0 font-mono text-[10px] text-slate-500">
-                      {{ t.fecha | date: 'dd/MM/yy HH:mm' }}
-                    </span>
-                  </div>
-                  <p class="mt-0.5 truncate text-[11px] text-slate-400">
-                    {{ nombreCentro(t.idCentroOrigen) }} → {{ nombreDestino(t.idDestinoTraslado) }}
-                  </p>
-                  <div class="mt-1 flex flex-wrap gap-1.5">
-                    <span class="chip-neon">{{ nombreTipoTraslado(t.idTipoTraslado) }}</span>
-                    <span class="chip-alerta">{{
-                      nombreEstatusTraslado(t.idEstatusTraslado)
-                    }}</span>
-                  </div>
-                </button>
-              }
-            </div>
-          </div>
-        </div>
-      }
-    }
-
-    <!-- Asistente de voz del mapa (P11) -->
-    <div class="absolute bottom-4 left-4 z-[1000]">
-      <rw-asistente-mapa (comando)="ejecutarComando($event)" />
     </div>
 
     <!-- Listado flotante de centros -->
@@ -119,6 +57,7 @@
           <div class="flex items-center gap-2 border-b border-borde px-3 py-2.5">
             <p class="etiqueta grow">Centros ({{ centros().length }})</p>
             <button class="btn-secundario btn-mini" type="button" (click)="verTodos()">
+              <rw-icono nombre="localizar" [tamano]="14" />
               Ver todos
             </button>
             <button
@@ -127,7 +66,7 @@
               title="Ocultar listado"
               (click)="panelAbierto.set(false)"
             >
-              ─
+              <rw-icono nombre="menos" [tamano]="14" />
             </button>
           </div>
           <div class="grow space-y-0.5 overflow-y-auto p-2">
@@ -141,11 +80,14 @@
                 type="button"
                 (click)="enfocar(c)"
               >
-                <span class="w-4 shrink-0 text-center text-neon/70">📍</span>
+                <rw-icono class="w-4 text-neon/70" nombre="mapa" [tamano]="15" />
                 <span class="min-w-0 grow">
                   <span class="block truncate text-xs">{{ c.nombre }}</span>
-                  <span class="block font-mono text-[9px] text-slate-600">
-                    {{ c.latitud }}, {{ c.longitud }}
+                  <span
+                    class="block truncate font-mono text-[9px] text-slate-600"
+                    [title]="c.latitud + ', ' + c.longitud"
+                  >
+                    {{ c.latitud | number: '1.4-5' }}, {{ c.longitud | number: '1.4-5' }}
                   </span>
                 </span>
                 @if (poblacion() !== null && conteo(c.id) > 0) {
@@ -161,7 +103,16 @@
               <p class="etiqueta px-2 pb-1 pt-3">Sin ubicación registrada</p>
               @for (c of sinUbicacion(); track c.id) {
                 <div class="nav-item w-full cursor-default opacity-60">
-                  <span class="w-4 shrink-0 text-center text-slate-600">◌</span>
+                  <rw-icono class="w-4 text-slate-600" nombre="mapa" [tamano]="14" />
+                  <span class="block min-w-0 truncate text-xs">{{ c.nombre }}</span>
+                </div>
+              }
+            }
+            @if (fueraDeJalisco().length > 0) {
+              <p class="etiqueta px-2 pb-1 pt-3">Coordenadas fuera de Jalisco</p>
+              @for (c of fueraDeJalisco(); track c.id) {
+                <div class="nav-item w-full cursor-default opacity-60">
+                  <rw-icono class="w-4 text-amber-400" nombre="alerta" [tamano]="14" />
                   <span class="block min-w-0 truncate text-xs">{{ c.nombre }}</span>
                 </div>
               }
@@ -175,7 +126,7 @@
           title="Mostrar listado de centros"
           (click)="panelAbierto.set(true)"
         >
-          <span class="font-mono text-xs">≡</span>
+          <rw-icono nombre="menu" [tamano]="16" />
           Centros ({{ centros().length }})
         </button>
       }
@@ -200,7 +151,7 @@
               title="Cerrar ficha"
               (click)="seleccionado.set(null)"
             >
-              ✕
+              <rw-icono nombre="cerrar" [tamano]="14" />
             </button>
           </div>
 

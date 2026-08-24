@@ -13,7 +13,13 @@
         <span class="text-sm text-slate-500">minutos restantes de 30 (renovables)</span>
       </div>
       <p class="font-mono text-xs text-slate-600">sesión {{ auth.sid() || '—' }}</p>
-      <button class="btn-primario" type="button" [disabled]="session.extendiendo()" (click)="session.extender()">
+      <button
+        class="btn-primario"
+        type="button"
+        [disabled]="session.extendiendo()"
+        (click)="session.extender()"
+      >
+        <rw-icono nombre="recargar" [tamano]="16" />
         {{ session.extendiendo() ? 'Extendiendo…' : 'Extender sesión 30 min' }}
       </button>
 
@@ -30,26 +36,58 @@
     <!-- Cambio de contraseña -->
     <div class="panel space-y-4 p-6">
       <p class="etiqueta">Cambio de contraseña (RF-CUE-002)</p>
-      <form class="space-y-3" (ngSubmit)="cambiarPassword()">
+      <form
+        #formularioPassword="ngForm"
+        class="space-y-3"
+        (ngSubmit)="cambiarPassword(formularioPassword, $event)"
+      >
         <div>
           <label class="campo-etiqueta obligatorio" for="passwordActual">Contraseña actual</label>
-          <input class="campo" id="passwordActual" name="currentPassword" type="password" required autocomplete="current-password" [(ngModel)]="passwords.currentPassword" />
+          <input
+            class="campo"
+            id="passwordActual"
+            name="currentPassword"
+            type="password"
+            required
+            autocomplete="current-password"
+            [(ngModel)]="passwords.currentPassword"
+          />
         </div>
         <div>
-          <label class="campo-etiqueta obligatorio" for="passwordNueva">Nueva contraseña (mínimo 12)</label>
-          <input class="campo" id="passwordNueva" name="newPassword" type="password" minlength="12" required autocomplete="new-password" [(ngModel)]="passwords.newPassword" />
+          <label class="campo-etiqueta obligatorio" for="passwordNueva"
+            >Nueva contraseña (mínimo 12)</label
+          >
+          <input
+            class="campo"
+            id="passwordNueva"
+            name="newPassword"
+            type="password"
+            minlength="12"
+            required
+            autocomplete="new-password"
+            [(ngModel)]="passwords.newPassword"
+          />
         </div>
         <div>
-          <label class="campo-etiqueta obligatorio" for="passwordConfirmacion">Confirmar nueva contraseña</label>
-          <input class="campo" id="passwordConfirmacion" name="confirmPassword" type="password" minlength="12" required autocomplete="new-password" [(ngModel)]="passwords.confirmPassword" />
+          <label class="campo-etiqueta obligatorio" for="passwordConfirmacion"
+            >Confirmar nueva contraseña</label
+          >
+          <input
+            class="campo"
+            id="passwordConfirmacion"
+            name="confirmPassword"
+            type="password"
+            minlength="12"
+            required
+            autocomplete="new-password"
+            [(ngModel)]="passwords.confirmPassword"
+          />
         </div>
-        @if (errorPassword()) {
-          <p class="alerta-error">{{ errorPassword() }}</p>
-        }
         <p class="text-[11px] text-slate-600">
           Al cambiarla se revocan TODAS tus sesiones y deberás iniciar de nuevo.
         </p>
         <button class="btn-primario w-full justify-center" type="submit" [disabled]="cambiando()">
+          <rw-icono nombre="lock" [tamano]="16" />
           {{ cambiando() ? 'Aplicando…' : 'Cambiar contraseña' }}
         </button>
       </form>
@@ -60,11 +98,20 @@
   <div class="panel space-y-3 p-6">
     <div class="flex items-center justify-between">
       <p class="etiqueta">Sesiones activas (auditoría con IP, DP-003)</p>
-      <button class="btn-peligro btn-mini" type="button" (click)="cerrarTodas()">Cerrar todas</button>
+      <button class="btn-peligro btn-mini" type="button" (click)="cerrarTodas()">
+        <rw-icono nombre="salir" [tamano]="14" />
+        Cerrar todas
+      </button>
     </div>
     <table class="tabla">
       <thead>
-        <tr><th>Sesión</th><th>IP</th><th>Agente</th><th>Inicio</th><th></th></tr>
+        <tr>
+          <th>Sesión</th>
+          <th>IP</th>
+          <th>Agente</th>
+          <th>Inicio</th>
+          <th></th>
+        </tr>
       </thead>
       <tbody>
         @for (s of sesiones(); track s.sessionId) {
@@ -76,7 +123,9 @@
               }
             </td>
             <td class="font-mono text-xs">{{ s.ipAddress || '—' }}</td>
-            <td class="max-w-[280px] truncate text-xs" [title]="s.userAgent || ''">{{ s.userAgent || '—' }}</td>
+            <td class="max-w-[280px] truncate text-xs" [title]="s.userAgent || ''">
+              {{ s.userAgent || '—' }}
+            </td>
             <td class="font-mono text-xs">{{ s.createdAt | date: 'dd/MM/yy HH:mm' }}</td>
             <td></td>
           </tr>
@@ -95,7 +144,9 @@
         </div>
         <div>
           <p class="etiqueta">Estado</p>
-          <span [class]="u.isActive ? 'chip-ok' : 'chip-peligro'">{{ u.isActive ? 'activa' : 'inactiva' }}</span>
+          <span [class]="u.isActive ? 'chip-ok' : 'chip-peligro'">{{
+            u.isActive ? 'activa' : 'inactiva'
+          }}</span>
         </div>
         <div>
           <p class="etiqueta">Roles</p>

@@ -10,7 +10,14 @@
   </div>
   <div>
     <label class="campo-etiqueta obligatorio" for="domCalle">Calle</label>
-    <input class="campo" id="domCalle" name="calle" maxlength="150" [(ngModel)]="domicilio.calle" />
+    <input
+      class="campo"
+      id="domCalle"
+      name="calle"
+      maxlength="150"
+      required
+      [(ngModel)]="domicilio.calle"
+    />
   </div>
   <div>
     <label class="campo-etiqueta" for="domNumExt">No. exterior</label>

@@ -5,6 +5,7 @@ import { NotificacionesService } from '../core/notificaciones.service';
 import { ToastService } from '../core/toast.service';
 import { Notificacion, Paginado } from '../core/models';
 import { mensajeDe } from '../core/problem';
+import { IconoComponent } from '../shared/icono.component';
 
 /**
  * Campana del navbar (RF-NOT-001..004 + tiempo real): contador flotante de
@@ -15,7 +16,7 @@ import { mensajeDe } from '../core/problem';
 @Component({
   selector: 'rw-campana',
   standalone: true,
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, IconoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="relative">
@@ -26,7 +27,7 @@ import { mensajeDe } from '../core/problem';
         [attr.aria-expanded]="abierto()"
         (click)="alternar()"
       >
-        ◎
+        <rw-icono nombre="notificaciones" [tamano]="20" />
         @if (notificaciones.noLeidas() > 0) {
           <!-- Contador flotante de no leídas -->
           <span
@@ -42,7 +43,7 @@ import { mensajeDe } from '../core/problem';
         <div class="fixed inset-0 z-30" (click)="abierto.set(false)"></div>
 
         <div
-          class="absolute right-0 top-9 z-40 w-96 overflow-hidden rounded-xl border border-borde bg-panel shadow-[0_18px_60px_rgba(0,0,0,0.6)] backdrop-blur"
+          class="glass-popover absolute right-0 top-9 z-40 w-96 overflow-hidden rounded-2xl"
         >
           <div class="flex items-center justify-between border-b border-borde px-4 py-2.5">
             <p class="etiqueta">Notificaciones</p>
@@ -80,6 +81,7 @@ import { mensajeDe } from '../core/problem';
                   type="button"
                   (click)="ver(n)"
                 >
+                  <rw-icono nombre="revisar" [tamano]="14" />
                   Ver
                 </button>
               </div>
@@ -94,7 +96,7 @@ import { mensajeDe } from '../core/problem';
                 [disabled]="pagina().page <= 1"
                 (click)="cargar(pagina().page - 1)"
               >
-                ‹
+                <rw-icono nombre="anterior" [tamano]="14" />
               </button>
               <span class="font-mono text-[10px] text-slate-500">
                 {{ pagina().page }} / {{ pagina().totalPages || 1 }}
@@ -105,7 +107,7 @@ import { mensajeDe } from '../core/problem';
                 [disabled]="pagina().page >= pagina().totalPages"
                 (click)="cargar(pagina().page + 1)"
               >
-                ›
+                <rw-icono nombre="siguiente" [tamano]="14" />
               </button>
             </div>
             <a
@@ -113,7 +115,7 @@ import { mensajeDe } from '../core/problem';
               routerLink="/notificaciones"
               (click)="abierto.set(false)"
             >
-              Mostrar todas →
+              Mostrar todas <rw-icono nombre="flecha_derecha" [tamano]="13" />
             </a>
           </div>
         </div>

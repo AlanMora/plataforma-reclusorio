@@ -1,14 +1,15 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, isDevMode, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../core/auth.service';
 import { mensajeDe } from '../core/problem';
+import { IconoComponent } from '../shared/icono.component';
 
 /** RF-UI-001/RF-AUT-*: acceso con correo y contraseña; error genérico. */
 @Component({
   selector: 'rw-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, IconoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './login.component.html',
 })
@@ -16,8 +17,8 @@ export class LoginComponent {
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  email = '';
-  password = '';
+  email = isDevMode() ? 'admin@reclusorio.mx' : '';
+  password = isDevMode() ? 'Reclusorio#Dev2026' : '';
   readonly enviando = signal(false);
   readonly error = signal<string | null>(null);
 

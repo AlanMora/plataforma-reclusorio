@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { normalizarUbicacion } from '../core/ubicaciones-dummy';
+import { IconoComponent } from './icono.component';
 
 /** Opción con valor persistible (p. ej. UUID) y etiqueta visible. */
 export interface OpcionSelect {
@@ -34,6 +35,7 @@ export function aOpciones(valores: Array<{ id: string; nombre: string }>): Opcio
 @Component({
   selector: 'rw-select-buscable',
   standalone: true,
+  imports: [IconoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './select-buscable.component.html',
   providers: [

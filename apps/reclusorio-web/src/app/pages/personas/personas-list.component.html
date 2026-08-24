@@ -3,87 +3,293 @@
     <div>
       <p class="etiqueta">Módulo</p>
       <h2 class="text-2xl font-bold text-slate-100">Personas</h2>
+      <p class="mt-1 text-sm text-slate-500">
+        Consulta y gestión del padrón de personas registradas en el sistema.
+      </p>
     </div>
-    <a *rwPermiso="'personas:crear'" class="btn-primario" routerLink="/personas/nueva"
-      >+ Nueva persona</a
-    >
+    <button *rwPermiso="'personas:crear'" class="btn-primario" type="button" (click)="mostrarAlta.set(true)">
+      <rw-icono nombre="agregar" [tamano]="16" />
+      Nueva persona
+    </button>
   </div>
 
-  <form class="panel flex flex-wrap items-end gap-3 p-4" (ngSubmit)="buscar()">
-    <div class="grow">
-      <label class="campo-etiqueta" for="buscar">Nombre, apellidos o alias</label>
-      <input
-        class="campo"
-        id="buscar"
-        name="buscar"
-        maxlength="150"
-        [(ngModel)]="textoBusqueda"
-        placeholder="Texto libre"
-      />
+  @if (mostrarAlta()) {
+    <rw-modal-formulario
+      titulo="Registrar persona"
+      descripcion="Da de alta a la persona y, si lo necesitas, captura su primer domicilio."
+      [bloquearCierre]="formAltaPersona.guardando()"
+      (cerrar)="mostrarAlta.set(false)"
+    >
+      <div modal-contenido>
+        <rw-persona-form
+          #formAltaPersona
+          modo="crear"
+          idFormulario="formulario-alta-persona"
+          [mostrarAcciones]="false"
+          (guardada)="alGuardar($event)"
+        />
+      </div>
+      <div modal-acciones class="modal-footer-actions">
+        <button
+          class="btn-secundario"
+          type="button"
+          [disabled]="formAltaPersona.guardando()"
+          (click)="mostrarAlta.set(false)"
+        >
+          Cancelar
+        </button>
+        <button
+          class="btn-primario"
+          type="submit"
+          form="formulario-alta-persona"
+          [disabled]="formAltaPersona.guardando()"
+        >
+          <rw-icono nombre="guardar" [tamano]="16" />
+          {{ formAltaPersona.guardando() ? 'Guardando…' : 'Registrar persona' }}
+        </button>
+      </div>
+    </rw-modal-formulario>
+  }
+
+  <!-- Panel de búsqueda y filtros -->
+  <form class="panel p-4" (ngSubmit)="buscar()">
+    <div class="flex flex-wrap items-end gap-3">
+      <div class="grow min-w-[220px]">
+        <label class="campo-etiqueta" for="buscar">Nombre, apellidos o alias</label>
+        <div class="relative">
+          <input
+            class="campo pr-8"
+            id="buscar"
+            name="buscar"
+            maxlength="150"
+            [(ngModel)]="textoBusqueda"
+            placeholder="Buscar por nombre o alias..."
+          />
+          @if (textoBusqueda) {
+            <button
+              type="button"
+              (click)="textoBusqueda = ''; buscar()"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 rounded cursor-pointer transition-colors"
+              title="Borrar texto"
+            >
+              <rw-icono nombre="cerrar" [tamano]="13" />
+            </button>
+          }
+        </div>
+      </div>
+      <div class="w-full sm:w-60">
+        <label class="campo-etiqueta" for="curp">CURP exacta</label>
+        <div class="relative">
+          <input
+            class="campo font-mono uppercase pr-8"
+            id="curp"
+            name="curp"
+            maxlength="18"
+            [(ngModel)]="curpBusqueda"
+            placeholder="18 caracteres"
+          />
+          @if (curpBusqueda) {
+            <button
+              type="button"
+              (click)="curpBusqueda = ''; buscar()"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 rounded cursor-pointer transition-colors"
+              title="Borrar CURP"
+            >
+              <rw-icono nombre="cerrar" [tamano]="13" />
+            </button>
+          }
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button class="btn-primario" type="submit" [disabled]="cargando()">
+          <rw-icono [nombre]="cargando() ? 'cargando' : 'buscar'" [tamano]="16" />
+          <span>Buscar</span>
+        </button>
+        @if (hayFiltros) {
+          <button
+            class="btn-secundario"
+            type="button"
+            (click)="limpiarFiltros()"
+            title="Limpiar todos los filtros"
+          >
+            <rw-icono nombre="cerrar" [tamano]="14" />
+            <span class="hidden sm:inline">Limpiar</span>
+          </button>
+        }
+      </div>
     </div>
-    <div>
-      <label class="campo-etiqueta" for="curp">CURP exacta</label>
-      <input
-        class="campo font-mono uppercase"
-        id="curp"
-        name="curp"
-        maxlength="18"
-        [(ngModel)]="curpBusqueda"
-      />
-    </div>
-    <button class="btn-primario" type="submit" [disabled]="cargando()">Buscar</button>
   </form>
 
   @if (error()) {
     <p class="alerta-error">{{ error() }}</p>
   }
 
-  <div class="panel overflow-x-auto p-2">
-    <table class="tabla">
-      <thead>
-        <tr>
-          <th>Nombre completo</th>
-          <th>Alias</th>
-          <th>CURP</th>
-          <th>Edad</th>
-          <th>Teléfono</th>
-        </tr>
-      </thead>
-      <tbody>
-        @if (cargando()) {
-          <tr>
-            <td colspan="5" class="py-8 text-center text-slate-500">Consultando el padrón…</td>
-          </tr>
-        } @else if (pagina().items.length === 0) {
-          <tr>
-            <td colspan="5" class="py-8 text-center text-slate-500">
-              Sin resultados con los criterios dados.
-            </td>
-          </tr>
-        } @else {
-          @for (p of pagina().items; track p.idPersona) {
-            <tr class="cursor-pointer" [routerLink]="['/personas', p.idPersona]">
-              <td class="font-medium text-slate-100">{{ nombreDe(p) }}</td>
-              <td>{{ p.alias || '—' }}</td>
-              <td class="font-mono text-xs">{{ p.curp || '—' }}</td>
-              <td class="font-mono">{{ p.edad ?? '—' }}</td>
-              <td class="font-mono text-xs">{{ p.numeroTelefono || '—' }}</td>
-            </tr>
-          }
+  <!-- Contenedor principal de la tabla -->
+  <div class="panel overflow-hidden">
+    <!-- Toolbar superior con estado y acciones -->
+    <div class="tabla-toolbar">
+      <div class="tabla-toolbar-info">
+        <span class="tabla-toolbar-dot"></span>
+        <h3>Padrón Maestro de Personas</h3>
+        <span class="tabla-toolbar-count">{{ pagina().total }}</span>
+      </div>
+      <div class="flex items-center gap-2">
+        @if (hayFiltros) {
+          <span class="hidden md:inline-flex items-center gap-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/20 px-2.5 py-0.5 font-mono text-[10px] text-cyan-300">
+            <span class="h-1.5 w-1.5 rounded-full bg-cyan-400"></span>
+            Filtros activos
+          </span>
         }
-        @if (pagina().items.length > 0) {
-          @for (r of relleno(); track $index) {
-            <tr aria-hidden="true">
-              <td colspan="5" class="select-none border-b-0 text-transparent">·</td>
+        <button
+          class="btn-secundario btn-mini inline-flex items-center gap-1.5"
+          type="button"
+          (click)="buscar()"
+          [disabled]="cargando()"
+          title="Actualizar padrón"
+        >
+          <rw-icono [nombre]="cargando() ? 'cargando' : 'recargar'" [tamano]="12" />
+          <span class="hidden sm:inline">Actualizar</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="overflow-x-auto">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th class="pl-4">Persona / Expediente</th>
+            <th>CURP</th>
+            <th>Edad</th>
+            <th>Contacto</th>
+            <th>Fecha de Registro</th>
+            <th class="w-20 text-right pr-4"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (cargando()) {
+            <tr>
+              <td colspan="6" class="py-14 text-center text-slate-400">
+                <div class="flex items-center justify-center gap-2.5">
+                  <rw-icono nombre="cargando" [tamano]="20" class="text-cyan-400 animate-spin" />
+                  <span class="text-sm font-medium text-slate-300">Consultando padrón de personas…</span>
+                </div>
+              </td>
             </tr>
+          } @else if (pagina().items.length === 0) {
+            <tr>
+              <td colspan="6" class="py-14 text-center">
+                <div class="flex flex-col items-center gap-2 text-slate-500">
+                  <rw-icono nombre="buscar" [tamano]="28" class="opacity-40" />
+                  <p class="text-sm font-medium text-slate-400">No se encontraron personas registradas</p>
+                  @if (hayFiltros) {
+                    <button
+                      class="btn-secundario btn-mini mt-1"
+                      type="button"
+                      (click)="limpiarFiltros()"
+                    >
+                      Limpiar filtros de búsqueda
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (p of pagina().items; track p.idPersona) {
+              <tr
+                class="group cursor-pointer hover:bg-cyan-500/[0.05] transition-colors"
+                [routerLink]="['/personas', p.idPersona]"
+              >
+                <!-- Nombre e iniciales -->
+                <td class="pl-4">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-900/90 border border-white/10 text-cyan-300 font-mono text-xs font-bold group-hover:border-cyan-400/40 group-hover:bg-cyan-950/60 group-hover:shadow-[0_0_12px_rgba(34,211,238,0.18)] transition-all"
+                    >
+                      {{ (p.primerNombre?.[0] || 'P') + (p.apellidoPaterno?.[0] || '') }}
+                    </div>
+                    <div class="flex flex-col min-w-0">
+                      <span class="font-medium text-slate-100 group-hover:text-cyan-200 transition-colors truncate">
+                        {{ nombreDe(p) }}
+                      </span>
+                      @if (p.alias) {
+                        <span class="font-mono text-[11px] text-slate-400/90 truncate">
+                          alias <span class="text-cyan-400/90 italic">"{{ p.alias }}"</span>
+                        </span>
+                      }
+                    </div>
+                  </div>
+                </td>
+
+                <!-- CURP -->
+                <td>
+                  @if (p.curp) {
+                    <span
+                      class="inline-block font-mono text-xs text-slate-300 bg-slate-900/70 px-2 py-0.5 rounded border border-white/5"
+                    >
+                      {{ p.curp }}
+                    </span>
+                  } @else {
+                    <span class="text-xs text-slate-500 italic">Sin CURP</span>
+                  }
+                </td>
+
+                <!-- Edad -->
+                <td>
+                  @if (p.edad !== null && p.edad !== undefined) {
+                    <span class="text-xs font-medium text-slate-200">
+                      {{ p.edad }} <span class="text-slate-500 text-[11px]">años</span>
+                    </span>
+                  } @else {
+                    <span class="text-slate-500 text-xs">—</span>
+                  }
+                </td>
+
+                <!-- Teléfono -->
+                <td>
+                  <span class="font-mono text-xs text-slate-400">
+                    {{ p.numeroTelefono || '—' }}
+                  </span>
+                </td>
+
+                <!-- Fecha de Registro -->
+                <td>
+                  <span class="font-mono text-xs text-slate-400">
+                    {{ p.fechaRegistro | date: 'dd/MM/yyyy' }}
+                  </span>
+                </td>
+
+                <!-- Acción rápida -->
+                <td class="text-right pr-4" (click)="$event.stopPropagation()">
+                  <a
+                    [routerLink]="['/personas', p.idPersona]"
+                    class="btn-secundario btn-mini inline-flex items-center gap-1.5 opacity-80 group-hover:opacity-100 group-hover:border-cyan-400/40 group-hover:text-cyan-200 transition-all shadow-xs"
+                  >
+                    <span>Ver</span>
+                    <rw-icono nombre="flecha_derecha" [tamano]="12" />
+                  </a>
+                </td>
+              </tr>
+            }
+
+            @if (pagina().items.length > 0) {
+              @for (r of relleno(); track $index) {
+                <tr aria-hidden="true">
+                  <td colspan="6" class="select-none border-b-0 text-transparent py-2.5">·</td>
+                </tr>
+              }
+            }
           }
-        }
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginador integrado -->
     <rw-paginador
       [page]="pagina().page"
       [totalPages]="pagina().totalPages"
       [total]="pagina().total"
+      [limit]="pagina().limit"
       (cambiar)="irAPagina($event)"
     />
   </div>

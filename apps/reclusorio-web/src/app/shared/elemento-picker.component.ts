@@ -5,6 +5,7 @@ import { ToastService } from '../core/toast.service';
 import { PermisoDirective } from '../core/permiso.directive';
 import { Elemento } from '../core/models';
 import { mensajeDe } from '../core/problem';
+import { IconoComponent } from './icono.component';
 
 export function nombreElemento(e: Elemento): string {
   return [e.grado, e.primerNombre, e.apellidoPaterno, e.apellidoMaterno].filter(Boolean).join(' ');
@@ -20,7 +21,7 @@ export function nombreElemento(e: Elemento): string {
 @Component({
   selector: 'rw-elemento-picker',
   standalone: true,
-  imports: [FormsModule, PermisoDirective],
+  imports: [FormsModule, PermisoDirective, IconoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './elemento-picker.component.html',
 })
@@ -141,7 +142,7 @@ export class ElementoPickerComponent {
       this.toast.ok('Elemento registrado en el padrón.');
       this.elegir(creado);
     } catch (err) {
-      this.errorAlta.set(mensajeDe(err));
+      this.toast.error(mensajeDe(err));
     } finally {
       this.guardando.set(false);
     }

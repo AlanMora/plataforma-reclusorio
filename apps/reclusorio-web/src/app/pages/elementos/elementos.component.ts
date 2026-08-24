@@ -6,14 +6,17 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
 import { ToastService } from '../../core/toast.service';
 import { PermisoDirective } from '../../core/permiso.directive';
 import { PaginadorComponent } from '../../shared/paginador.component';
+import { ModalFormulario } from '../../shared/modal-formulario/modal-formulario';
 import { Elemento, Paginado } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
 import { nombreElemento } from '../../shared/elemento-picker.component';
+import { presentarErrorFormulario, validarFormulario } from '../../core/validacion-formulario';
+import { IconoComponent } from '../../shared/icono.component';
 
 /**
  * Padrón de elementos (RF-ELE-001..005 / RF-GEN-007): la BÚSQUEDA PREVIA es
@@ -23,7 +26,7 @@ import { nombreElemento } from '../../shared/elemento-picker.component';
 @Component({
   selector: 'rw-elementos',
   standalone: true,
-  imports: [FormsModule, PermisoDirective, PaginadorComponent],
+  imports: [FormsModule, PermisoDirective, PaginadorComponent, ModalFormulario, IconoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './elementos.component.html',
 })
@@ -80,7 +83,7 @@ export class ElementosComponent implements OnInit {
         }),
       );
       this.busquedaHecha.set(true);
-      this.mostrarAlta.set(false);
+      this.cancelarForm();
     } catch (err) {
       this.errorBusqueda.set(mensajeDe(err));
     } finally {
@@ -91,6 +94,7 @@ export class ElementosComponent implements OnInit {
   editar(e: Elemento): void {
     this.elementoEnEdicion.set(e);
     this.mostrarAlta.set(false);
+    this.errorForm.set(null);
     this.forma = {
       grado: e.grado ?? '',
       primerNombre: e.primerNombre ?? '',
@@ -99,6 +103,20 @@ export class ElementosComponent implements OnInit {
       numeroElemento: e.numeroElemento ?? '',
       adscripcion: e.adscripcion ?? '',
     };
+  }
+
+  abrirAlta(): void {
+    this.elementoEnEdicion.set(null);
+    this.errorForm.set(null);
+    this.forma = {
+      grado: '',
+      primerNombre: '',
+      apellidoPaterno: '',
+      apellidoMaterno: '',
+      numeroElemento: '',
+      adscripcion: '',
+    };
+    this.mostrarAlta.set(true);
   }
 
   cancelarForm(): void {
@@ -115,7 +133,13 @@ export class ElementosComponent implements OnInit {
     };
   }
 
-  async guardar(): Promise<void> {
+  async guardar(formulario: NgForm, evento: SubmitEvent): Promise<void> {
+    const errorValidacion = validarFormulario(formulario, evento);
+    if (errorValidacion) {
+      this.errorForm.set(null);
+      this.toast.error(errorValidacion);
+      return;
+    }
     this.guardando.set(true);
     this.errorForm.set(null);
     try {
@@ -132,7 +156,7 @@ export class ElementosComponent implements OnInit {
       this.coincidencias.set([]);
       await this.cargarPadron(1);
     } catch (err) {
-      this.errorForm.set(mensajeDe(err));
+      this.toast.error(presentarErrorFormulario(formulario, evento, err));
     } finally {
       this.guardando.set(false);
     }

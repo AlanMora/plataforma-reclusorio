@@ -1,16 +1,13 @@
-<div class="mx-auto max-w-5xl space-y-5">
+<div class="mx-auto max-w-6xl space-y-5">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
       <p class="etiqueta">Catálogos · {{ esFijo() ? 'fijos' : 'administrables' }}</p>
       <h2 class="text-2xl font-bold text-slate-100">{{ etiquetaActual() }}</h2>
     </div>
     @if (!esFijo()) {
-      <button
-        class="btn-primario btn-mini"
-        type="button"
-        (click)="mostrarForm.set(!mostrarForm())"
-      >
-        {{ mostrarForm() ? 'Cancelar' : '+ Agregar valor' }}
+      <button class="btn-primario btn-mini" type="button" (click)="abrirAlta()">
+        <rw-icono nombre="agregar" [tamano]="15" />
+        Agregar valor
       </button>
     } @else {
       <span class="chip-apagado">catálogo fijo · sin edición (RF-CAT-008)</span>
@@ -18,33 +15,61 @@
   </div>
 
   @if (mostrarForm() && !esFijo()) {
-    <form
-      class="panel flex flex-wrap items-end gap-3 p-4"
-      (ngSubmit)="crear()"
+    <rw-modal-formulario
+      titulo="Agregar valor"
+      [descripcion]="'Añade un nuevo valor a ' + etiquetaActual() + '.'"
+      [bloquearCierre]="guardando()"
+      (cerrar)="cerrarAlta()"
     >
-      <div class="grow">
-        <label class="campo-etiqueta obligatorio" for="nuevoNombre">Nuevo valor</label>
-        <input
-          class="campo"
-          id="nuevoNombre"
-          name="nombre"
-          maxlength="255"
-          required
-          [(ngModel)]="nuevo.nombre"
-        />
+      <form
+        #formularioCatalogo="ngForm"
+        id="formulario-alta-catalogo"
+        modal-contenido
+        class="grid gap-4 md:grid-cols-2"
+        (ngSubmit)="crear(formularioCatalogo, $event)"
+      >
+        <div>
+          <label class="campo-etiqueta obligatorio" for="nuevoNombre">Nuevo valor</label>
+          <input
+            class="campo"
+            id="nuevoNombre"
+            name="nombre"
+            maxlength="255"
+            required
+            [(ngModel)]="nuevo.nombre"
+          />
+        </div>
+        <div>
+          <label class="campo-etiqueta" for="nuevaDescripcion">Descripción</label>
+          <input
+            class="campo"
+            id="nuevaDescripcion"
+            name="descripcion"
+            maxlength="500"
+            [(ngModel)]="nuevo.descripcion"
+          />
+        </div>
+      </form>
+      <div modal-acciones class="modal-footer-actions">
+        <button
+          class="btn-secundario"
+          type="button"
+          [disabled]="guardando()"
+          (click)="cerrarAlta()"
+        >
+          Cancelar
+        </button>
+        <button
+          class="btn-primario"
+          type="submit"
+          form="formulario-alta-catalogo"
+          [disabled]="guardando()"
+        >
+          <rw-icono nombre="guardar" [tamano]="16" />
+          {{ guardando() ? 'Guardando…' : 'Agregar valor' }}
+        </button>
       </div>
-      <div class="grow">
-        <label class="campo-etiqueta" for="nuevaDescripcion">Descripción</label>
-        <input
-          class="campo"
-          id="nuevaDescripcion"
-          name="descripcion"
-          maxlength="500"
-          [(ngModel)]="nuevo.descripcion"
-        />
-      </div>
-      <button class="btn-primario" type="submit" [disabled]="guardando()">Agregar</button>
-    </form>
+    </rw-modal-formulario>
   }
 
   @if (!esFijo()) {
@@ -60,7 +85,10 @@
           placeholder="Texto libre"
         />
       </div>
-      <button class="btn-primario" type="submit" [disabled]="cargando()">Buscar</button>
+      <button class="btn-primario" type="submit" [disabled]="cargando()">
+        <rw-icono nombre="buscar" [tamano]="16" />
+        Buscar
+      </button>
     </form>
   }
 
@@ -101,118 +129,54 @@
         <tbody>
           @for (v of pagina().items; track v.id) {
             <tr>
-              @if (enEdicion() === v.id) {
-                <td>
-                  <input
-                    class="campo"
-                    name="nombreEdit"
-                    maxlength="255"
-                    [(ngModel)]="edicion.nombre"
-                  />
-                </td>
-                <td>
-                  <input
-                    class="campo"
-                    name="descripcionEdit"
-                    maxlength="500"
-                    [(ngModel)]="edicion.descripcion"
-                  />
-                </td>
-                <td></td>
+              <td class="text-slate-100">
+                {{ v.nombre }}
+                @if (esCentros() && v.latitud != null && v.longitud != null) {
+                  <span
+                    class="mt-1 flex items-center gap-1 font-mono text-[10px] text-slate-500"
+                  >
+                    <rw-icono nombre="mapa" [tamano]="12" />
+                    {{ v.latitud }}, {{ v.longitud }}
+                  </span>
+                } @else if (esCentros()) {
+                  <span
+                    class="mt-1 block font-mono text-[10px] uppercase tracking-widest text-alerta/70"
+                    >sin ubicación</span
+                  >
+                }
+              </td>
+              <td class="max-w-[280px] truncate" [title]="v.descripcion || ''">
+                {{ v.descripcion || '—' }}
+              </td>
+              <td>
+                <span [class]="v.activo ? 'chip-ok' : 'chip-apagado'">{{
+                  v.activo ? 'activo' : 'inactivo'
+                }}</span>
+              </td>
+              @if (!esFijo()) {
                 <td class="text-right">
                   <button
-                    class="btn-primario btn-mini"
+                    class="btn-secundario btn-mini"
                     type="button"
-                    [disabled]="guardando()"
-                    (click)="guardarCorreccion(v)"
+                    (click)="iniciarCorreccion(v)"
                   >
-                    Guardar
+                    <rw-icono nombre="editar" [tamano]="14" />
+                    Corregir
                   </button>
-                  <button
-                    class="btn-secundario btn-mini ml-2"
-                    type="button"
-                    (click)="enEdicion.set(null)"
-                  >
-                    Cancelar
-                  </button>
-                </td>
-              } @else {
-                <td class="text-slate-100">
-                  {{ v.nombre }}
-                  @if (esCentros() && v.latitud != null && v.longitud != null) {
-                    <span class="mt-1 block font-mono text-[10px] text-slate-500"
-                      >📍 {{ v.latitud }}, {{ v.longitud }}</span
-                    >
-                  } @else if (esCentros()) {
-                    <span
-                      class="mt-1 block font-mono text-[10px] uppercase tracking-widest text-alerta/70"
-                      >sin ubicación</span
-                    >
+                  @if (v.activo) {
+                    <button class="btn-peligro btn-mini ml-2" type="button" (click)="desactivar(v)">
+                      <rw-icono nombre="menos" [tamano]="14" />
+                      Desactivar
+                    </button>
+                  } @else {
+                    <button class="btn-primario btn-mini ml-2" type="button" (click)="reactivar(v)">
+                      <rw-icono nombre="recargar" [tamano]="14" />
+                      Reactivar
+                    </button>
                   }
                 </td>
-                <td class="max-w-[280px] truncate" [title]="v.descripcion || ''">
-                  {{ v.descripcion || '—' }}
-                </td>
-                <td>
-                  <span [class]="v.activo ? 'chip-ok' : 'chip-apagado'">{{
-                    v.activo ? 'activo' : 'inactivo'
-                  }}</span>
-                </td>
-                @if (!esFijo()) {
-                  <td class="text-right">
-                    <button
-                      class="btn-secundario btn-mini"
-                      type="button"
-                      (click)="iniciarCorreccion(v)"
-                    >
-                      Corregir
-                    </button>
-                    @if (v.activo) {
-                      <button
-                        class="btn-peligro btn-mini ml-2"
-                        type="button"
-                        (click)="desactivar(v)"
-                      >
-                        Desactivar
-                      </button>
-                    } @else {
-                      <button
-                        class="btn-primario btn-mini ml-2"
-                        type="button"
-                        (click)="reactivar(v)"
-                      >
-                        Reactivar
-                      </button>
-                    }
-                  </td>
-                }
               }
             </tr>
-            @if (enEdicion() === v.id && esCentros()) {
-              <tr>
-                <td colspan="4" class="!border-b-0 pb-4">
-                  <div class="rounded-lg border border-borde bg-panel-2/40 p-4">
-                    <p class="etiqueta mb-2">Ubicación del centro penitenciario</p>
-                    <rw-mapa-domicilio
-                      [lat]="edicion.latitud"
-                      [lng]="edicion.longitud"
-                      (domicilio)="alUbicarCentro($event)"
-                    />
-                    @if (edicion.latitud !== null && edicion.longitud !== null) {
-                      <p
-                        class="mt-2 font-mono text-[10px] uppercase tracking-widest text-slate-500"
-                      >
-                        Coordenadas a guardar: {{ edicion.latitud }}, {{ edicion.longitud }}
-                      </p>
-                    } @else {
-                      <p class="mt-2 text-[11px] text-slate-600">
-                        Busque la dirección o haga clic en el mapa para fijar la ubicación.
-                      </p>
-                    }
-                  </div>
-                </td>
-              </tr>
-            }
           }
         </tbody>
       </table>
@@ -226,4 +190,83 @@
       }
     }
   </div>
+
+  @if (valorEnEdicion(); as valor) {
+    <rw-modal-formulario
+      titulo="Corregir valor"
+      etiqueta="Edición de catálogo"
+      [descripcion]="'Actualiza “' + valor.nombre + '” sin cambiar su identificador.'"
+      [bloquearCierre]="guardando()"
+      (cerrar)="cerrarCorreccion()"
+    >
+      <form
+        id="formulario-correccion-catalogo"
+        modal-contenido
+        class="space-y-5"
+        (ngSubmit)="guardarCorreccion(valor)"
+      >
+        <div class="grid gap-4 md:grid-cols-2">
+          <div>
+            <label class="campo-etiqueta" for="nombreEdit">Nombre</label>
+            <input
+              class="campo"
+              id="nombreEdit"
+              name="nombreEdit"
+              maxlength="255"
+              [(ngModel)]="edicion.nombre"
+            />
+          </div>
+          <div>
+            <label class="campo-etiqueta" for="descripcionEdit">Descripción</label>
+            <input
+              class="campo"
+              id="descripcionEdit"
+              name="descripcionEdit"
+              maxlength="500"
+              [(ngModel)]="edicion.descripcion"
+            />
+          </div>
+        </div>
+
+        @if (esCentros()) {
+          <div class="rounded-lg border border-borde bg-panel-2/40 p-4">
+            <p class="etiqueta mb-2">Ubicación del centro penitenciario</p>
+            <rw-mapa-domicilio
+              [lat]="edicion.latitud"
+              [lng]="edicion.longitud"
+              (domicilio)="alUbicarCentro($event)"
+            />
+            @if (edicion.latitud !== null && edicion.longitud !== null) {
+              <p class="mt-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">
+                Coordenadas a guardar: {{ edicion.latitud }}, {{ edicion.longitud }}
+              </p>
+            } @else {
+              <p class="mt-2 text-[11px] text-slate-600">
+                Busque la dirección o haga clic en el mapa para fijar la ubicación.
+              </p>
+            }
+          </div>
+        }
+      </form>
+      <div modal-acciones class="modal-footer-actions">
+        <button
+          class="btn-secundario"
+          type="button"
+          [disabled]="guardando()"
+          (click)="cerrarCorreccion()"
+        >
+          Cancelar
+        </button>
+        <button
+          class="btn-primario"
+          type="submit"
+          form="formulario-correccion-catalogo"
+          [disabled]="guardando()"
+        >
+          <rw-icono nombre="guardar" [tamano]="16" />
+          {{ guardando() ? 'Guardando…' : 'Guardar corrección' }}
+        </button>
+      </div>
+    </rw-modal-formulario>
+  }
 </div>

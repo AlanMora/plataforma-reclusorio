@@ -7,12 +7,13 @@ import { ToastService } from '../core/toast.service';
 import { PaginadorComponent } from '../shared/paginador.component';
 import { Notificacion, Paginado } from '../core/models';
 import { mensajeDe } from '../core/problem';
+import { IconoComponent } from '../shared/icono.component';
 
 /** Bandeja personal (RF-NOT-001..004): listar, buscar, paginar, marcar leída. */
 @Component({
   selector: 'rw-notificaciones',
   standalone: true,
-  imports: [DatePipe, FormsModule, PaginadorComponent],
+  imports: [DatePipe, FormsModule, PaginadorComponent, IconoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './notificaciones.component.html',
 })

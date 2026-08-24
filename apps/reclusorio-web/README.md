@@ -4,6 +4,18 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 
 ## Development server
 
+### Mapbox local
+
+El mapa lee su token publico desde `public/mapbox-config.js`, archivo que no se versiona. Puede
+generarlo desde un `.env.local` o desde otro archivo que contenga `MAPBOX_ACCESS_TOKEN` o
+`mapboxAccessToken`:
+
+```bash
+pnpm mapbox:configure /ruta/al/archivo-con-token
+```
+
+Use un token publico (`pk.*`) restringido a los dominios autorizados desde la consola de Mapbox.
+
 To start a local development server, run:
 
 ```bash

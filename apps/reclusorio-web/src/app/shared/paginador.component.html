@@ -1,23 +1,98 @@
 @if (totalPages() > 0) {
-  <div class="flex items-center justify-between gap-4 px-1 pt-3">
-    <span class="etiqueta"
-      >{{ total() }} registro(s) · página {{ page() }} / {{ totalPages() }}</span
-    >
-    <div class="flex gap-2">
-      <button
-        class="btn-secundario btn-mini"
-        [disabled]="page() <= 1"
-        (click)="cambiar.emit(page() - 1)"
-      >
-        ← Anterior
-      </button>
-      <button
-        class="btn-secundario btn-mini"
-        [disabled]="page() >= totalPages()"
-        (click)="cambiar.emit(page() + 1)"
-      >
-        Siguiente →
-      </button>
+  <div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-3 py-2.5 border-t border-white/5 bg-slate-950/20">
+    <!-- Información de registros -->
+    <div class="flex items-center gap-1.5 text-xs text-slate-400">
+      <span class="font-mono text-[10px] text-slate-500 uppercase tracking-wider">Mostrando</span>
+      <span class="font-mono font-medium text-slate-200 bg-slate-900/80 px-2 py-0.5 rounded border border-white/5 text-[11px]">
+        {{ rango() }}
+      </span>
+      <span class="font-mono text-[10px] text-slate-500 uppercase tracking-wider">de</span>
+      <span class="font-mono font-semibold text-cyan-300 text-[11px]">
+        {{ total() }}
+      </span>
+      <span class="text-slate-500 text-[11px]">registros</span>
     </div>
+
+    <!-- Controles de navegación -->
+    @if (hayPaginas()) {
+      <div class="flex items-center gap-1">
+        <!-- Botón Primera página -->
+        @if (totalPages() > 5) {
+          <button
+            class="flex h-7 w-7 items-center justify-center rounded-lg border border-white/5 bg-slate-900/40 text-slate-400 hover:text-cyan-200 hover:border-cyan-500/20 hover:bg-slate-850 disabled:opacity-20 disabled:pointer-events-none transition-all"
+            [disabled]="page() <= 1"
+            (click)="cambiar.emit(1)"
+            title="Primera página"
+            type="button"
+          >
+            <rw-icono nombre="atras" [tamano]="12" />
+          </button>
+        }
+
+        <!-- Botón Anterior -->
+        <button
+          class="inline-flex h-7 items-center gap-1 rounded-lg border border-white/10 bg-slate-900/50 px-2 text-xs font-medium text-slate-300 hover:text-cyan-200 hover:border-cyan-500/30 hover:bg-slate-850 disabled:opacity-20 disabled:pointer-events-none transition-all shadow-xs"
+          [disabled]="page() <= 1"
+          (click)="cambiar.emit(page() - 1)"
+          type="button"
+        >
+          <rw-icono nombre="anterior" [tamano]="12" />
+          <span class="hidden sm:inline text-[11px]">Ant</span>
+        </button>
+
+        <!-- Botones numéricos de página -->
+        <div class="flex items-center gap-0.5 px-0.5">
+          @for (item of itemsPaginacion(); track $index) {
+            @if (item.tipo === 'num') {
+              <button
+                class="flex h-7 min-w-[1.75rem] items-center justify-center rounded-md px-1.5 font-mono text-[11px] font-semibold transition-all"
+                [class]="
+                  item.valor === page()
+                    ? 'border border-cyan-400/50 bg-cyan-500/20 text-cyan-200 shadow-[0_0_10px_rgba(34,211,238,0.25)]'
+                    : 'border border-transparent text-slate-400 hover:border-white/10 hover:bg-white/5 hover:text-slate-200'
+                "
+                (click)="cambiar.emit(item.valor)"
+                type="button"
+              >
+                {{ item.valor }}
+              </button>
+            } @else {
+              <button
+                class="flex h-7 w-5 items-center justify-center text-[11px] font-mono text-slate-600 hover:text-slate-400 transition-colors"
+                (click)="cambiar.emit(item.valor)"
+                title="Saltar páginas"
+                type="button"
+              >
+                …
+              </button>
+            }
+          }
+        </div>
+
+        <!-- Botón Siguiente -->
+        <button
+          class="inline-flex h-7 items-center gap-1 rounded-lg border border-white/10 bg-slate-900/50 px-2 text-xs font-medium text-slate-300 hover:text-cyan-200 hover:border-cyan-500/30 hover:bg-slate-850 disabled:opacity-20 disabled:pointer-events-none transition-all shadow-xs"
+          [disabled]="page() >= totalPages()"
+          (click)="cambiar.emit(page() + 1)"
+          type="button"
+        >
+          <span class="hidden sm:inline text-[11px]">Sig</span>
+          <rw-icono nombre="siguiente" [tamano]="12" />
+        </button>
+
+        <!-- Botón Última página -->
+        @if (totalPages() > 5) {
+          <button
+            class="flex h-7 w-7 items-center justify-center rounded-lg border border-white/5 bg-slate-900/40 text-slate-400 hover:text-cyan-200 hover:border-cyan-500/20 hover:bg-slate-850 disabled:opacity-20 disabled:pointer-events-none transition-all"
+            [disabled]="page() >= totalPages()"
+            (click)="cambiar.emit(totalPages())"
+            title="Última página"
+            type="button"
+          >
+            <rw-icono nombre="flecha_derecha" [tamano]="12" />
+          </button>
+        }
+      </div>
+    }
   </div>
 }

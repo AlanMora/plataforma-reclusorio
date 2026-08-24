@@ -1,6 +1,9 @@
 <div class="space-y-2 rounded-lg border border-borde bg-panel-2/60 p-3">
   <div class="flex items-center justify-between">
-    <p class="etiqueta">Buscar elemento del padrón</p>
+    <p class="etiqueta flex items-center gap-1.5">
+      <rw-icono nombre="buscar" [tamano]="13" />
+      Buscar elemento del padrón
+    </p>
     @if (buscando()) {
       <span class="etiqueta animate-pulse text-neon">Buscando…</span>
     }
@@ -62,6 +65,7 @@
     }
     <div *rwPermiso="'elementos:crear'">
       <button class="btn-secundario btn-mini" type="button" (click)="abrirAlta()">
+        <rw-icono nombre="agregar" [tamano]="14" />
         {{
           resultados().length === 0
             ? 'Registrar elemento nuevo y asociarlo'
@@ -120,19 +124,20 @@
           [(ngModel)]="forma['adscripcion']"
         />
       </div>
-      @if (errorAlta()) {
-        <p class="alerta-error">{{ errorAlta() }}</p>
-      }
       <div class="flex justify-end gap-2">
         <button class="btn-secundario btn-mini" type="button" (click)="cancelarAlta()">
+          <rw-icono nombre="cerrar" [tamano]="14" />
           Cancelar
         </button>
         <button
           class="btn-primario btn-mini"
           type="button"
-          [disabled]="guardando() || !forma['primerNombre'].trim() || !forma['apellidoPaterno'].trim()"
+          [disabled]="
+            guardando() || !forma['primerNombre'].trim() || !forma['apellidoPaterno'].trim()
+          "
           (click)="registrarYAsociar()"
         >
+          <rw-icono [nombre]="guardando() ? 'cargando' : 'guardar'" [tamano]="14" />
           {{ guardando() ? 'Guardando…' : 'Registrar y asociar' }}
         </button>
       </div>

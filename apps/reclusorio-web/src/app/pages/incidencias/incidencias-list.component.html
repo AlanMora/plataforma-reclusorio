@@ -8,10 +8,54 @@
         (RF-INC-001/002).
       </p>
     </div>
-    <a *rwPermiso="'incidencias:crear'" class="btn-primario" routerLink="/incidencias/nueva"
-      >+ Registrar incidencia</a
+    <button
+      *rwPermiso="'incidencias:crear'"
+      class="btn-primario"
+      type="button"
+      (click)="mostrarAlta.set(true)"
     >
+      <rw-icono nombre="agregar" [tamano]="16" />
+      Registrar incidencia
+    </button>
   </div>
+
+  @if (mostrarAlta()) {
+    <rw-modal-formulario
+      titulo="Registrar incidencia"
+      descripcion="Captura la incidencia y asocia sus elementos participantes sin abandonar el listado."
+      [bloquearCierre]="formAltaIncidencia.guardando()"
+      (cerrar)="mostrarAlta.set(false)"
+    >
+      <div modal-contenido>
+        <rw-incidencia-nueva
+          #formAltaIncidencia
+          [enModal]="true"
+          idFormulario="formulario-alta-incidencia"
+          [mostrarAcciones]="false"
+          (guardada)="alGuardar($event)"
+        />
+      </div>
+      <div modal-acciones class="modal-footer-actions">
+        <button
+          class="btn-secundario"
+          type="button"
+          [disabled]="formAltaIncidencia.guardando()"
+          (click)="mostrarAlta.set(false)"
+        >
+          Cancelar
+        </button>
+        <button
+          class="btn-primario"
+          type="submit"
+          form="formulario-alta-incidencia"
+          [disabled]="formAltaIncidencia.guardando()"
+        >
+          <rw-icono nombre="guardar" [tamano]="16" />
+          {{ formAltaIncidencia.guardando() ? 'Guardando…' : 'Registrar incidencia' }}
+        </button>
+      </div>
+    </rw-modal-formulario>
+  }
 
   <form class="panel flex flex-wrap items-end gap-3 p-4" (ngSubmit)="buscar()">
     <div class="grow">
@@ -25,7 +69,10 @@
         placeholder="Texto libre"
       />
     </div>
-    <button class="btn-primario" type="submit" [disabled]="cargando()">Buscar</button>
+    <button class="btn-primario" type="submit" [disabled]="cargando()">
+      <rw-icono nombre="buscar" [tamano]="16" />
+      Buscar
+    </button>
   </form>
 
   @if (error()) {

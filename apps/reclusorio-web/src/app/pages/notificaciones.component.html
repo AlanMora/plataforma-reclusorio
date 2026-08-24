@@ -9,7 +9,10 @@
       <label class="campo-etiqueta" for="buscarNotif">Buscar en título y mensaje</label>
       <input class="campo" id="buscarNotif" name="buscar" [(ngModel)]="texto" placeholder="Texto libre" />
     </div>
-    <button class="btn-primario" type="submit" [disabled]="cargando()">Buscar</button>
+    <button class="btn-primario" type="submit" [disabled]="cargando()">
+      <rw-icono nombre="buscar" [tamano]="16" />
+      Buscar
+    </button>
   </form>
 
   @if (error()) {
@@ -38,10 +41,14 @@
         </div>
         <div class="flex shrink-0 gap-2">
           @if (n.url) {
-            <button class="btn-primario btn-mini" type="button" (click)="ver(n)">Ver</button>
+            <button class="btn-primario btn-mini" type="button" (click)="ver(n)">
+              <rw-icono nombre="revisar" [tamano]="14" />
+              Ver
+            </button>
           }
           @if (!n.leida) {
             <button class="btn-secundario btn-mini" type="button" (click)="marcarLeida(n)">
+              <rw-icono nombre="correcto" [tamano]="14" />
               Marcar leída
             </button>
           }

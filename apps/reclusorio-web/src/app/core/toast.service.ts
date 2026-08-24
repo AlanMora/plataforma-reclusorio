@@ -15,7 +15,15 @@ export class ToastService {
     this.agregar('ok', texto);
   }
   error(texto: string): void {
-    this.agregar('error', texto, 9000);
+    const mensajes = [
+      ...new Set(
+        texto
+          .split(/(?:\r?\n|\s+·\s+)/)
+          .map((mensaje) => mensaje.trim())
+          .filter(Boolean),
+      ),
+    ];
+    for (const mensaje of mensajes) this.agregar('error', mensaje, 9000);
   }
   info(texto: string): void {
     this.agregar('info', texto);

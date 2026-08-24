@@ -16,6 +16,7 @@ import { Archivo } from '../core/models';
 import { mensajeDe } from '../core/problem';
 import { VistaPreviaComponent, tipoVistaPrevia } from './vista-previa.component';
 import { ArchivoMiniaturaComponent } from './archivo-miniatura.component';
+import { IconoComponent } from './icono.component';
 
 type ArchivoBiblioteca = Archivo & { origen: string };
 
@@ -43,6 +44,7 @@ const GRUPOS: Array<{ clave: string; etiqueta: string }> = [
     PermisoDirective,
     VistaPreviaComponent,
     ArchivoMiniaturaComponent,
+    IconoComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './biblioteca-archivos.component.html',
@@ -104,7 +106,7 @@ export class BibliotecaArchivosComponent {
       this.descripcion = '';
       await this.cargar(this.idPersona());
     } catch (err) {
-      this.error.set(mensajeDe(err));
+      this.toast.error(mensajeDe(err));
     } finally {
       this.subiendo.set(false);
     }

@@ -25,6 +25,7 @@ export function limpiarTokens(): void {
 export function decodificarJwt(token: string): JwtClaims | null {
   try {
     const payload = token.split('.')[1];
+    if (!payload) return null;
     const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
     const json = decodeURIComponent(
       atob(base64)
@@ -36,4 +37,12 @@ export function decodificarJwt(token: string): JwtClaims | null {
   } catch {
     return null;
   }
+}
+
+/** Verifica si el access token ya expiró considerando un margen de seguridad (por defecto 5s). */
+export function esJwtExpirado(token?: string | null, margenSegundos = 5): boolean {
+  if (!token) return true;
+  const claims = decodificarJwt(token);
+  if (!claims?.exp) return true;
+  return Date.now() >= (claims.exp - margenSegundos) * 1000;
 }

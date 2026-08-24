@@ -21,16 +21,29 @@
   <!-- Filtros -->
   <!-- z-20: los desplegables (calendarios y módulo) deben quedar SOBRE el panel de resultados. -->
   <form
+    #formularioReporte="ngForm"
     class="panel relative z-20 grid gap-4 p-5 md:grid-cols-[1fr_1fr_1fr_auto]"
-    (ngSubmit)="generar()"
+    (ngSubmit)="generar(formularioReporte, $event)"
   >
     <div>
       <label class="campo-etiqueta obligatorio" for="repDesde">Desde</label>
-      <rw-selector-fecha idCampo="repDesde" name="desde" [conHora]="true" [(ngModel)]="desde" />
+      <rw-selector-fecha
+        idCampo="repDesde"
+        name="desde"
+        [conHora]="true"
+        [(ngModel)]="desde"
+        required
+      />
     </div>
     <div>
       <label class="campo-etiqueta obligatorio" for="repHasta">Hasta (exclusivo)</label>
-      <rw-selector-fecha idCampo="repHasta" name="hasta" [conHora]="true" [(ngModel)]="hasta" />
+      <rw-selector-fecha
+        idCampo="repHasta"
+        name="hasta"
+        [conHora]="true"
+        [(ngModel)]="hasta"
+        required
+      />
     </div>
     <div>
       <label class="campo-etiqueta" for="repModulo">Módulo</label>
@@ -52,14 +65,11 @@
         Hoy
       </button>
       <button class="btn-primario" type="submit" [disabled]="cargando()">
+        <rw-icono [nombre]="cargando() ? 'cargando' : 'reportes'" [tamano]="16" />
         {{ cargando() ? 'Generando…' : 'Generar' }}
       </button>
     </div>
   </form>
-
-  @if (error()) {
-    <p class="alerta-error">{{ error() }}</p>
-  }
 
   @if (consultado() && !cargando()) {
     <div class="panel space-y-4 p-5">
@@ -71,7 +81,8 @@
           [disabled]="filas().length === 0"
           (click)="exportarCsv()"
         >
-          ⇩ Exportar CSV
+          <rw-icono nombre="descargar" [tamano]="15" />
+          Exportar CSV
         </button>
       </div>
 

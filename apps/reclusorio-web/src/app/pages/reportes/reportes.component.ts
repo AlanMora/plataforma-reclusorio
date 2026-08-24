@@ -1,10 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
 import { mensajeDe } from '../../core/problem';
+import { ToastService } from '../../core/toast.service';
+import {
+  fechaParaApi,
+  presentarErrorFormulario,
+  validarFormulario,
+} from '../../core/validacion-formulario';
 import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
 import { OpcionSelect, SelectBuscableComponent } from '../../shared/select-buscable.component';
+import { IconoComponent } from '../../shared/icono.component';
 
 /** Fila del reporte consolidado (contrato de GET /reportes/actividades). */
 interface FilaReporte {
@@ -50,12 +57,19 @@ function fechaLocal(fecha: Date): string {
 @Component({
   selector: 'rw-reportes',
   standalone: true,
-  imports: [DatePipe, FormsModule, SelectorFechaComponent, SelectBuscableComponent],
+  imports: [
+    DatePipe,
+    FormsModule,
+    SelectorFechaComponent,
+    SelectBuscableComponent,
+    IconoComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './reportes.component.html',
 })
 export class ReportesComponent {
   private readonly api = inject(ApiService);
+  private readonly toast = inject(ToastService);
 
   readonly modulos = MODULOS;
 
@@ -105,9 +119,18 @@ export class ReportesComponent {
     void this.generar();
   }
 
-  async generar(): Promise<void> {
+  async generar(formulario?: NgForm, evento?: SubmitEvent): Promise<void> {
+    if (formulario && evento) {
+      const errorValidacion = validarFormulario(formulario, evento);
+      if (errorValidacion) {
+        this.error.set(null);
+        this.toast.error(errorValidacion);
+        return;
+      }
+    }
     if (!this.desde || !this.hasta) {
-      this.error.set('Seleccione el inicio y el fin del periodo (o use "Hoy").');
+      this.error.set(null);
+      this.toast.error('Seleccione el inicio y el fin del periodo (o use "Hoy").');
       return;
     }
     this.cargando.set(true);
@@ -115,14 +138,16 @@ export class ReportesComponent {
     try {
       this.filas.set(
         await this.api.get<FilaReporte[]>('/api/v1/reportes/actividades', {
-          desde: new Date(this.desde).toISOString(),
-          hasta: new Date(this.hasta).toISOString(),
+          desde: fechaParaApi(this.desde),
+          hasta: fechaParaApi(this.hasta),
           modulo: this.modulo || undefined,
         }),
       );
       this.consultado.set(true);
     } catch (err) {
-      this.error.set(mensajeDe(err));
+      this.toast.error(
+        formulario && evento ? presentarErrorFormulario(formulario, evento, err) : mensajeDe(err),
+      );
     } finally {
       this.cargando.set(false);
     }

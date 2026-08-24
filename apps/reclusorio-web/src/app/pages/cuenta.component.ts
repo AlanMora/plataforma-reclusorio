@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
 import { SessionService } from '../core/session.service';
 import { ToastService } from '../core/toast.service';
 import { SesionActiva, UsuarioMe } from '../core/models';
 import { mensajeDe } from '../core/problem';
+import { presentarErrorFormulario, validarFormulario } from '../core/validacion-formulario';
+import { IconoComponent } from '../shared/icono.component';
 
 /**
  * Mi cuenta (RF-CUE-001/002): datos y permisos del usuario, vigencia de la
@@ -16,7 +18,7 @@ import { mensajeDe } from '../core/problem';
 @Component({
   selector: 'rw-cuenta',
   standalone: true,
-  imports: [DatePipe, FormsModule],
+  imports: [DatePipe, FormsModule, IconoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './cuenta.component.html',
 })
@@ -34,7 +36,10 @@ export class CuentaComponent implements OnInit {
   passwords = { currentPassword: '', newPassword: '', confirmPassword: '' };
 
   ngOnInit(): void {
-    void this.api.get<UsuarioMe>('/api/v1/users/me').then((u) => this.usuario.set(u)).catch(() => undefined);
+    void this.api
+      .get<UsuarioMe>('/api/v1/users/me')
+      .then((u) => this.usuario.set(u))
+      .catch(() => undefined);
     void this.cargarSesiones();
   }
 
@@ -43,9 +48,16 @@ export class CuentaComponent implements OnInit {
     return s === null ? '—' : String(Math.max(Math.ceil(s / 60), 0));
   }
 
-  async cambiarPassword(): Promise<void> {
+  async cambiarPassword(formulario: NgForm, evento: SubmitEvent): Promise<void> {
+    const errorValidacion = validarFormulario(formulario, evento);
+    if (errorValidacion) {
+      this.errorPassword.set(null);
+      this.toast.error(errorValidacion);
+      return;
+    }
     if (this.passwords.newPassword !== this.passwords.confirmPassword) {
-      this.errorPassword.set('La confirmación no coincide con la nueva contraseña.');
+      this.errorPassword.set(null);
+      this.toast.error('La confirmación no coincide con la nueva contraseña.');
       return;
     }
     this.cambiando.set(true);
@@ -55,7 +67,7 @@ export class CuentaComponent implements OnInit {
       // El backend revoca TODAS las sesiones (RF-CUE-002).
       this.auth.forzarLogout('Contraseña actualizada. Inicia sesión con la nueva contraseña.');
     } catch (err) {
-      this.errorPassword.set(mensajeDe(err));
+      this.toast.error(presentarErrorFormulario(formulario, evento, err));
     } finally {
       this.cambiando.set(false);
     }

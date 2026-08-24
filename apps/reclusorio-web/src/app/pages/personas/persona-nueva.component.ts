@@ -2,11 +2,12 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { PersonaFormComponent } from './persona-form.component';
 import { Persona } from '../../core/models';
+import { IconoComponent } from '../../shared/icono.component';
 
 @Component({
   selector: 'rw-persona-nueva',
   standalone: true,
-  imports: [PersonaFormComponent, RouterLink],
+  imports: [PersonaFormComponent, RouterLink, IconoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './persona-nueva.component.html',
 })

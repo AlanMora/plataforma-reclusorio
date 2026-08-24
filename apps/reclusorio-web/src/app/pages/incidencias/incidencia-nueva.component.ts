@@ -1,6 +1,14 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  OnInit,
+  output,
+  signal,
+} from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
 import { SelectBuscableComponent, aOpciones } from '../../shared/select-buscable.component';
 import { ElementoPickerComponent, nombreElemento } from '../../shared/elemento-picker.component';
@@ -11,6 +19,12 @@ import { CatalogosService } from '../../core/catalogos.service';
 import { ToastService } from '../../core/toast.service';
 import { Elemento, Incidencia, ValorCatalogo } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
+import {
+  fechaParaApi,
+  presentarErrorFormulario,
+  validarFormulario,
+} from '../../core/validacion-formulario';
+import { IconoComponent } from '../../shared/icono.component';
 
 /** Alta de incidencia (RF-INC-001/002/006/007): válida sin personas. */
 @Component({
@@ -23,6 +37,7 @@ import { mensajeDe } from '../../core/problem';
     SelectBuscableComponent,
     ElementoPickerComponent,
     ElementoCardComponent,
+    IconoComponent,
     PermisoDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,6 +51,11 @@ export class IncidenciaNuevaComponent implements OnInit {
   private readonly catalogos = inject(CatalogosService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+
+  readonly enModal = input(false);
+  readonly idFormulario = input('formulario-incidencia');
+  readonly mostrarAcciones = input(true);
+  readonly guardada = output<Incidencia>();
 
   readonly centros = signal<ValorCatalogo[]>([]);
   readonly tipos = signal<ValorCatalogo[]>([]);
@@ -102,19 +122,26 @@ export class IncidenciaNuevaComponent implements OnInit {
     this.elementosCaptura.set([]);
   }
 
-  async crear(): Promise<void> {
+  async crear(formulario: NgForm, evento: SubmitEvent): Promise<void> {
+    const errorValidacion = validarFormulario(formulario, evento);
+    if (errorValidacion) {
+      this.error.set(null);
+      this.toast.error(errorValidacion);
+      return;
+    }
     this.guardando.set(true);
     this.error.set(null);
     try {
       const incidencia = await this.api.post<Incidencia>('/api/v1/incidencias', {
         ...this.forma,
-        fecha: new Date(this.forma['fecha']).toISOString(),
+        fecha: fechaParaApi(this.forma['fecha']),
       });
       await this.asociarElementosCaptura(incidencia.idIncidencia);
       this.toast.ok('Incidencia registrada.');
-      await this.router.navigate(['/incidencias', incidencia.idIncidencia]);
+      if (this.enModal()) this.guardada.emit(incidencia);
+      else await this.router.navigate(['/incidencias', incidencia.idIncidencia]);
     } catch (err) {
-      this.error.set(mensajeDe(err));
+      this.toast.error(presentarErrorFormulario(formulario, evento, err));
     } finally {
       this.guardando.set(false);
     }

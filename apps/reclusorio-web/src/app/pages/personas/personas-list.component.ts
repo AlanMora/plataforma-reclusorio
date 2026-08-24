@@ -6,13 +6,17 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { DatePipe } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
 import { PermisoDirective } from '../../core/permiso.directive';
 import { PaginadorComponent } from '../../shared/paginador.component';
 import { Paginado, Persona } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
+import { ModalFormulario } from '../../shared/modal-formulario/modal-formulario';
+import { PersonaFormComponent } from './persona-form.component';
+import { IconoComponent } from '../../shared/icono.component';
 
 export function nombreCompleto(p: Persona): string {
   return [p.primerNombre, p.apellidoPaterno, p.apellidoMaterno].filter(Boolean).join(' ') || '—';
@@ -22,12 +26,22 @@ export function nombreCompleto(p: Persona): string {
 @Component({
   selector: 'rw-personas-list',
   standalone: true,
-  imports: [RouterLink, FormsModule, PaginadorComponent, PermisoDirective],
+  imports: [
+    DatePipe,
+    RouterLink,
+    FormsModule,
+    PaginadorComponent,
+    PermisoDirective,
+    ModalFormulario,
+    PersonaFormComponent,
+    IconoComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './personas-list.component.html',
 })
 export class PersonasListComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
 
   readonly pagina = signal<Paginado<Persona>>({
     items: [],
@@ -43,6 +57,7 @@ export class PersonasListComponent implements OnInit {
   );
   readonly cargando = signal(false);
   readonly error = signal<string | null>(null);
+  readonly mostrarAlta = signal(false);
   textoBusqueda = '';
   curpBusqueda = '';
 
@@ -58,6 +73,21 @@ export class PersonasListComponent implements OnInit {
 
   irAPagina(pagina: number): void {
     void this.cargar(pagina);
+  }
+
+  get hayFiltros(): boolean {
+    return Boolean(this.textoBusqueda.trim() || this.curpBusqueda.trim());
+  }
+
+  limpiarFiltros(): void {
+    this.textoBusqueda = '';
+    this.curpBusqueda = '';
+    void this.cargar(1);
+  }
+
+  alGuardar(persona: Persona): void {
+    this.mostrarAlta.set(false);
+    void this.router.navigate(['/personas', persona.idPersona]);
   }
 
   private async cargar(page: number): Promise<void> {

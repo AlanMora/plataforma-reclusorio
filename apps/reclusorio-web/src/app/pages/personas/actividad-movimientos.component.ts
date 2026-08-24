@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, input, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
 import { CatalogosService } from '../../core/catalogos.service';
 import { ToastService } from '../../core/toast.service';
@@ -11,6 +11,13 @@ import { SelectBuscableComponent, aOpciones } from '../../shared/select-buscable
 import { Movimiento, ValorCatalogo } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
 import { RevisionRegistroComponent } from '../../shared/revision-registro.component';
+import { ModalFormulario } from '../../shared/modal-formulario/modal-formulario';
+import { IconoComponent } from '../../shared/icono.component';
+import {
+  fechaParaApi,
+  presentarErrorFormulario,
+  validarFormulario,
+} from '../../core/validacion-formulario';
 
 /** Movimientos internos/externos de la persona (RF-MOV-001..005). */
 @Component({
@@ -24,6 +31,8 @@ import { RevisionRegistroComponent } from '../../shared/revision-registro.compon
     SelectorFechaComponent,
     SelectBuscableComponent,
     RevisionRegistroComponent,
+    ModalFormulario,
+    IconoComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './actividad-movimientos.component.html',
@@ -119,7 +128,13 @@ export class ActividadMovimientosComponent implements OnInit {
     this.archivosCaptura = [];
   }
 
-  async crear(): Promise<void> {
+  async crear(formulario: NgForm, evento: SubmitEvent): Promise<void> {
+    const errorValidacion = validarFormulario(formulario, evento);
+    if (errorValidacion) {
+      this.errorForm.set(null);
+      this.toast.error(errorValidacion);
+      return;
+    }
     this.guardando.set(true);
     this.errorForm.set(null);
     try {
@@ -127,7 +142,7 @@ export class ActividadMovimientosComponent implements OnInit {
         `/api/v1/personas/${this.idPersona()}/movimientos`,
         {
           ...this.forma,
-          fecha: new Date(this.forma['fecha']).toISOString(),
+          fecha: fechaParaApi(this.forma['fecha']),
         },
       );
       await this.subirArchivosCaptura('idMovimiento', creado['idMovimiento']);
@@ -136,7 +151,7 @@ export class ActividadMovimientosComponent implements OnInit {
       this.limpiarCaptura();
       await this.cargar();
     } catch (err) {
-      this.errorForm.set(mensajeDe(err));
+      this.toast.error(presentarErrorFormulario(formulario, evento, err));
     } finally {
       this.guardando.set(false);
     }

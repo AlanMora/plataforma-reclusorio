@@ -59,6 +59,14 @@ export class RealtimeService {
         this.auth.forzarLogout(MOTIVOS[evento?.motivo ?? ''] ?? 'Tu sesión fue revocada.');
       }
     });
+    this.socket.on('connect_error', (err) => {
+      const msg = err?.message?.toLowerCase() ?? '';
+      if (msg.includes('unauthorized') || msg.includes('jwt') || msg.includes('forbidden')) {
+        this.auth.refrescar().catch(() => {
+          this.auth.forzarLogout('Tu sesión expiró. Inicia sesión nuevamente.');
+        });
+      }
+    });
   }
 
   private desconectar(): void {

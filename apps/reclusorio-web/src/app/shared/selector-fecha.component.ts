@@ -10,6 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { IconoComponent } from './icono.component';
 
 const MESES = [
   'Enero',
@@ -45,6 +46,7 @@ function dosDigitos(n: number): string {
 @Component({
   selector: 'rw-selector-fecha',
   standalone: true,
+  imports: [IconoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './selector-fecha.component.html',
   providers: [

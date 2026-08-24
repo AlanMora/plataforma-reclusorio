@@ -1,0 +1,46 @@
+<section class="modal-layer">
+  <div class="modal-backdrop" aria-hidden="true"></div>
+
+  <div class="modal-position" (click)="solicitarCierre()">
+    <article
+      #dialogo
+      class="modal-glass"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="idTitulo"
+      [attr.aria-describedby]="descripcion() ? idDescripcion : null"
+      tabindex="-1"
+      (click)="$event.stopPropagation()"
+      (keydown)="manejarTeclado($event)"
+    >
+      <header class="modal-header">
+        <div class="min-w-0">
+          <p class="modal-kicker"><span></span> {{ etiqueta() }}</p>
+          <h2 class="modal-title" [id]="idTitulo">{{ titulo() }}</h2>
+          @if (descripcion()) {
+            <p class="modal-description" [id]="idDescripcion">{{ descripcion() }}</p>
+          }
+        </div>
+
+        <button
+          class="modal-close"
+          type="button"
+          aria-label="Cerrar formulario"
+          title="Cerrar (Esc)"
+          [disabled]="bloquearCierre()"
+          (click)="solicitarCierre()"
+        >
+          <rw-icono nombre="cerrar" [tamano]="20" [grosor]="2" />
+        </button>
+      </header>
+
+      <div class="modal-body">
+        <ng-content select="[modal-contenido]" />
+      </div>
+
+      <footer class="modal-footer">
+        <ng-content select="[modal-acciones]" />
+      </footer>
+    </article>
+  </div>
+</section>

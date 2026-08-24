@@ -1,156 +1,187 @@
-<div class="space-y-4">
-  <div class="flex justify-end">
+<div class="tabla-seccion">
+  <header class="tabla-toolbar">
+    <div class="tabla-toolbar-info">
+      <span class="tabla-toolbar-dot" aria-hidden="true"></span>
+      <h3>Incidencias vinculadas</h3>
+      <span class="tabla-toolbar-count">{{ registros().length }}</span>
+    </div>
     <button
       *rwPermiso="'incidencias:crear'"
       class="btn-primario btn-mini"
       type="button"
       (click)="alternarForm()"
     >
-      {{ mostrarForm() ? 'Cancelar' : '+ Registrar incidencia' }}
+      <rw-icono nombre="agregar" [tamano]="14" />
+      Registrar incidencia
     </button>
-  </div>
+  </header>
 
   @if (mostrarForm()) {
-    <form class="panel grid gap-4 p-4 md:grid-cols-2" (ngSubmit)="crear()">
-      <p class="text-xs text-slate-500 md:col-span-2">
-        La persona de este expediente quedará asociada automáticamente a la incidencia
-        (RF-INC-003); otras personas y autoridades se agregan después, desde el detalle.
-      </p>
-      <div>
-        <label class="campo-etiqueta obligatorio" for="incTabCentro">Centro penitenciario</label>
-        <rw-select-buscable
-          idCampo="incTabCentro"
-          name="idCentroPenitenciario"
-          required
-          [opciones]="aOpciones(centros())"
-          [(ngModel)]="forma.idCentroPenitenciario"
-        />
-      </div>
-      <div>
-        <label class="campo-etiqueta obligatorio" for="incTabTipo">Tipo de incidencia</label>
-        <rw-select-buscable
-          idCampo="incTabTipo"
-          name="idTipoIncidencia"
-          required
-          [opciones]="aOpciones(tipos())"
-          [(ngModel)]="forma.idTipoIncidencia"
-        />
-      </div>
-      <div>
-        <label class="campo-etiqueta obligatorio" for="incTabFecha">Fecha y hora</label>
-        <rw-selector-fecha
-          idCampo="incTabFecha"
-          name="fecha"
-          [conHora]="true"
-          required
-          [(ngModel)]="forma.fecha"
-        />
-      </div>
-      <div>
-        <label class="campo-etiqueta" for="incTabIph">IPH</label>
-        <input
-          class="campo font-mono"
-          id="incTabIph"
-          name="iph"
-          maxlength="100"
-          [(ngModel)]="forma.iph"
-        />
-      </div>
-      <div class="md:col-span-2">
-        <label class="campo-etiqueta obligatorio" for="incTabDescripcion">Descripción</label>
-        <textarea
-          class="campo"
-          id="incTabDescripcion"
-          name="descripcion"
-          rows="3"
-          maxlength="2000"
-          required
-          [(ngModel)]="forma.descripcion"
-        ></textarea>
-      </div>
-      <div>
-        <label class="campo-etiqueta" for="incTabPrimerRespondiente"
-          >Primer respondiente (texto libre)</label
-        >
-        <input
-          class="campo"
-          id="incTabPrimerRespondiente"
-          name="primerRespondiente"
-          maxlength="255"
-          [(ngModel)]="forma.primerRespondiente"
-        />
-        <p class="mt-1 text-[11px] text-slate-600">
-          Úsalo cuando el elemento NO está en el padrón (RF-INC-007); si está registrado (o lo das
-          de alta), asócialo abajo en «Elementos participantes».
-        </p>
-      </div>
-      <div class="md:col-span-2">
-        <label class="campo-etiqueta" for="incTabNarrativa">Narrativa</label>
-        <textarea
-          class="campo"
-          id="incTabNarrativa"
-          name="narrativa"
-          rows="4"
-          [(ngModel)]="forma.narrativa"
-        ></textarea>
-      </div>
-      <!-- keydown.enter: evita el submit implícito del form al buscar en el picker -->
-      <div
-        *rwPermiso="'incidencias:asociar'"
-        class="md:col-span-2"
-        (keydown.enter)="$event.preventDefault()"
+    <rw-modal-formulario
+      titulo="Registrar incidencia"
+      descripcion="La persona quedará vinculada automáticamente al nuevo registro."
+      [bloquearCierre]="guardando()"
+      (cerrar)="alternarForm()"
+    >
+      <form
+        #formularioIncidencia="ngForm"
+        id="form-registro-incidencia"
+        modal-contenido
+        class="grid gap-4 md:grid-cols-2"
+        (ngSubmit)="crear(formularioIncidencia, $event)"
       >
-        <p class="campo-etiqueta">
-          Elementos participantes (opcional, se asocian al registrar — RF-INC-005/007)
+        <p class="text-xs text-slate-500 md:col-span-2">
+          La persona de este expediente quedará asociada automáticamente a la incidencia
+          (RF-INC-003); otras personas y autoridades se agregan después, desde el detalle.
         </p>
-        @if (elementosCaptura().length > 0) {
-          <div class="mb-2 grid gap-2 md:grid-cols-2">
-            @for (e of elementosCaptura(); track e.elemento.idElemento) {
-              <div class="flex items-center gap-2">
-                <div class="min-w-0 flex-1">
-                  <rw-elemento-card
-                    [elemento]="e.elemento"
-                    [insignia]="e.primerRespondiente ? 'Primer respondiente' : ''"
-                  />
-                </div>
-                <button
-                  class="btn-secundario btn-mini shrink-0"
-                  type="button"
-                  (click)="quitarElementoCaptura(e.elemento.idElemento)"
-                >
-                  Quitar
-                </button>
-              </div>
-            }
-          </div>
-        }
-        <label class="mb-2 flex items-center gap-2 text-xs text-slate-400">
-          <input
-            type="checkbox"
-            name="marcarPrimerRespondienteCaptura"
-            [(ngModel)]="marcarPrimerRespondienteCaptura"
+        <div>
+          <label class="campo-etiqueta obligatorio" for="incTabCentro">Centro penitenciario</label>
+          <rw-select-buscable
+            idCampo="incTabCentro"
+            name="idCentroPenitenciario"
+            required
+            [opciones]="aOpciones(centros())"
+            [(ngModel)]="forma.idCentroPenitenciario"
           />
-          Marcar como primer respondiente al elegirlo
-        </label>
-        <rw-elemento-picker (elegido)="agregarElementoCaptura($event)" />
-      </div>
-      @if (errorForm()) {
-        <p class="alerta-error md:col-span-2">{{ errorForm() }}</p>
-      }
-      <div class="flex justify-end md:col-span-2">
-        <button class="btn-primario" type="submit" [disabled]="guardando()">
+        </div>
+        <div>
+          <label class="campo-etiqueta obligatorio" for="incTabTipo">Tipo de incidencia</label>
+          <rw-select-buscable
+            idCampo="incTabTipo"
+            name="idTipoIncidencia"
+            required
+            [opciones]="aOpciones(tipos())"
+            [(ngModel)]="forma.idTipoIncidencia"
+          />
+        </div>
+        <div>
+          <label class="campo-etiqueta obligatorio" for="incTabFecha">Fecha y hora</label>
+          <rw-selector-fecha
+            idCampo="incTabFecha"
+            name="fecha"
+            [conHora]="true"
+            required
+            [(ngModel)]="forma.fecha"
+          />
+        </div>
+        <div>
+          <label class="campo-etiqueta" for="incTabIph">IPH</label>
+          <input
+            class="campo font-mono"
+            id="incTabIph"
+            name="iph"
+            maxlength="100"
+            [(ngModel)]="forma.iph"
+          />
+        </div>
+        <div class="md:col-span-2">
+          <label class="campo-etiqueta obligatorio" for="incTabDescripcion">Descripción</label>
+          <textarea
+            class="campo"
+            id="incTabDescripcion"
+            name="descripcion"
+            rows="3"
+            maxlength="2000"
+            required
+            [(ngModel)]="forma.descripcion"
+          ></textarea>
+        </div>
+        <div>
+          <label class="campo-etiqueta" for="incTabPrimerRespondiente"
+            >Primer respondiente (texto libre)</label
+          >
+          <input
+            class="campo"
+            id="incTabPrimerRespondiente"
+            name="primerRespondiente"
+            maxlength="255"
+            [(ngModel)]="forma.primerRespondiente"
+          />
+          <p class="mt-1 text-[11px] text-slate-600">
+            Úsalo cuando el elemento NO está en el padrón (RF-INC-007); si está registrado (o lo das
+            de alta), asócialo abajo en «Elementos participantes».
+          </p>
+        </div>
+        <div class="md:col-span-2">
+          <label class="campo-etiqueta" for="incTabNarrativa">Narrativa</label>
+          <textarea
+            class="campo"
+            id="incTabNarrativa"
+            name="narrativa"
+            rows="4"
+            [(ngModel)]="forma.narrativa"
+          ></textarea>
+        </div>
+        <!-- keydown.enter: evita el submit implícito del form al buscar en el picker -->
+        <div
+          *rwPermiso="'incidencias:asociar'"
+          class="md:col-span-2"
+          (keydown.enter)="$event.preventDefault()"
+        >
+          <p class="campo-etiqueta">
+            Elementos participantes (opcional, se asocian al registrar — RF-INC-005/007)
+          </p>
+          @if (elementosCaptura().length > 0) {
+            <div class="mb-2 grid gap-2 md:grid-cols-2">
+              @for (e of elementosCaptura(); track e.elemento.idElemento) {
+                <div class="flex items-center gap-2">
+                  <div class="min-w-0 flex-1">
+                    <rw-elemento-card
+                      [elemento]="e.elemento"
+                      [insignia]="e.primerRespondiente ? 'Primer respondiente' : ''"
+                    />
+                  </div>
+                  <button
+                    class="btn-secundario btn-mini shrink-0"
+                    type="button"
+                    (click)="quitarElementoCaptura(e.elemento.idElemento)"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              }
+            </div>
+          }
+          <label class="mb-2 flex items-center gap-2 text-xs text-slate-400">
+            <input
+              type="checkbox"
+              name="marcarPrimerRespondienteCaptura"
+              [(ngModel)]="marcarPrimerRespondienteCaptura"
+            />
+            Marcar como primer respondiente al elegirlo
+          </label>
+          <rw-elemento-picker (elegido)="agregarElementoCaptura($event)" />
+        </div>
+      </form>
+      <div modal-acciones class="modal-footer-actions">
+        <button
+          class="btn-secundario"
+          type="button"
+          [disabled]="guardando()"
+          (click)="alternarForm()"
+        >
+          <rw-icono nombre="cerrar" [tamano]="15" />
+          Cancelar
+        </button>
+        <button
+          class="btn-primario"
+          type="submit"
+          form="form-registro-incidencia"
+          [disabled]="guardando()"
+        >
+          <rw-icono [nombre]="guardando() ? 'cargando' : 'guardar'" [tamano]="15" />
           {{ guardando() ? 'Guardando…' : 'Registrar incidencia' }}
         </button>
       </div>
-    </form>
+    </rw-modal-formulario>
   }
 
   @if (error()) {
-    <p class="alerta-error">{{ error() }}</p>
+    <p class="alerta-error tabla-estado">{{ error() }}</p>
   } @else if (cargando()) {
-    <p class="etiqueta animate-pulse">Cargando incidencias…</p>
+    <p class="etiqueta tabla-estado animate-pulse">Cargando incidencias…</p>
   } @else if (registros().length === 0) {
-    <p class="py-6 text-center text-sm text-slate-600">
+    <p class="tabla-estado py-6 text-center text-sm text-slate-600">
       La persona no está asociada a ninguna incidencia. Regístrala aquí mismo con «+ Registrar
       incidencia» (queda asociada automáticamente) o desde el módulo Incidencias.
     </p>

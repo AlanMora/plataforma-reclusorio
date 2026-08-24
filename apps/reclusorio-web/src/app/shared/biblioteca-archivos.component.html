@@ -28,6 +28,7 @@
       />
     </div>
     <button class="btn-primario" type="submit" [disabled]="!seleccionado || subiendo()">
+      <rw-icono [nombre]="subiendo() ? 'cargando' : 'subir'" [tamano]="15" />
       {{ subiendo() ? 'Subiendo…' : 'Subir archivo' }}
     </button>
   </form>
@@ -90,10 +91,12 @@
                     type="button"
                     (click)="previsualizar(a, visor)"
                   >
+                    <rw-icono nombre="revisar" [tamano]="14" />
                     Vista previa
                   </button>
                 }
                 <button class="btn-secundario btn-mini" type="button" (click)="descargar(a)">
+                  <rw-icono nombre="descargar" [tamano]="14" />
                   Descargar
                 </button>
                 <button
@@ -102,6 +105,7 @@
                   type="button"
                   (click)="desactivar(a)"
                 >
+                  <rw-icono nombre="eliminar" [tamano]="14" />
                   Desactivar
                 </button>
               </div>

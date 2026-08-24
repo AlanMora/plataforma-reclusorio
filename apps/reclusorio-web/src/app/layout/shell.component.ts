@@ -9,33 +9,34 @@ import { NotificacionesService } from '../core/notificaciones.service';
 import { ToastService } from '../core/toast.service';
 import { CATALOGOS_ADMINISTRABLES, CATALOGOS_FIJOS } from '../core/catalogos.service';
 import { CampanaComponent } from './campana.component';
+import { IconoComponent, NombreIcono } from '../shared/icono.component';
 
 interface ItemMenu {
   ruta: string;
   etiqueta: string;
-  icono: string;
+  icono: NombreIcono;
   permiso?: string;
   exacto?: boolean;
 }
 
 /** El menú se construye con los permisos del JWT (RF-SEG-001, RF-UI). */
 const MENU: ItemMenu[] = [
-  { ruta: '/', etiqueta: 'Panel', icono: '◈', exacto: true },
-  { ruta: '/penitenciarios', etiqueta: 'Penitenciarios', icono: '⌖' },
-  { ruta: '/personas', etiqueta: 'Personas', icono: '◉', permiso: 'personas:consultar' },
-  { ruta: '/incidencias', etiqueta: 'Incidencias', icono: '▲', permiso: 'incidencias:consultar' },
-  { ruta: '/elementos', etiqueta: 'Elementos', icono: '⬡', permiso: 'elementos:consultar' },
-  { ruta: '/reportes', etiqueta: 'Reportes', icono: '▤', permiso: 'personas:consultar' },
-  { ruta: '/catalogos', etiqueta: 'Catálogos', icono: '≡', permiso: 'catalogos:administrar' },
-  { ruta: '/usuarios', etiqueta: 'Usuarios', icono: '♟', permiso: 'users:read' },
-  { ruta: '/notificaciones', etiqueta: 'Notificaciones', icono: '◎' },
-  { ruta: '/cuenta', etiqueta: 'Mi cuenta', icono: '□' },
+  { ruta: '/', etiqueta: 'Dashboard', icono: 'panel', exacto: true },
+  { ruta: '/penitenciarios', etiqueta: 'Penitenciarios', icono: 'centro' },
+  { ruta: '/personas', etiqueta: 'Personas', icono: 'usuarios', permiso: 'personas:consultar' },
+  { ruta: '/incidencias', etiqueta: 'Incidencias', icono: 'incidencias', permiso: 'incidencias:consultar' },
+  { ruta: '/elementos', etiqueta: 'Elementos', icono: 'elementos', permiso: 'elementos:consultar' },
+  { ruta: '/reportes', etiqueta: 'Reportes', icono: 'reportes', permiso: 'personas:consultar' },
+  { ruta: '/catalogos', etiqueta: 'Catálogos', icono: 'catalogos', permiso: 'catalogos:administrar' },
+  { ruta: '/usuarios', etiqueta: 'Usuarios', icono: 'configuracion_usuario', permiso: 'users:read' },
+  { ruta: '/notificaciones', etiqueta: 'Notificaciones', icono: 'notificaciones' },
+  { ruta: '/cuenta', etiqueta: 'Mi cuenta', icono: 'cuenta' },
 ];
 
 @Component({
   selector: 'rw-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CampanaComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CampanaComponent, IconoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './shell.component.html',
 })
@@ -87,7 +88,7 @@ export class ShellComponent {
   /** Título de la sección actual para la barra superior. */
   readonly tituloPagina = computed(() => {
     const url = this.urlActual();
-    if (url === '/' || url === '') return 'Panel de control';
+    if (url === '/' || url === '') return 'Dashboard operativo';
     return (
       MENU.find((item) => item.ruta !== '/' && url.startsWith(item.ruta))?.etiqueta ?? 'Consola'
     );

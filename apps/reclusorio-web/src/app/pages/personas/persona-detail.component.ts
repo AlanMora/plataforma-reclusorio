@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
 import { ToastService } from '../../core/toast.service';
 import { PermisoDirective } from '../../core/permiso.directive';
@@ -17,6 +17,9 @@ import { Domicilio, Persona, PersonaDetalle } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
 import { MapaDomicilioComponent } from '../../shared/mapa-domicilio.component';
 import { DomicilioFormComponent } from '../../shared/domicilio-form.component';
+import { ModalFormulario } from '../../shared/modal-formulario/modal-formulario';
+import { presentarErrorFormulario, validarFormulario } from '../../core/validacion-formulario';
+import { IconoComponent } from '../../shared/icono.component';
 
 type Pestana =
   | 'datos'
@@ -28,15 +31,15 @@ type Pestana =
   | 'incidencias'
   | 'archivos';
 
-const PESTANAS: { clave: Pestana; etiqueta: string }[] = [
-  { clave: 'datos', etiqueta: 'Datos generales' },
-  { clave: 'domicilios', etiqueta: 'Domicilios' },
-  { clave: 'ingresos', etiqueta: 'Ingresos / Libertades' },
-  { clave: 'movimientos', etiqueta: 'Movimientos' },
-  { clave: 'audiencias', etiqueta: 'Audiencias' },
-  { clave: 'traslados', etiqueta: 'Traslados' },
-  { clave: 'incidencias', etiqueta: 'Incidencias' },
-  { clave: 'archivos', etiqueta: 'Archivos' },
+const PESTANAS: { clave: Pestana; etiqueta: string; numero: string }[] = [
+  { clave: 'datos', etiqueta: 'Datos generales', numero: '01' },
+  { clave: 'domicilios', etiqueta: 'Domicilios', numero: '02' },
+  { clave: 'ingresos', etiqueta: 'Ingresos / Libertades', numero: '03' },
+  { clave: 'movimientos', etiqueta: 'Movimientos', numero: '04' },
+  { clave: 'audiencias', etiqueta: 'Audiencias', numero: '05' },
+  { clave: 'traslados', etiqueta: 'Traslados', numero: '06' },
+  { clave: 'incidencias', etiqueta: 'Incidencias', numero: '07' },
+  { clave: 'archivos', etiqueta: 'Archivos', numero: '08' },
 ];
 
 /** Expediente de la persona (RF-PER-004): datos, domicilios y actividades. */
@@ -58,6 +61,8 @@ const PESTANAS: { clave: Pestana; etiqueta: string }[] = [
     ActividadIncidenciasComponent,
     MapaDomicilioComponent,
     DomicilioFormComponent,
+    ModalFormulario,
+    IconoComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './persona-detail.component.html',
@@ -93,12 +98,6 @@ export class PersonaDetailComponent {
     return this.persona() ? nombreCompleto(this.persona()!) : '';
   }
 
-  iniciales(): string {
-    const p = this.persona();
-    if (!p) return '';
-    return ((p.primerNombre?.[0] ?? '') + (p.apellidoPaterno?.[0] ?? '')).toUpperCase() || '?';
-  }
-
   datosGenerales(): { etiqueta: string; valor?: string | number | null }[] {
     const p = this.persona();
     if (!p) return [];
@@ -125,8 +124,39 @@ export class PersonaDetailComponent {
     this.persona.update((actual) => (actual ? { ...actual, ...actualizada } : actual));
   }
 
+  alNavegarPestanas(evento: KeyboardEvent, indice: number): void {
+    let destino = indice;
+
+    if (evento.key === 'ArrowRight') destino = (indice + 1) % this.pestanas.length;
+    else if (evento.key === 'ArrowLeft')
+      destino = (indice - 1 + this.pestanas.length) % this.pestanas.length;
+    else if (evento.key === 'Home') destino = 0;
+    else if (evento.key === 'End') destino = this.pestanas.length - 1;
+    else return;
+
+    evento.preventDefault();
+    this.pestana.set(this.pestanas[destino].clave);
+    const lista = (evento.currentTarget as HTMLElement).parentElement;
+    lista?.querySelectorAll<HTMLButtonElement>('[role="tab"]').item(destino).focus();
+  }
+
+  alternarFormDomicilio(): void {
+    this.mostrarFormDomicilio.update((visible) => !visible);
+    this.errorDomicilio.set(null);
+  }
+
   /** Alta de domicilio desde el expediente usando el formulario compartido. */
-  async agregarDomicilio(formulario: DomicilioFormComponent): Promise<void> {
+  async agregarDomicilio(
+    formulario: DomicilioFormComponent,
+    formularioAngular: NgForm,
+    evento: SubmitEvent,
+  ): Promise<void> {
+    const errorValidacion = validarFormulario(formularioAngular, evento);
+    if (errorValidacion) {
+      this.errorDomicilio.set(null);
+      this.toast.error(errorValidacion);
+      return;
+    }
     this.guardandoDomicilio.set(true);
     this.errorDomicilio.set(null);
     try {
@@ -139,7 +169,7 @@ export class PersonaDetailComponent {
       formulario.reiniciar();
       await this.cargar(this.idPersona());
     } catch (err) {
-      this.errorDomicilio.set(mensajeDe(err));
+      this.toast.error(presentarErrorFormulario(formularioAngular, evento, err));
     } finally {
       this.guardandoDomicilio.set(false);
     }

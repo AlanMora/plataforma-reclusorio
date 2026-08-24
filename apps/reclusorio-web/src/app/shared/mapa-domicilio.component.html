@@ -1,13 +1,24 @@
-<div class="space-y-2">
+<div class="space-y-2.5">
   @if (interactivo()) {
     <div>
-      <label class="campo-etiqueta" for="mapaBusqueda">Buscar domicilio completo</label>
+      <div class="mb-1.5 flex items-end justify-between gap-3">
+        <label class="campo-etiqueta" for="mapaBusqueda">Buscar domicilio completo</label>
+        <span class="font-mono text-[9px] uppercase tracking-[0.2em] text-cyan-300/60">
+          Mapbox · MX
+        </span>
+      </div>
       <div class="relative">
+        <span
+          class="pointer-events-none absolute left-3.5 top-1/2 z-10 -translate-y-1/2 text-cyan-300/65"
+          aria-hidden="true"
+        >
+          <rw-icono nombre="buscar" [tamano]="16" />
+        </span>
         <input
-          class="campo pr-24"
+          class="campo pl-9 pr-24"
           id="mapaBusqueda"
           name="mapaBusqueda"
-          placeholder="Calle, número, colonia, municipio, estado…"
+          placeholder="Ej. Sexta Pte. 427, Nuevo México, Jalisco"
           autocomplete="off"
           [(ngModel)]="consulta"
           (ngModelChange)="alTeclear()"
@@ -16,23 +27,40 @@
         />
         @if (buscando()) {
           <span
-            class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 animate-pulse font-mono text-[10px] uppercase tracking-widest text-neon"
+            class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 animate-pulse font-mono text-[9px] uppercase tracking-widest text-neon"
           >
             Buscando…
           </span>
         }
         @if (resultados().length > 0) {
           <ul
-            class="absolute left-0 right-0 top-full z-[1100] mt-1 max-h-56 divide-y divide-borde overflow-y-auto rounded-lg border border-borde bg-panel-2 shadow-xl shadow-black/50"
+            class="glass-popover absolute left-0 right-0 top-full z-[1200] mt-2 max-h-64 divide-y divide-white/[0.06] overflow-y-auto rounded-xl"
+            role="listbox"
           >
-            @for (r of resultados(); track r.place_id) {
+            @for (resultado of resultados(); track resultado.id) {
               <li>
                 <button
-                  class="block w-full px-3 py-2 text-left text-xs text-slate-300 hover:bg-neon/10 hover:text-neon"
+                  class="group flex w-full items-start gap-3 px-3.5 py-3 text-left transition hover:bg-cyan-300/[0.07] focus-visible:bg-cyan-300/[0.07] focus-visible:outline-none"
                   type="button"
-                  (click)="elegir(r)"
+                  role="option"
+                  (click)="elegir(resultado)"
                 >
-                  {{ r.display_name }}
+                  <span
+                    class="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg border border-cyan-300/15 bg-cyan-300/[0.06] text-xs text-cyan-200 transition group-hover:border-cyan-300/35 group-hover:bg-cyan-300/10"
+                    aria-hidden="true"
+                  >
+                    <rw-icono nombre="mapa" [tamano]="15" />
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block text-xs leading-5 text-slate-200 group-hover:text-white">
+                      {{ etiqueta(resultado) }}
+                    </span>
+                    <span
+                      class="mt-1 block font-mono text-[9px] uppercase tracking-[0.18em] text-cyan-300/55"
+                    >
+                      {{ tipoResultado(resultado) }}
+                    </span>
+                  </span>
                 </button>
               </li>
             }
@@ -40,15 +68,44 @@
         }
       </div>
       @if (errorBusqueda()) {
-        <p class="mt-1 text-xs text-alerta">{{ errorBusqueda() }}</p>
+        <p class="mt-1.5 text-xs text-alerta">{{ errorBusqueda() }}</p>
       }
     </div>
   }
-  <div #contenedor class="mapa-bn h-72 w-full overflow-hidden rounded-lg border border-borde"></div>
+
+  <div
+    class="mapa-mapbox relative h-72 w-full overflow-hidden rounded-xl border border-cyan-200/15"
+  >
+    <div #contenedor class="absolute inset-0"></div>
+    <div
+      class="pointer-events-none absolute left-3 top-3 z-10 flex items-center gap-2 rounded-lg border border-cyan-200/15 bg-slate-950/65 px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-[0.18em] text-cyan-100/70 backdrop-blur-md"
+    >
+      <span class="size-1.5 animate-pulse rounded-full bg-cyan-300 shadow-[0_0_9px_#67e8f9]"></span>
+      Jalisco · enlace geográfico
+    </div>
+    @if (resolviendoPunto()) {
+      <div
+        class="pointer-events-none absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full border border-cyan-200/15 bg-slate-950/75 px-3 py-1.5 font-mono text-[9px] uppercase tracking-widest text-cyan-200 backdrop-blur-md"
+      >
+        Resolviendo ubicación…
+      </div>
+    }
+    @if (errorMapa()) {
+      <div class="absolute inset-0 z-20 grid place-items-center bg-slate-950/95 p-6 text-center">
+        <div>
+          <p class="font-mono text-[10px] uppercase tracking-[0.22em] text-alerta">
+            Mapa no disponible
+          </p>
+          <p class="mt-2 max-w-sm text-xs leading-5 text-slate-400">{{ errorMapa() }}</p>
+        </div>
+      </div>
+    }
+  </div>
+
   @if (interactivo()) {
-    <p class="text-[10px] uppercase tracking-widest text-slate-600">
-      Escriba el domicilio y elija una coincidencia de la lista, o haga clic en el mapa para fijar
-      la ubicación; los campos del domicilio se llenan en automático.
+    <p class="text-[10px] leading-4 text-slate-500">
+      Busque una dirección o marque el punto exacto en el mapa. Puede arrastrar el pin para afinar
+      la ubicación y completar los campos automáticamente.
     </p>
   }
 </div>

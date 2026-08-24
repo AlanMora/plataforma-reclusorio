@@ -19,6 +19,7 @@ out-tsc/
 .env.local
 .env.*.local
 docker-compose.override.yml
+apps/reclusorio-web/public/mapbox-config.js
 
 # Logs
 logs/

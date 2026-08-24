@@ -12,6 +12,7 @@ import { ElementoCardComponent } from '../../shared/elemento-card.component';
 import { nombreCompleto } from '../personas/personas-list.component';
 import { Elemento, IncidenciaDetalle, Paginado, Persona, ValorCatalogo } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
+import { IconoComponent } from '../../shared/icono.component';
 
 /** Detalle de incidencia con TODAS sus asociaciones (RF-INC-003..009). */
 @Component({
@@ -25,6 +26,7 @@ import { mensajeDe } from '../../core/problem';
     ArchivosPanelComponent,
     ElementoPickerComponent,
     ElementoCardComponent,
+    IconoComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './incidencia-detail.component.html',

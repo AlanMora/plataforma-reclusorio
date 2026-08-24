@@ -7,7 +7,7 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import {
   CATALOGOS_ADMINISTRABLES,
   CATALOGOS_FIJOS,
@@ -17,10 +17,13 @@ import { ToastService } from '../../core/toast.service';
 import { PaginadorComponent } from '../../shared/paginador.component';
 import { Paginado, ValorCatalogo } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
+import { ModalFormulario } from '../../shared/modal-formulario/modal-formulario';
 import {
   DomicilioGeocodificado,
   MapaDomicilioComponent,
 } from '../../shared/mapa-domicilio.component';
+import { presentarErrorFormulario, validarFormulario } from '../../core/validacion-formulario';
+import { IconoComponent } from '../../shared/icono.component';
 
 /**
  * Administración de catálogos (RF-CAT-001..010): alta, corrección,
@@ -32,7 +35,13 @@ import {
 @Component({
   selector: 'rw-catalogos',
   standalone: true,
-  imports: [FormsModule, MapaDomicilioComponent, PaginadorComponent],
+  imports: [
+    FormsModule,
+    MapaDomicilioComponent,
+    PaginadorComponent,
+    ModalFormulario,
+    IconoComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './catalogos.component.html',
 })
@@ -73,6 +82,10 @@ export class CatalogosComponent {
       [...CATALOGOS_ADMINISTRABLES, ...CATALOGOS_FIJOS].find((c) => c.slug === this.slug())
         ?.etiqueta ?? this.slug(),
   );
+  readonly valorEnEdicion = computed(() => {
+    const id = this.enEdicion();
+    return id ? (this.pagina().items.find((valor) => valor.id === id) ?? null) : null;
+  });
 
   constructor() {
     // Cambiar de catálogo en el sidebar reinicia listado, edición y formulario.
@@ -112,8 +125,28 @@ export class CatalogosComponent {
     void this.cargar(1);
   }
 
-  async crear(): Promise<void> {
-    if (!this.nuevo.nombre.trim()) return;
+  abrirAlta(): void {
+    this.enEdicion.set(null);
+    this.nuevo = { nombre: '', descripcion: '' };
+    this.mostrarForm.set(true);
+  }
+
+  cerrarAlta(): void {
+    this.mostrarForm.set(false);
+    this.nuevo = { nombre: '', descripcion: '' };
+  }
+
+  cerrarCorreccion(): void {
+    this.enEdicion.set(null);
+  }
+
+  async crear(formulario: NgForm, evento: SubmitEvent): Promise<void> {
+    const errorValidacion = validarFormulario(formulario, evento);
+    if (errorValidacion) {
+      this.error.set(null);
+      this.toast.error(errorValidacion);
+      return;
+    }
     this.guardando.set(true);
     this.error.set(null);
     try {
@@ -122,17 +155,17 @@ export class CatalogosComponent {
         descripcion: this.nuevo.descripcion.trim() || undefined,
       });
       this.toast.ok('Valor agregado al catálogo.');
-      this.nuevo = { nombre: '', descripcion: '' };
-      this.mostrarForm.set(false);
+      this.cerrarAlta();
       await this.cargar(1);
     } catch (err) {
-      this.error.set(mensajeDe(err));
+      this.toast.error(presentarErrorFormulario(formulario, evento, err));
     } finally {
       this.guardando.set(false);
     }
   }
 
   iniciarCorreccion(v: ValorCatalogo): void {
+    this.mostrarForm.set(false);
     this.enEdicion.set(v.id);
     this.edicion = {
       nombre: v.nombre,
@@ -154,10 +187,10 @@ export class CatalogosComponent {
           : {}),
       });
       this.toast.ok('Valor corregido (conserva su identificador).');
-      this.enEdicion.set(null);
+      this.cerrarCorreccion();
       await this.cargar(this.pagina().page);
     } catch (err) {
-      this.error.set(mensajeDe(err));
+      this.toast.error(mensajeDe(err));
     } finally {
       this.guardando.set(false);
     }

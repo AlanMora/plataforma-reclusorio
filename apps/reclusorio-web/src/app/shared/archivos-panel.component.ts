@@ -8,6 +8,7 @@ import { Archivo, ReferenciaArchivo } from '../core/models';
 import { mensajeDe } from '../core/problem';
 import { VistaPreviaComponent, tipoVistaPrevia } from './vista-previa.component';
 import { ArchivoMiniaturaComponent } from './archivo-miniatura.component';
+import { IconoComponent } from './icono.component';
 
 /**
  * Expediente digital reutilizable (RF-ARC-001..007): lista, sube, descarga
@@ -17,7 +18,14 @@ import { ArchivoMiniaturaComponent } from './archivo-miniatura.component';
 @Component({
   selector: 'rw-archivos-panel',
   standalone: true,
-  imports: [DatePipe, FormsModule, PermisoDirective, VistaPreviaComponent, ArchivoMiniaturaComponent],
+  imports: [
+    DatePipe,
+    FormsModule,
+    PermisoDirective,
+    VistaPreviaComponent,
+    ArchivoMiniaturaComponent,
+    IconoComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './archivos-panel.component.html',
 })
@@ -63,7 +71,7 @@ export class ArchivosPanelComponent {
       this.descripcion = '';
       await this.cargar(this.referencia(), this.id());
     } catch (err) {
-      this.error.set(mensajeDe(err));
+      this.toast.error(mensajeDe(err));
     } finally {
       this.subiendo.set(false);
     }

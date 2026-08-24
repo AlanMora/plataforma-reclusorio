@@ -8,11 +8,12 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
 import { ToastService } from '../../core/toast.service';
 import { Persona } from '../../core/models';
-import { mensajeDe, problemaDe } from '../../core/problem';
+import { mensajeDe } from '../../core/problem';
+import { presentarErrorFormulario, validarFormulario } from '../../core/validacion-formulario';
 import { conValorActual } from '../../core/ubicaciones-dummy';
 import {
   ESTADOS_CIVILES_DUMMY,
@@ -25,6 +26,7 @@ import {
 import { SelectBuscableComponent } from '../../shared/select-buscable.component';
 import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
 import { DomicilioFormComponent } from '../../shared/domicilio-form.component';
+import { IconoComponent } from '../../shared/icono.component';
 
 /**
  * Alta y modificación de personas (RF-PER-003/005).
@@ -36,7 +38,13 @@ import { DomicilioFormComponent } from '../../shared/domicilio-form.component';
 @Component({
   selector: 'rw-persona-form',
   standalone: true,
-  imports: [FormsModule, SelectBuscableComponent, SelectorFechaComponent, DomicilioFormComponent],
+  imports: [
+    FormsModule,
+    SelectBuscableComponent,
+    SelectorFechaComponent,
+    DomicilioFormComponent,
+    IconoComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './persona-form.component.html',
 })
@@ -46,6 +54,8 @@ export class PersonaFormComponent implements OnInit {
 
   readonly modo = input.required<'crear' | 'editar'>();
   readonly inicial = input<Persona | null>(null);
+  readonly idFormulario = input('formulario-persona');
+  readonly mostrarAcciones = input(true);
   readonly guardada = output<Persona>();
 
   readonly guardando = signal(false);
@@ -121,7 +131,13 @@ export class PersonaFormComponent implements OnInit {
     }
   }
 
-  async guardar(): Promise<void> {
+  async guardar(formulario: NgForm, evento: SubmitEvent): Promise<void> {
+    const errorValidacion = validarFormulario(formulario, evento);
+    if (errorValidacion) {
+      this.error.set(null);
+      this.toast.error(errorValidacion);
+      return;
+    }
     this.guardando.set(true);
     this.error.set(null);
     try {
@@ -139,8 +155,7 @@ export class PersonaFormComponent implements OnInit {
       }
       this.guardada.emit(persona);
     } catch (err) {
-      const p = problemaDe(err);
-      this.error.set(p.errors?.length ? p.errors.join('\n') : mensajeDe(err));
+      this.toast.error(presentarErrorFormulario(formulario, evento, err));
     } finally {
       this.guardando.set(false);
     }

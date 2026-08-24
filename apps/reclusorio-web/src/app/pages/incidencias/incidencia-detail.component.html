@@ -1,5 +1,8 @@
 <div class="mx-auto max-w-6xl space-y-5">
-  <a routerLink="/incidencias" class="etiqueta hover:text-neon">← Incidencias</a>
+  <a routerLink="/incidencias" class="etiqueta inline-flex items-center gap-1.5 hover:text-neon">
+    <rw-icono nombre="atras" [tamano]="13" />
+    Incidencias
+  </a>
 
   @if (error()) {
     <p class="alerta-error">{{ error() }}</p>
@@ -62,7 +65,10 @@
               placeholder="Nombre, alias o CURP"
               (keyup.enter)="buscarPersonas()"
             />
-            <button class="btn-secundario" type="button" (click)="buscarPersonas()">Buscar</button>
+            <button class="btn-secundario" type="button" (click)="buscarPersonas()">
+              <rw-icono nombre="buscar" [tamano]="15" />
+              Buscar
+            </button>
           </div>
           @for (p of candidatasPersonas(); track p.idPersona) {
             <button
@@ -102,6 +108,7 @@
               [disabled]="!autoridadSeleccionada"
               (click)="asociarAutoridad()"
             >
+              <rw-icono nombre="agregar" [tamano]="14" />
               Asociar
             </button>
           </div>

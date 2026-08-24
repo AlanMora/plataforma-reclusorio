@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { CatalogosService } from '../../core/catalogos.service';
 import { PermisoDirective } from '../../core/permiso.directive';
@@ -16,18 +16,32 @@ import { PaginadorComponent } from '../../shared/paginador.component';
 import { Incidencia, Paginado } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
 import { RevisionRegistroComponent } from '../../shared/revision-registro.component';
+import { ModalFormulario } from '../../shared/modal-formulario/modal-formulario';
+import { IncidenciaNuevaComponent } from './incidencia-nueva.component';
+import { IconoComponent } from '../../shared/icono.component';
 
 /** Consulta paginada de incidencias (RF-INC-009). */
 @Component({
   selector: 'rw-incidencias-list',
   standalone: true,
-  imports: [DatePipe, FormsModule, RouterLink, PermisoDirective, PaginadorComponent, RevisionRegistroComponent],
+  imports: [
+    DatePipe,
+    FormsModule,
+    RouterLink,
+    PermisoDirective,
+    PaginadorComponent,
+    RevisionRegistroComponent,
+    ModalFormulario,
+    IncidenciaNuevaComponent,
+    IconoComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './incidencias-list.component.html',
 })
 export class IncidenciasListComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly catalogos = inject(CatalogosService);
+  private readonly router = inject(Router);
 
   readonly pagina = signal<Paginado<Incidencia>>({
     items: [],
@@ -43,6 +57,7 @@ export class IncidenciasListComponent implements OnInit {
   );
   readonly cargando = signal(false);
   readonly error = signal<string | null>(null);
+  readonly mostrarAlta = signal(false);
 
   private mapaTipos = new Map<string, string>();
   private mapaCentros = new Map<string, string>();
@@ -68,6 +83,11 @@ export class IncidenciasListComponent implements OnInit {
 
   buscar(): void {
     void this.cargar(1);
+  }
+
+  alGuardar(incidencia: Incidencia): void {
+    this.mostrarAlta.set(false);
+    void this.router.navigate(['/incidencias', incidencia.idIncidencia]);
   }
 
   async cargar(page: number): Promise<void> {

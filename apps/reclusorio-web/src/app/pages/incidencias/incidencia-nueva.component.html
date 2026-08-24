@@ -1,14 +1,26 @@
-<div class="mx-auto max-w-6xl space-y-5">
-  <div>
-    <a routerLink="/incidencias" class="etiqueta hover:text-neon">← Incidencias</a>
-    <h2 class="mt-1 text-2xl font-bold text-slate-100">Registrar incidencia</h2>
-    <p class="mt-1 text-sm text-slate-500">
-      Los elementos participantes pueden asociarse aquí mismo; personas y autoridades se agregan
-      después, desde el detalle.
-    </p>
-  </div>
+<div class="space-y-5" [class.mx-auto]="!enModal()" [class.max-w-6xl]="!enModal()">
+  @if (!enModal()) {
+    <div>
+      <a routerLink="/incidencias" class="etiqueta inline-flex items-center gap-1.5 hover:text-neon">
+        <rw-icono nombre="atras" [tamano]="13" />
+        Incidencias
+      </a>
+      <h2 class="mt-1 text-2xl font-bold text-slate-100">Registrar incidencia</h2>
+      <p class="mt-1 text-sm text-slate-500">
+        Los elementos participantes pueden asociarse aquí mismo; personas y autoridades se agregan
+        después, desde el detalle.
+      </p>
+    </div>
+  }
 
-  <form class="panel grid gap-4 p-6 md:grid-cols-2" (ngSubmit)="crear()">
+  <form
+    #formularioIncidencia="ngForm"
+    [id]="idFormulario()"
+    class="grid gap-4 md:grid-cols-2"
+    [class.panel]="!enModal()"
+    [class.p-6]="!enModal()"
+    (ngSubmit)="crear(formularioIncidencia, $event)"
+  >
     <div>
       <label class="campo-etiqueta obligatorio" for="incCentro">Centro penitenciario</label>
       <rw-select-buscable
@@ -127,13 +139,13 @@
       </label>
       <rw-elemento-picker (elegido)="agregarElementoCaptura($event)" />
     </div>
-    @if (error()) {
-      <p class="alerta-error md:col-span-2">{{ error() }}</p>
+    @if (mostrarAcciones()) {
+      <div class="flex justify-end md:col-span-2">
+        <button class="btn-primario" type="submit" [disabled]="guardando()">
+          <rw-icono [nombre]="guardando() ? 'cargando' : 'guardar'" [tamano]="15" />
+          {{ guardando() ? 'Guardando…' : 'Registrar incidencia' }}
+        </button>
+      </div>
     }
-    <div class="flex justify-end md:col-span-2">
-      <button class="btn-primario" type="submit" [disabled]="guardando()">
-        {{ guardando() ? 'Guardando…' : 'Registrar incidencia' }}
-      </button>
-    </div>
   </form>
 </div>

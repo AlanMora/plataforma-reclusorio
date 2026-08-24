@@ -39,6 +39,7 @@
         />
       </div>
       <button class="btn-primario" type="submit" [disabled]="buscando()">
+        <rw-icono [nombre]="buscando() ? 'cargando' : 'buscar'" [tamano]="16" />
         {{ buscando() ? 'Buscando…' : 'Buscar coincidencias' }}
       </button>
     </form>
@@ -74,6 +75,7 @@
                     type="button"
                     (click)="editar(e)"
                   >
+                    <rw-icono nombre="editar" [tamano]="14" />
                     Editar
                   </button>
                 </td>
@@ -85,7 +87,8 @@
         <p class="text-sm text-slate-400">Sin coincidencias en el padrón.</p>
       }
       <div *rwPermiso="'elementos:crear'">
-        <button class="btn-primario btn-mini" type="button" (click)="mostrarAlta.set(true)">
+        <button class="btn-primario btn-mini" type="button" (click)="abrirAlta()">
+          <rw-icono nombre="agregar" [tamano]="14" />
           Ninguna coincidencia corresponde — registrar elemento nuevo
         </button>
       </div>
@@ -94,73 +97,100 @@
 
   <!-- Alta condicionada / edición -->
   @if (mostrarAlta() || elementoEnEdicion()) {
-    <form class="panel grid gap-4 p-4 md:grid-cols-3" (ngSubmit)="guardar()">
-      <p class="etiqueta md:col-span-3">
-        {{ elementoEnEdicion() ? 'Modificar elemento' : 'Alta de elemento (tras búsqueda previa)' }}
-      </p>
-      <div>
-        <label class="campo-etiqueta" for="grado">Grado</label>
-        <input class="campo" id="grado" name="grado" maxlength="50" [(ngModel)]="forma.grado" />
-      </div>
-      <div>
-        <label class="campo-etiqueta obligatorio" for="primerNombreElem">Nombre(s)</label>
-        <input
-          class="campo"
-          id="primerNombreElem"
-          name="primerNombre"
-          maxlength="100"
-          required
-          [(ngModel)]="forma.primerNombre"
-        />
-      </div>
-      <div>
-        <label class="campo-etiqueta obligatorio" for="apellidoPaternoElem">Apellido paterno</label>
-        <input
-          class="campo"
-          id="apellidoPaternoElem"
-          name="apellidoPaterno"
-          maxlength="100"
-          required
-          [(ngModel)]="forma.apellidoPaterno"
-        />
-      </div>
-      <div>
-        <label class="campo-etiqueta" for="apellidoMaternoElem">Apellido materno</label>
-        <input
-          class="campo"
-          id="apellidoMaternoElem"
-          name="apellidoMaterno"
-          maxlength="100"
-          [(ngModel)]="forma.apellidoMaterno"
-        />
-      </div>
-      <div>
-        <label class="campo-etiqueta" for="numeroElemento">No. de elemento</label>
-        <input
-          class="campo font-mono"
-          id="numeroElemento"
-          name="numeroElemento"
-          maxlength="50"
-          placeholder="Admite letras y ceros"
-          [(ngModel)]="forma.numeroElemento"
-        />
-      </div>
-      <div>
-        <label class="campo-etiqueta" for="adscripcion">Adscripción</label>
-        <input
-          class="campo"
-          id="adscripcion"
-          name="adscripcion"
-          maxlength="255"
-          [(ngModel)]="forma.adscripcion"
-        />
-      </div>
-      @if (errorForm()) {
-        <p class="alerta-error md:col-span-3">{{ errorForm() }}</p>
-      }
-      <div class="flex justify-end gap-2 md:col-span-3">
-        <button class="btn-secundario" type="button" (click)="cancelarForm()">Cancelar</button>
-        <button class="btn-primario" type="submit" [disabled]="guardando()">
+    <rw-modal-formulario
+      [titulo]="elementoEnEdicion() ? 'Editar elemento' : 'Registrar elemento'"
+      [etiqueta]="elementoEnEdicion() ? 'Edición de registro' : 'Nuevo registro'"
+      [descripcion]="
+        elementoEnEdicion()
+          ? 'Actualiza los datos del elemento sin perder de vista el padrón.'
+          : 'Completa el alta después de verificar que ninguna coincidencia corresponde.'
+      "
+      [bloquearCierre]="guardando()"
+      (cerrar)="cancelarForm()"
+    >
+      <form
+        #formularioElemento="ngForm"
+        id="formulario-elemento"
+        modal-contenido
+        class="grid gap-4 md:grid-cols-3"
+        (ngSubmit)="guardar(formularioElemento, $event)"
+      >
+        <div>
+          <label class="campo-etiqueta" for="grado">Grado</label>
+          <input class="campo" id="grado" name="grado" maxlength="50" [(ngModel)]="forma.grado" />
+        </div>
+        <div>
+          <label class="campo-etiqueta obligatorio" for="primerNombreElem">Nombre(s)</label>
+          <input
+            class="campo"
+            id="primerNombreElem"
+            name="primerNombre"
+            maxlength="100"
+            required
+            [(ngModel)]="forma.primerNombre"
+          />
+        </div>
+        <div>
+          <label class="campo-etiqueta obligatorio" for="apellidoPaternoElem"
+            >Apellido paterno</label
+          >
+          <input
+            class="campo"
+            id="apellidoPaternoElem"
+            name="apellidoPaterno"
+            maxlength="100"
+            required
+            [(ngModel)]="forma.apellidoPaterno"
+          />
+        </div>
+        <div>
+          <label class="campo-etiqueta" for="apellidoMaternoElem">Apellido materno</label>
+          <input
+            class="campo"
+            id="apellidoMaternoElem"
+            name="apellidoMaterno"
+            maxlength="100"
+            [(ngModel)]="forma.apellidoMaterno"
+          />
+        </div>
+        <div>
+          <label class="campo-etiqueta" for="numeroElemento">No. de elemento</label>
+          <input
+            class="campo font-mono"
+            id="numeroElemento"
+            name="numeroElemento"
+            maxlength="50"
+            placeholder="Admite letras y ceros"
+            [(ngModel)]="forma.numeroElemento"
+          />
+        </div>
+        <div>
+          <label class="campo-etiqueta" for="adscripcion">Adscripción</label>
+          <input
+            class="campo"
+            id="adscripcion"
+            name="adscripcion"
+            maxlength="255"
+            [(ngModel)]="forma.adscripcion"
+          />
+        </div>
+      </form>
+      <div modal-acciones class="modal-footer-actions">
+        <button
+          class="btn-secundario"
+          type="button"
+          [disabled]="guardando()"
+          (click)="cancelarForm()"
+        >
+          Cancelar
+        </button>
+        <button
+          class="btn-primario"
+          type="submit"
+          form="formulario-elemento"
+          [disabled]="guardando()"
+        >
+          <rw-icono nombre="guardar" [tamano]="16" />
           {{
             guardando()
               ? 'Guardando…'
@@ -170,7 +200,7 @@
           }}
         </button>
       </div>
-    </form>
+    </rw-modal-formulario>
   }
 
   <!-- Padrón completo -->
@@ -206,6 +236,7 @@
                 type="button"
                 (click)="editar(e)"
               >
+                <rw-icono nombre="editar" [tamano]="14" />
                 Editar
               </button>
             </td>
