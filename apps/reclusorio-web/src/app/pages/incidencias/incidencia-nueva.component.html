@@ -7,8 +7,8 @@
       </a>
       <h2 class="mt-1 text-2xl font-bold text-slate-100">Registrar incidencia</h2>
       <p class="mt-1 text-sm text-slate-500">
-        Los elementos participantes pueden asociarse aquí mismo; personas y autoridades se agregan
-        después, desde el detalle.
+        Elementos participantes, personas, autoridades de apoyo y archivos pueden capturarse aquí
+        mismo; se asocian en cuanto se guarda el registro.
       </p>
     </div>
   }
@@ -138,6 +138,125 @@
         Marcar como primer respondiente al elegirlo
       </label>
       <rw-elemento-picker (elegido)="agregarElementoCaptura($event)" />
+    </div>
+    <!-- Personas asociadas: se asocian al registrar (RF-INC-003) -->
+    <div
+      *rwPermiso="'incidencias:asociar'"
+      class="md:col-span-2"
+      (keydown.enter)="$event.preventDefault()"
+    >
+      <p class="campo-etiqueta">
+        Personas asociadas (opcional, se asocian al registrar — RF-INC-003)
+      </p>
+      @if (personasCaptura().length > 0) {
+        <div class="mb-2 flex flex-wrap gap-2">
+          @for (p of personasCaptura(); track p.idPersona) {
+            <span
+              class="inline-flex items-center gap-2 rounded-full border border-borde bg-panel-2 px-3 py-1 text-xs text-slate-300"
+            >
+              {{ nombreDePersona(p) }}
+              @if (p.curp) {
+                <span class="font-mono text-[10px] text-slate-500">{{ p.curp }}</span>
+              }
+              <button
+                class="text-slate-500 hover:text-red-400"
+                type="button"
+                title="Quitar persona"
+                (click)="quitarPersonaCaptura(p.idPersona)"
+              >
+                <rw-icono nombre="cerrar" [tamano]="12" />
+              </button>
+            </span>
+          }
+        </div>
+      }
+      <div class="flex flex-wrap items-center gap-2">
+        <input
+          class="campo max-w-xs"
+          name="textoPersonaCaptura"
+          maxlength="150"
+          placeholder="Nombre, alias o CURP…"
+          [(ngModel)]="textoPersona"
+          (keydown.enter)="$event.preventDefault(); buscarPersonas()"
+        />
+        <button class="btn-secundario btn-mini" type="button" (click)="buscarPersonas()">
+          <rw-icono nombre="buscar" [tamano]="13" />
+          Buscar
+        </button>
+      </div>
+      @if (candidatasPersonas().length > 0) {
+        <ul class="mt-2 max-w-lg divide-y divide-borde rounded-lg border border-borde">
+          @for (p of candidatasPersonas(); track p.idPersona) {
+            <li class="flex items-center justify-between gap-3 px-3 py-2">
+              <span class="min-w-0 truncate text-xs text-slate-300">
+                {{ nombreDePersona(p) }}
+                @if (p.curp) {
+                  <span class="ml-1 font-mono text-[10px] text-slate-500">{{ p.curp }}</span>
+                }
+              </span>
+              <button
+                class="btn-secundario btn-mini shrink-0"
+                type="button"
+                (click)="agregarPersonaCaptura(p)"
+              >
+                Agregar
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+    <!-- Autoridades de apoyo: se asocian al registrar (RF-INC-004) -->
+    <div *rwPermiso="'incidencias:asociar'" class="md:col-span-2">
+      <p class="campo-etiqueta">
+        Autoridades de apoyo (opcional, se asocian al registrar — RF-INC-004)
+      </p>
+      @if (autoridadesCaptura().length > 0) {
+        <div class="mb-2 flex flex-wrap gap-2">
+          @for (a of autoridadesCaptura(); track a.id) {
+            <span
+              class="inline-flex items-center gap-2 rounded-full border border-borde bg-panel-2 px-3 py-1 text-xs text-slate-300"
+            >
+              {{ a.nombre }}
+              <button
+                class="text-slate-500 hover:text-red-400"
+                type="button"
+                title="Quitar autoridad"
+                (click)="quitarAutoridadCaptura(a.id)"
+              >
+                <rw-icono nombre="cerrar" [tamano]="12" />
+              </button>
+            </span>
+          }
+        </div>
+      }
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="w-full max-w-xs">
+          <rw-select-buscable
+            idCampo="incAutoridad"
+            name="autoridadCaptura"
+            placeholder="— Autoridad del catálogo —"
+            [opciones]="aOpciones(autoridades())"
+            [(ngModel)]="autoridadSeleccionada"
+          />
+        </div>
+        <button
+          class="btn-secundario btn-mini"
+          type="button"
+          [disabled]="!autoridadSeleccionada"
+          (click)="agregarAutoridadCaptura()"
+        >
+          <rw-icono nombre="agregar" [tamano]="13" />
+          Agregar
+        </button>
+      </div>
+    </div>
+    <!-- La subida exige archivos:crear en el backend; sin él, el campo no se ofrece -->
+    <div *rwPermiso="'archivos:crear'" class="md:col-span-2">
+      <label class="campo-etiqueta" for="incArchivos"
+        >Archivos (opcional, se suben con el registro; cada uno con su descripción)</label
+      >
+      <rw-archivos-captura #archivosCaptura idCampo="incArchivos" />
     </div>
     @if (mostrarAcciones()) {
       <div class="flex justify-end md:col-span-2">

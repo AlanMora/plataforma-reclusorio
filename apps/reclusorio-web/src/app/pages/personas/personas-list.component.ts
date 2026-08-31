@@ -13,6 +13,7 @@ import { ApiService } from '../../core/api.service';
 import { PermisoDirective } from '../../core/permiso.directive';
 import { PaginadorComponent } from '../../shared/paginador.component';
 import { Paginado, Persona } from '../../core/models';
+import { calcularEdad } from '../../core/edad';
 import { mensajeDe } from '../../core/problem';
 import { ModalFormulario } from '../../shared/modal-formulario/modal-formulario';
 import { PersonaFormComponent } from './persona-form.component';
@@ -62,6 +63,11 @@ export class PersonasListComponent implements OnInit {
   curpBusqueda = '';
 
   nombreDe = nombreCompleto;
+
+  /** Edad del backend o calculada aquí (RF-GEN-008: siempre visible). */
+  edadDe(p: Persona): number | null {
+    return p.edad ?? calcularEdad(p.fechaNacimiento);
+  }
 
   ngOnInit(): void {
     void this.cargar(1);

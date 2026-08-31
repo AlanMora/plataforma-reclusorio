@@ -13,6 +13,7 @@ import { ApiService } from '../../core/api.service';
 import { ToastService } from '../../core/toast.service';
 import { Persona } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
+import { calcularEdad } from '../../core/edad';
 import { presentarErrorFormulario, validarFormulario } from '../../core/validacion-formulario';
 import { conValorActual } from '../../core/ubicaciones-dummy';
 import {
@@ -64,6 +65,13 @@ export class PersonaFormComponent implements OnInit {
   /** Sección de domicilio integrada al alta (solo modo crear). */
   private readonly formDomicilio = viewChild<DomicilioFormComponent>('formDomicilio');
 
+  /** Máximo elegible para nacimiento: AYER (ni hoy ni futuras). */
+  readonly fechaMaximaNacimiento = (() => {
+    const ayer = new Date();
+    ayer.setDate(ayer.getDate() - 1);
+    return `${ayer.getFullYear()}-${String(ayer.getMonth() + 1).padStart(2, '0')}-${String(ayer.getDate()).padStart(2, '0')}`;
+  })();
+
   modelo: Record<string, string> = {
     primerNombre: '',
     apellidoPaterno: '',
@@ -109,14 +117,20 @@ export class PersonaFormComponent implements OnInit {
   }
 
   /**
-   * El teléfono solo admite dígitos (RF-GEN-004): descarta letras, espacios y
-   * símbolos al teclear o pegar. Corrige también el elemento porque ngModel no
-   * repinta la vista cuando el valor saneado coincide con el anterior.
+   * El teléfono solo admite dígitos (RF-GEN-004) y máximo 10 (numeración
+   * nacional): descarta letras, espacios y símbolos al teclear o pegar.
+   * Corrige también el elemento porque ngModel no repinta la vista cuando el
+   * valor saneado coincide con el anterior.
    */
   sanearTelefono(input: HTMLInputElement): void {
-    const limpio = input.value.replace(/\D+/g, '');
+    const limpio = input.value.replace(/\D+/g, '').slice(0, 10);
     this.modelo['numeroTelefono'] = limpio;
     if (input.value !== limpio) input.value = limpio;
+  }
+
+  /** Edad calculada en vivo desde la fecha capturada (RF-GEN-008). */
+  edadCalculada(): number | null {
+    return calcularEdad(this.modelo['fechaNacimiento']);
   }
 
   ngOnInit(): void {

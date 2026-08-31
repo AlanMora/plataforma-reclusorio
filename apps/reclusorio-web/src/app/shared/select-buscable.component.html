@@ -1,10 +1,11 @@
 <div class="relative">
   <button
+    #botonSelect
     class="campo flex items-center justify-between gap-2 text-left"
     type="button"
     [id]="idCampo()"
     [disabled]="deshabilitado()"
-    (click)="alternar()"
+    (click)="alternar(botonSelect)"
   >
     <span class="truncate" [class.text-slate-600]="!valor()">{{
       etiquetaSeleccionada() || placeholder()
@@ -14,7 +15,11 @@
 
   @if (abierto()) {
     <div
-      class="absolute left-0 right-0 top-full z-[1100] mt-1 overflow-hidden rounded-lg border border-borde bg-panel-2 shadow-xl shadow-black/50"
+      class="absolute left-0 right-0 z-[1100] overflow-hidden rounded-lg border border-borde bg-panel-2 shadow-xl shadow-black/50"
+      [class.top-full]="!haciaArriba()"
+      [class.mt-1]="!haciaArriba()"
+      [class.bottom-full]="haciaArriba()"
+      [class.mb-1]="haciaArriba()"
     >
       <div class="border-b border-borde p-2">
         <input
@@ -52,7 +57,18 @@
             </button>
           </li>
         }
-        @if (filtradas().length === 0) {
+        @if (textoLibre()) {
+          <li>
+            <button
+              class="block w-full border-t border-borde px-3 py-2 text-left text-xs text-neon hover:bg-neon/10"
+              type="button"
+              (click)="elegir(textoLibre())"
+            >
+              Usar «{{ textoLibre() }}»
+            </button>
+          </li>
+        }
+        @if (filtradas().length === 0 && !textoLibre()) {
           <li class="px-3 py-2 text-xs text-slate-600">Sin coincidencias.</li>
         }
       </ul>

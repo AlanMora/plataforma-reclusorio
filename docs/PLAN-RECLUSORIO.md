@@ -71,6 +71,20 @@ Registradas conforme al mandato §22.10 (no asumir silenciosamente):
 | P11 | **Asistente de voz del mapa Penitenciarios** | §2.2 deja reportes/tableros fuera de alcance; el asistente requiere conteos de incidencias por centro | **APROBADA (13/08/2026, indicación directa del equipo):** asistente de voz en `/penitenciarios` — dictado y respuesta hablada con las APIs del navegador (Web Speech, es-MX; nada sale del sistema), intérprete de intenciones por reglas en el front (`asistente-intents.ts`, enchufable a LLM después) y endpoint de agregación `GET /incidencias/resumen-por-centro` (permiso `incidencias:consultar`, excluye DESCARTADOS de P10, sin tablas ni campos nuevos). Comandos: enfocar centro, población, incidencias por centro/periodo con capa en el mapa, resumen |
 | P9 | **Coordenadas y catálogos de ubicación en domicilios y centros** | El Modelo de Datos v1.0 no define `latitud`/`longitud` ni catálogos de país/estado/municipio | **APROBADA (11/08/2026, indicación directa del equipo):** columnas `latitud`/`longitud` (double precision, nulas) en `domicilios` Y en `centros`, capturadas desde el mapa (Leaflet + geocodificación Nominatim/OSM). Los centros penitenciarios se ubican al editarlos en Catálogos y se visualizan en el módulo Penitenciarios (mapa general); coordenadas iniciales aproximadas sembradas por el seeder (solo cuando faltan). País/estado/municipio pasan a selects en el frontend con data dummy en `apps/reclusorio-web/src/app/core/ubicaciones-dummy.ts`, a reemplazar por seeders/catálogos reales cuando el equipo los entregue |
 
+### Ajustes de la ronda de QA (31/08/2026)
+
+Observaciones del equipo atendidas sin tocar el esquema del modelo:
+
+- **fechaNacimiento**: bloqueada la captura del día en curso y posteriores (selector con máximo = ayer + validación en backend, RF-GEN-004). La edad se muestra calculada en vivo en el formulario y como respaldo en listado/detalle.
+- **numeroTelefono**: acotado a **10 dígitos** (numeración nacional) en frontend y DTOs; la columna sigue VARCHAR(50) fiel al modelo. *Si el equipo requiere teléfonos internacionales (>10), ajustar el límite.*
+- **Captura manual en selects** (`permitirLibre` del select buscable): ocupación, nacionalidad y país/estado/municipio de domicilio aceptan texto libre además del catálogo dummy (los campos ya eran texto en el modelo).
+- **Adscripción de elementos**: catálogo **derivado** del padrón (`GET /elementos/adscripciones`, valores distintos ya capturados) + escritura libre. NO se creó tabla de adscripciones (no existe en el modelo v1.0); si el equipo la aprueba, se migra a catálogo administrable.
+- **Desplegables recortados**: los selects y calendarios se abren hacia arriba cuando no hay espacio abajo (modales con scroll).
+- **Orden natural de catálogos** ("menor a mayor"): valores con número inicial (JUEZ 1..21) se ordenan numéricamente en backend y frontend.
+- **Archivos con descripción en la captura integrada**: componente `rw-archivos-captura` (descripción por archivo ANTES de guardar) en ingresos, movimientos, audiencias, traslados e incidencias; columna Descripción visible en el panel de archivos.
+- **Incidencias**: personas, autoridades de apoyo y archivos ahora se capturan EN el alta (módulo Incidencias y pestaña del expediente); se asocian/suben al crear el registro, igual que los elementos.
+- Etiqueta «Nombre del juez (texto)» → «Nombre del juez».
+
 ## 5. Definiciones ya resueltas por la base
 
 - DP-001 (usuarios/roles/sesiones/notificaciones fuera del dominio) → microservicios auth/configuration/notification ✓

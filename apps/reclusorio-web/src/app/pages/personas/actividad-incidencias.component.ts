@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, input, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -7,6 +15,7 @@ import { CatalogosService } from '../../core/catalogos.service';
 import { ToastService } from '../../core/toast.service';
 import { PermisoDirective } from '../../core/permiso.directive';
 import { ArchivosPanelComponent } from '../../shared/archivos-panel.component';
+import { ArchivosCapturaComponent } from '../../shared/archivos-captura.component';
 import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
 import { SelectBuscableComponent, aOpciones } from '../../shared/select-buscable.component';
 import { ElementoPickerComponent, nombreElemento } from '../../shared/elemento-picker.component';
@@ -45,6 +54,7 @@ import {
     FormsModule,
     PermisoDirective,
     ArchivosPanelComponent,
+    ArchivosCapturaComponent,
     SelectorFechaComponent,
     SelectBuscableComponent,
     ElementoPickerComponent,
@@ -79,9 +89,16 @@ export class ActividadIncidenciasComponent implements OnInit {
 
   readonly centros = signal<ValorCatalogo[]>([]);
   readonly tipos = signal<ValorCatalogo[]>([]);
+  readonly autoridades = signal<ValorCatalogo[]>([]);
+  /** Autoridades de apoyo elegidas durante la captura (RF-INC-004). */
+  readonly autoridadesCaptura = signal<ValorCatalogo[]>([]);
+
+  /** Archivos elegidos durante la captura; se suben al crear (RF-INC-009). */
+  private readonly archivosCaptura = viewChild<ArchivosCapturaComponent>('archivosCaptura');
 
   marcarPrimerRespondiente = false;
   marcarPrimerRespondienteCaptura = false;
+  autoridadSeleccionada = '';
 
   mapaTipos = new Map<string, string>();
   mapaCentros = new Map<string, string>();
@@ -131,8 +148,42 @@ export class ActividadIncidenciasComponent implements OnInit {
       narrativa: '',
     };
     this.elementosCaptura.set([]);
+    this.autoridadesCaptura.set([]);
+    this.autoridadSeleccionada = '';
+    this.archivosCaptura()?.limpiar();
     this.marcarPrimerRespondienteCaptura = false;
     this.errorForm.set(null);
+  }
+
+  agregarAutoridadCaptura(): void {
+    const elegida = this.autoridades().find((a) => a.id === this.autoridadSeleccionada);
+    if (!elegida) return;
+    if (this.autoridadesCaptura().some((a) => a.id === elegida.id)) {
+      this.toast.error('Esa autoridad ya está en la lista de la captura.');
+      return;
+    }
+    this.autoridadesCaptura.update((lista) => [...lista, elegida]);
+    this.autoridadSeleccionada = '';
+  }
+
+  quitarAutoridadCaptura(id: string): void {
+    this.autoridadesCaptura.update((lista) => lista.filter((a) => a.id !== id));
+  }
+
+  /** Asocia las autoridades elegidas; un fallo no revierte la captura. */
+  private async asociarAutoridadesCaptura(idIncidencia: string): Promise<void> {
+    for (const a of this.autoridadesCaptura()) {
+      try {
+        await this.api.post(`/api/v1/incidencias/${idIncidencia}/autoridades`, {
+          idAutoridad: a.id,
+        });
+      } catch (err) {
+        this.toast.error(
+          `La incidencia se guardó, pero la autoridad "${a.nombre}" no se pudo asociar: ${mensajeDe(err)}`,
+        );
+      }
+    }
+    this.autoridadesCaptura.set([]);
   }
 
   agregarElementoCaptura(elemento: Elemento): void {
@@ -198,6 +249,8 @@ export class ActividadIncidenciasComponent implements OnInit {
         );
       }
       await this.asociarElementosCaptura(incidencia.idIncidencia);
+      await this.asociarAutoridadesCaptura(incidencia.idIncidencia);
+      await this.archivosCaptura()?.subirA('idIncidencia', incidencia.idIncidencia);
       this.toast.ok('Incidencia registrada.');
       this.mostrarForm.set(false);
       this.limpiarCaptura();
@@ -240,12 +293,14 @@ export class ActividadIncidenciasComponent implements OnInit {
 
   private async cargarCatalogos(): Promise<void> {
     try {
-      const [tipos, centros] = await Promise.all([
+      const [tipos, centros, autoridades] = await Promise.all([
         this.catalogos.valores('tipo_incidencia'),
         this.catalogos.valores('centros'),
+        this.catalogos.valores('autoridad'),
       ]);
       this.tipos.set(tipos);
       this.centros.set(centros);
+      this.autoridades.set(autoridades);
       this.mapaTipos = new Map(tipos.map((v) => [v.id, v.nombre]));
       this.mapaCentros = new Map(centros.map((v) => [v.id, v.nombre]));
     } catch (err) {

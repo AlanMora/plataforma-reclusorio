@@ -14,6 +14,7 @@ import { ActividadTrasladosComponent } from './actividad-traslados.component';
 import { ActividadIncidenciasComponent } from './actividad-incidencias.component';
 import { nombreCompleto } from './personas-list.component';
 import { Domicilio, Persona, PersonaDetalle } from '../../core/models';
+import { calcularEdad } from '../../core/edad';
 import { mensajeDe } from '../../core/problem';
 import { MapaDomicilioComponent } from '../../shared/mapa-domicilio.component';
 import { DomicilioFormComponent } from '../../shared/domicilio-form.component';
@@ -98,6 +99,12 @@ export class PersonaDetailComponent {
     return this.persona() ? nombreCompleto(this.persona()!) : '';
   }
 
+  /** Edad del backend o calculada aquí (RF-GEN-008: siempre visible). */
+  edad(): number | null {
+    const p = this.persona();
+    return p ? (p.edad ?? calcularEdad(p.fechaNacimiento)) : null;
+  }
+
   datosGenerales(): { etiqueta: string; valor?: string | number | null }[] {
     const p = this.persona();
     if (!p) return [];
@@ -106,7 +113,7 @@ export class PersonaDetailComponent {
       { etiqueta: 'Apellido paterno', valor: p.apellidoPaterno },
       { etiqueta: 'Apellido materno', valor: p.apellidoMaterno },
       { etiqueta: 'Fecha de nacimiento', valor: p.fechaNacimiento?.slice(0, 10) },
-      { etiqueta: 'Edad (calculada)', valor: p.edad },
+      { etiqueta: 'Edad (calculada)', valor: this.edad() },
       { etiqueta: 'CURP', valor: p.curp },
       { etiqueta: 'Alias', valor: p.alias },
       { etiqueta: 'Género', valor: p.genero },

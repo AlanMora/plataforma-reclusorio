@@ -1,10 +1,11 @@
 <div class="relative">
   <button
+    #botonFecha
     class="campo flex items-center justify-between gap-2 text-left"
     type="button"
     [id]="idCampo()"
     [disabled]="deshabilitado()"
-    (click)="alternar()"
+    (click)="alternar(botonFecha)"
   >
     <span class="truncate" [class.text-slate-600]="!valor()">
       {{ textoVisible() || (conHora() ? 'dd/mm/aaaa hh:mm' : 'dd/mm/aaaa') }}
@@ -14,7 +15,11 @@
 
   @if (abierto()) {
     <div
-      class="absolute left-0 top-full z-[1100] mt-1 w-72 rounded-lg border border-borde bg-panel-2 p-3 shadow-xl shadow-black/50"
+      class="absolute left-0 z-[1100] w-72 rounded-lg border border-borde bg-panel-2 p-3 shadow-xl shadow-black/50"
+      [class.top-full]="!haciaArriba()"
+      [class.mt-1]="!haciaArriba()"
+      [class.bottom-full]="haciaArriba()"
+      [class.mb-1]="haciaArriba()"
     >
       <!-- Navegación de mes / año -->
       <div class="flex items-center gap-1.5">
@@ -40,7 +45,7 @@
           (change)="anioVisible.set(+$any($event.target).value)"
           aria-label="Año"
         >
-          @for (a of anios; track a) {
+          @for (a of anios(); track a) {
             <option [value]="a" [selected]="a === anioVisible()">{{ a }}</option>
           }
         </select>
@@ -70,9 +75,11 @@
             <span></span>
           } @else {
             <button
-              class="flex h-8 items-center justify-center rounded-md text-xs transition-colors hover:bg-neon/10"
+              class="flex h-8 items-center justify-center rounded-md text-xs transition-colors"
               type="button"
               [class]="claseDia(celda)"
+              [class.hover:bg-neon/10]="!diaNoPermitido(celda)"
+              [disabled]="diaNoPermitido(celda)"
               (click)="elegirDia(celda)"
             >
               {{ celda }}
@@ -111,7 +118,12 @@
 
       <!-- Acciones -->
       <div class="mt-3 flex items-center gap-2 border-t border-borde pt-3">
-        <button class="btn-secundario btn-mini" type="button" (click)="hoy()">
+        <button
+          class="btn-secundario btn-mini"
+          type="button"
+          [disabled]="!hoyPermitido()"
+          (click)="hoy()"
+        >
           {{ conHora() ? 'Ahora' : 'Hoy' }}
         </button>
         <button class="btn-secundario btn-mini" type="button" (click)="limpiar()">Limpiar</button>

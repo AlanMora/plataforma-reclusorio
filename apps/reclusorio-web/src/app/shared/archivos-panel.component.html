@@ -40,6 +40,7 @@
         <tr>
           <th></th>
           <th>Nombre</th>
+          <th>Descripción</th>
           <th>Tipo</th>
           <th>Tamaño</th>
           <th>SHA-256</th>
@@ -66,6 +67,9 @@
             </td>
             <td class="max-w-[220px] truncate" [title]="a.nombreOriginal">
               {{ a.nombreOriginal }}
+            </td>
+            <td class="max-w-[200px] truncate text-xs text-slate-400" [title]="a.descripcion || ''">
+              {{ a.descripcion || '—' }}
             </td>
             <td>
               <span class="chip-neon">{{ a.tipoArchivo }}</span>

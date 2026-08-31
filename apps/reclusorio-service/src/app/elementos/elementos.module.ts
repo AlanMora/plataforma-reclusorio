@@ -82,6 +82,21 @@ export class ElementosService {
     return [];
   }
 
+  /**
+   * Adscripciones distintas ya capturadas en el padrón: catálogo DERIVADO para
+   * asistir la captura (no existe tabla de adscripciones en el modelo v1.0 y
+   * no se inventa; el campo sigue aceptando texto libre).
+   */
+  async adscripciones(): Promise<string[]> {
+    const filas: { adscripcion: string }[] = await this.elementos
+      .createQueryBuilder('e')
+      .select('DISTINCT e.adscripcion', 'adscripcion')
+      .where("e.adscripcion IS NOT NULL AND TRIM(e.adscripcion) <> ''")
+      .orderBy('e.adscripcion', 'ASC')
+      .getRawMany();
+    return filas.map((f) => f.adscripcion);
+  }
+
   /** Listado del módulo administrador de elementos (paginado, DP-010). */
   async listar(query: PaginationQueryDto) {
     const [items, total] = await this.elementos.findAndCount({
@@ -126,6 +141,13 @@ export class ElementosController {
   })
   coincidencias(@Query() query: BusquedaPreviaQuery) {
     return this.service.buscarCoincidencias(query);
+  }
+
+  @Get('adscripciones')
+  @RequirePermissions('elementos:consultar')
+  @ApiOperation({ summary: 'Adscripciones distintas del padrón (catálogo derivado para la captura)' })
+  adscripciones() {
+    return this.service.adscripciones();
   }
 
   @Get()

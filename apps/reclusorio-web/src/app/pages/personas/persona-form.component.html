@@ -66,10 +66,16 @@
           idCampo="fechaNacimiento"
           name="fechaNacimiento"
           required
+          [max]="fechaMaximaNacimiento"
           [(ngModel)]="modelo.fechaNacimiento"
         />
         <p class="mt-1 text-[11px] text-slate-600">
-          La edad SIEMPRE se calcula; nunca se captura (RF-GEN-008).
+          @if (edadCalculada() !== null) {
+            Edad calculada: <span class="font-semibold text-neon">{{ edadCalculada() }} años</span>
+            (RF-GEN-008).
+          } @else {
+            Solo fechas anteriores al día en curso; la edad SIEMPRE se calcula (RF-GEN-008).
+          }
         </p>
       </div>
       <div>
@@ -126,6 +132,7 @@
           idCampo="ocupacion"
           name="ocupacion"
           [opciones]="ocupacionesOpciones()"
+          [permitirLibre]="true"
           [(ngModel)]="modelo.ocupacion"
         />
       </div>
@@ -150,6 +157,7 @@
           idCampo="nacionalidad"
           name="nacionalidad"
           [opciones]="nacionalidadesOpciones()"
+          [permitirLibre]="true"
           [(ngModel)]="modelo.nacionalidad"
         />
       </div>
@@ -169,10 +177,10 @@
           class="campo"
           id="numeroTelefono"
           name="numeroTelefono"
-          maxlength="50"
+          maxlength="10"
           inputmode="numeric"
           pattern="[0-9]*"
-          placeholder="Solo dígitos"
+          placeholder="10 dígitos"
           [(ngModel)]="modelo.numeroTelefono"
           (ngModelChange)="sanearTelefono(campoTelefono)"
         />

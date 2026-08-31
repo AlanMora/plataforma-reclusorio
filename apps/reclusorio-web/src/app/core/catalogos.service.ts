@@ -54,6 +54,9 @@ export const CATALOGOS_FIJOS: { slug: string; etiqueta: string }[] = [
 
 const SLUGS_FIJOS = new Set(CATALOGOS_FIJOS.map((c) => c.slug));
 
+/** Orden natural "menor a mayor": JUEZ 2 antes que JUEZ 10 (los fijos conservan su campo `orden`). */
+const COMPARADOR_NATURAL = new Intl.Collator('es', { numeric: true, sensitivity: 'base' });
+
 @Injectable({ providedIn: 'root' })
 export class CatalogosService {
   private readonly api = inject(ApiService);
@@ -68,7 +71,13 @@ export class CatalogosService {
         : `/api/v1/catalogos/${slug}`;
       pendiente = this.api
         .get<Record<string, unknown>[]>(url)
-        .then((filas) => filas.map((f) => normalizar(slug, f)))
+        .then((filas) => {
+          const valores = filas.map((f) => normalizar(slug, f));
+          if (!SLUGS_FIJOS.has(slug)) {
+            valores.sort((a, b) => COMPARADOR_NATURAL.compare(a.nombre, b.nombre));
+          }
+          return valores;
+        })
         .catch((err) => {
           this.cache.delete(slug);
           throw err;

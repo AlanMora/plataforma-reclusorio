@@ -10,6 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { abrirHaciaArriba } from './desplegable';
 import { IconoComponent } from './icono.component';
 
 const MESES = [
@@ -64,6 +65,8 @@ export class SelectorFechaComponent implements ControlValueAccessor {
   readonly conHora = input(false);
   /** id del botón, para asociarlo con el label del formulario. */
   readonly idCampo = input('');
+  /** Fecha máxima elegible 'YYYY-MM-DD' (p. ej. ayer para fecha de nacimiento). */
+  readonly max = input('');
 
   readonly valor = signal('');
   readonly abierto = signal(false);
@@ -72,15 +75,24 @@ export class SelectorFechaComponent implements ControlValueAccessor {
   readonly anioVisible = signal(new Date().getFullYear());
   readonly hora = signal('00');
   readonly minuto = signal('00');
+  /** true → el calendario se abre hacia arriba (sin espacio abajo). */
+  readonly haciaArriba = signal(false);
 
   readonly meses = MESES;
   readonly diasSemana = DIAS_SEMANA;
   readonly horas = Array.from({ length: 24 }, (_, i) => dosDigitos(i));
   readonly minutos = Array.from({ length: 60 }, (_, i) => dosDigitos(i));
-  readonly anios = Array.from(
-    { length: new Date().getFullYear() + 6 - ANIO_MINIMO },
-    (_, i) => ANIO_MINIMO + i,
-  );
+  readonly anios = computed(() => {
+    const partes = descomponer(this.max());
+    const tope = partes ? partes.anio : new Date().getFullYear() + 5;
+    return Array.from({ length: tope + 1 - ANIO_MINIMO }, (_, i) => ANIO_MINIMO + i);
+  });
+
+  /** true si el atajo Hoy/Ahora es válido con el máximo configurado. */
+  readonly hoyPermitido = computed(() => {
+    const ahora = new Date();
+    return !this.excedeMax(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+  });
 
   /** Texto del campo: dd/mm/aaaa [HH:mm]. */
   readonly textoVisible = computed(() => {
@@ -129,12 +141,14 @@ export class SelectorFechaComponent implements ControlValueAccessor {
     if (deshabilitado) this.cerrar();
   }
 
-  alternar(): void {
+  alternar(boton?: HTMLElement): void {
     if (this.deshabilitado()) return;
     if (this.abierto()) {
       this.cerrar();
       return;
     }
+    // ~420px: navegación + calendario (+hora). Sin espacio abajo, se abre arriba.
+    this.haciaArriba.set(boton ? abrirHaciaArriba(boton, 420) : false);
     const partes = descomponer(this.valor());
     const ahora = new Date();
     this.mesVisible.set(partes?.mes ?? ahora.getMonth());
@@ -191,13 +205,28 @@ export class SelectorFechaComponent implements ControlValueAccessor {
     );
   }
 
+  /** true si el día del mes visible excede la fecha máxima permitida. */
+  diaNoPermitido(dia: number): boolean {
+    return this.excedeMax(this.anioVisible(), this.mesVisible(), dia);
+  }
+
+  private excedeMax(anio: number, mes: number, dia: number): boolean {
+    const partes = descomponer(this.max());
+    if (!partes) return false;
+    const fecha = `${anio}-${dosDigitos(mes + 1)}-${dosDigitos(dia)}`;
+    const tope = `${partes.anio}-${dosDigitos(partes.mes + 1)}-${dosDigitos(partes.dia)}`;
+    return fecha > tope;
+  }
+
   /** Clases del día: seleccionado en neón, hoy con anillo, resto neutro. */
   claseDia(dia: number): string {
+    if (this.diaNoPermitido(dia)) return 'cursor-not-allowed text-slate-700 line-through';
     const clases = this.esSeleccionado(dia) ? 'bg-neon/20 font-bold text-neon' : 'text-slate-300';
     return this.esHoy(dia) ? `${clases} ring-1 ring-neon/40` : clases;
   }
 
   elegirDia(dia: number): void {
+    if (this.diaNoPermitido(dia)) return;
     this.emitir(this.anioVisible(), this.mesVisible(), dia);
     if (!this.conHora()) this.cerrar();
   }
@@ -211,6 +240,7 @@ export class SelectorFechaComponent implements ControlValueAccessor {
   }
 
   hoy(): void {
+    if (!this.hoyPermitido()) return;
     const ahora = new Date();
     this.mesVisible.set(ahora.getMonth());
     this.anioVisible.set(ahora.getFullYear());

@@ -132,15 +132,9 @@
         <!-- La subida exige archivos:crear en el backend; sin él, el campo no se ofrece -->
         <div *rwPermiso="'archivos:crear'" class="md:col-span-3">
           <label class="campo-etiqueta" for="traArchivos"
-            >Archivos (opcional, se suben con el registro)</label
+            >Archivos (opcional, se suben con el registro; cada uno con su descripción)</label
           >
-          <input
-            class="campo max-w-md text-xs file:mr-3 file:rounded file:border-0 file:bg-neon/10 file:px-2 file:py-1 file:text-neon"
-            type="file"
-            id="traArchivos"
-            multiple
-            (change)="seleccionarArchivosCaptura($event)"
-          />
+          <rw-archivos-captura #archivosCaptura idCampo="traArchivos" />
         </div>
       </form>
       <div modal-acciones class="modal-footer-actions">

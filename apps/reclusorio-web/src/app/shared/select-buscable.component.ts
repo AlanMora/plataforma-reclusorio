@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { normalizarUbicacion } from '../core/ubicaciones-dummy';
+import { abrirHaciaArriba } from './desplegable';
 import { IconoComponent } from './icono.component';
 
 /** Opción con valor persistible (p. ej. UUID) y etiqueta visible. */
@@ -54,11 +55,18 @@ export class SelectBuscableComponent implements ControlValueAccessor {
   readonly placeholder = input('— Seleccione —');
   /** id del botón, para asociarlo con el label del formulario. */
   readonly idCampo = input('');
+  /**
+   * true → además del catálogo se puede usar el texto buscado tal cual
+   * (captura manual cuando el valor no existe en la lista).
+   */
+  readonly permitirLibre = input(false);
 
   readonly valor = signal('');
   readonly abierto = signal(false);
   readonly filtro = signal('');
   readonly deshabilitado = signal(false);
+  /** true → el panel se abre hacia arriba (sin espacio abajo). */
+  readonly haciaArriba = signal(false);
 
   private readonly normalizadas = computed<OpcionSelect[]>(() =>
     this.opciones().map((o) => (typeof o === 'string' ? { valor: o, etiqueta: o } : o)),
@@ -75,6 +83,16 @@ export class SelectBuscableComponent implements ControlValueAccessor {
     const v = this.valor();
     if (!v) return '';
     return this.normalizadas().find((o) => o.valor === v)?.etiqueta ?? v;
+  });
+
+  /** Texto libre ofrecible: hay filtro, se permite y no coincide exacto con una opción. */
+  readonly textoLibre = computed(() => {
+    if (!this.permitirLibre()) return '';
+    const texto = this.filtro().trim();
+    if (!texto) return '';
+    const buscado = normalizarUbicacion(texto);
+    const existe = this.normalizadas().some((o) => normalizarUbicacion(o.etiqueta) === buscado);
+    return existe ? '' : texto;
   });
 
   private readonly campoBusqueda = viewChild<ElementRef<HTMLInputElement>>('campoBusqueda');
@@ -107,12 +125,14 @@ export class SelectBuscableComponent implements ControlValueAccessor {
     if (deshabilitado) this.cerrar();
   }
 
-  alternar(): void {
+  alternar(boton?: HTMLElement): void {
     if (this.deshabilitado()) return;
     if (this.abierto()) {
       this.cerrar();
       return;
     }
+    // ~300px: buscador + lista (max-h-56). Sin espacio abajo, se abre arriba.
+    this.haciaArriba.set(boton ? abrirHaciaArriba(boton, 300) : false);
     this.abierto.set(true);
     this.filtro.set('');
   }
@@ -130,11 +150,12 @@ export class SelectBuscableComponent implements ControlValueAccessor {
     this.cerrar();
   }
 
-  /** Enter en el buscador elige la primera coincidencia visible. */
+  /** Enter en el buscador elige la primera coincidencia visible (o el texto libre). */
   elegirPrimera(evento: Event): void {
     evento.preventDefault();
     const primera = this.filtradas()[0];
     if (primera !== undefined) this.elegir(primera.valor);
+    else if (this.textoLibre()) this.elegir(this.textoLibre());
   }
 
   @HostListener('document:click', ['$event'])

@@ -32,7 +32,7 @@
       >
         <p class="text-xs text-slate-500 md:col-span-2">
           La persona de este expediente quedará asociada automáticamente a la incidencia
-          (RF-INC-003); otras personas y autoridades se agregan después, desde el detalle.
+          (RF-INC-003); autoridades de apoyo, elementos y archivos pueden capturarse aquí mismo.
         </p>
         <div>
           <label class="campo-etiqueta obligatorio" for="incTabCentro">Centro penitenciario</label>
@@ -151,6 +151,58 @@
             Marcar como primer respondiente al elegirlo
           </label>
           <rw-elemento-picker (elegido)="agregarElementoCaptura($event)" />
+        </div>
+        <!-- Autoridades de apoyo: se asocian al registrar (RF-INC-004) -->
+        <div *rwPermiso="'incidencias:asociar'" class="md:col-span-2">
+          <p class="campo-etiqueta">
+            Autoridades de apoyo (opcional, se asocian al registrar — RF-INC-004)
+          </p>
+          @if (autoridadesCaptura().length > 0) {
+            <div class="mb-2 flex flex-wrap gap-2">
+              @for (a of autoridadesCaptura(); track a.id) {
+                <span
+                  class="inline-flex items-center gap-2 rounded-full border border-borde bg-panel-2 px-3 py-1 text-xs text-slate-300"
+                >
+                  {{ a.nombre }}
+                  <button
+                    class="text-slate-500 hover:text-red-400"
+                    type="button"
+                    title="Quitar autoridad"
+                    (click)="quitarAutoridadCaptura(a.id)"
+                  >
+                    <rw-icono nombre="cerrar" [tamano]="12" />
+                  </button>
+                </span>
+              }
+            </div>
+          }
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="w-full max-w-xs">
+              <rw-select-buscable
+                idCampo="incTabAutoridad"
+                name="autoridadCaptura"
+                placeholder="— Autoridad del catálogo —"
+                [opciones]="aOpciones(autoridades())"
+                [(ngModel)]="autoridadSeleccionada"
+              />
+            </div>
+            <button
+              class="btn-secundario btn-mini"
+              type="button"
+              [disabled]="!autoridadSeleccionada"
+              (click)="agregarAutoridadCaptura()"
+            >
+              <rw-icono nombre="agregar" [tamano]="13" />
+              Agregar
+            </button>
+          </div>
+        </div>
+        <!-- La subida exige archivos:crear en el backend; sin él, el campo no se ofrece -->
+        <div *rwPermiso="'archivos:crear'" class="md:col-span-2">
+          <label class="campo-etiqueta" for="incTabArchivos"
+            >Archivos (opcional, se suben con el registro; cada uno con su descripción)</label
+          >
+          <rw-archivos-captura #archivosCaptura idCampo="incTabArchivos" />
         </div>
       </form>
       <div modal-acciones class="modal-footer-actions">

@@ -76,6 +76,7 @@
       idCampo="domPais"
       name="pais"
       [opciones]="paisesOpciones()"
+      [permitirLibre]="true"
       [(ngModel)]="domicilio.pais"
       (ngModelChange)="alCambiarPais()"
     />
@@ -86,6 +87,7 @@
       idCampo="domEstado"
       name="estado"
       [opciones]="estadosOpciones()"
+      [permitirLibre]="true"
       [disabled]="!domicilio.pais"
       [(ngModel)]="domicilio.estado"
       (ngModelChange)="alCambiarEstado()"
@@ -97,6 +99,7 @@
       idCampo="domMunicipio"
       name="municipio"
       [opciones]="municipiosOpciones()"
+      [permitirLibre]="true"
       [disabled]="!domicilio.estado"
       [(ngModel)]="domicilio.municipio"
     />

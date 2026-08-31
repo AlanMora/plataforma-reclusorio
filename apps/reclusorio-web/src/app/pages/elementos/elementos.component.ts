@@ -11,6 +11,7 @@ import { ApiService } from '../../core/api.service';
 import { ToastService } from '../../core/toast.service';
 import { PermisoDirective } from '../../core/permiso.directive';
 import { PaginadorComponent } from '../../shared/paginador.component';
+import { SelectBuscableComponent } from '../../shared/select-buscable.component';
 import { ModalFormulario } from '../../shared/modal-formulario/modal-formulario';
 import { Elemento, Paginado } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
@@ -26,7 +27,14 @@ import { IconoComponent } from '../../shared/icono.component';
 @Component({
   selector: 'rw-elementos',
   standalone: true,
-  imports: [FormsModule, PermisoDirective, PaginadorComponent, ModalFormulario, IconoComponent],
+  imports: [
+    FormsModule,
+    PermisoDirective,
+    PaginadorComponent,
+    SelectBuscableComponent,
+    ModalFormulario,
+    IconoComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './elementos.component.html',
 })
@@ -67,8 +75,26 @@ export class ElementosComponent implements OnInit {
 
   nombreDe = nombreElemento;
 
+  /** Catálogo DERIVADO: adscripciones ya capturadas en el padrón (+ escritura libre). */
+  readonly adscripciones = signal<string[]>([]);
+
   ngOnInit(): void {
     void this.cargarPadron(1);
+    void this.cargarAdscripciones();
+  }
+
+  adscripcionesOpciones(): string[] {
+    const actual = this.forma['adscripcion'];
+    const lista = this.adscripciones();
+    return actual && !lista.includes(actual) ? [actual, ...lista] : lista;
+  }
+
+  private async cargarAdscripciones(): Promise<void> {
+    try {
+      this.adscripciones.set(await this.api.get<string[]>('/api/v1/elementos/adscripciones'));
+    } catch {
+      // sin catálogo derivado el campo sigue admitiendo texto libre
+    }
   }
 
   async buscarCoincidencias(): Promise<void> {
@@ -155,6 +181,7 @@ export class ElementosComponent implements OnInit {
       this.busquedaHecha.set(false);
       this.coincidencias.set([]);
       await this.cargarPadron(1);
+      void this.cargarAdscripciones(); // refresca el catálogo derivado
     } catch (err) {
       this.toast.error(presentarErrorFormulario(formulario, evento, err));
     } finally {

@@ -236,9 +236,9 @@
 
                 <!-- Edad -->
                 <td>
-                  @if (p.edad !== null && p.edad !== undefined) {
+                  @if (edadDe(p) !== null) {
                     <span class="text-xs font-medium text-slate-200">
-                      {{ p.edad }} <span class="text-slate-500 text-[11px]">años</span>
+                      {{ edadDe(p) }} <span class="text-slate-500 text-[11px]">años</span>
                     </span>
                   } @else {
                     <span class="text-slate-500 text-xs">—</span>

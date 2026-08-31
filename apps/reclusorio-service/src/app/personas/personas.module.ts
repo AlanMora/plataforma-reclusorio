@@ -24,7 +24,12 @@ import {
   Min,
 } from 'class-validator';
 import { DatabaseModule } from '@icms/database';
-import { EntityNotFoundException, PaginationQueryDto, paginate } from '@icms/common';
+import {
+  BusinessRuleException,
+  EntityNotFoundException,
+  PaginationQueryDto,
+  paginate,
+} from '@icms/common';
 import { RequirePermissions } from '@icms/auth';
 import { Idempotent } from '@icms/redis';
 import { Domicilio, Persona } from '../entities/persona.entities';
@@ -55,7 +60,7 @@ class CrearPersonaDto {
   @IsOptional() @IsString() @MaxLength(255) estadoNacimiento?: string;
   @IsOptional()
   @IsString()
-  @MaxLength(50)
+  @MaxLength(10)
   @Matches(/^\d*$/, { message: 'numeroTelefono debe contener solo dígitos, sin espacios ni letras' })
   numeroTelefono?: string;
 }
@@ -82,7 +87,7 @@ class ModificarPersonaDto {
   @IsOptional() @IsString() @MaxLength(255) estadoNacimiento?: string;
   @IsOptional()
   @IsString()
-  @MaxLength(50)
+  @MaxLength(10)
   @Matches(/^\d*$/, { message: 'numeroTelefono debe contener solo dígitos, sin espacios ni letras' })
   numeroTelefono?: string;
 }
@@ -113,6 +118,21 @@ class CrearDomicilioDto {
 /** Serializa la persona incluyendo la edad calculada (RF-GEN-008). */
 function conEdad(persona: Persona) {
   return { ...persona, edad: persona.edad };
+}
+
+/**
+ * La fecha de nacimiento debe ser ANTERIOR al día en curso (el backend es la
+ * autoridad, RF-GEN-004): ni hoy ni fechas futuras.
+ */
+function validarFechaNacimiento(fecha?: string): void {
+  if (!fecha) return;
+  const dia = fecha.slice(0, 10);
+  const hoy = new Date().toISOString().slice(0, 10);
+  if (dia >= hoy) {
+    throw new BusinessRuleException(
+      'fechaNacimiento debe ser una fecha anterior al día en curso',
+    );
+  }
 }
 
 @Injectable()
@@ -150,6 +170,7 @@ export class PersonasService {
 
   /** RF-PER-003: alta con idPersona UUID; la edad nunca se persiste. */
   async crear(dto: CrearPersonaDto) {
+    validarFechaNacimiento(dto.fechaNacimiento);
     const persona = await this.personas.save(
       this.personas.create({ ...dto, curp: dto.curp.toUpperCase() }),
     );
@@ -176,6 +197,7 @@ export class PersonasService {
 
   /** RF-PER-005: modificación respetando tipos y longitudes del modelo. */
   async modificar(idPersona: string, dto: ModificarPersonaDto) {
+    validarFechaNacimiento(dto.fechaNacimiento);
     const persona = await this.obtener(idPersona);
     Object.assign(persona, dto, dto.curp ? { curp: dto.curp.toUpperCase() } : {});
     return this.personas.save(persona).then(conEdad);

@@ -14,7 +14,7 @@
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h2 class="truncate text-xl font-bold text-slate-100">{{ nombre() }}</h2>
           <span class="font-mono text-[10px] text-slate-500">
-            {{ persona()!.edad ?? '—' }} años
+            {{ edad() ?? '—' }} años
           </span>
         </div>
         <div class="expediente-identificadores">

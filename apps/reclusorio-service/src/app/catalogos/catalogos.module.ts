@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, ILike, ObjectType } from 'typeorm';
+import { DataSource, ObjectType } from 'typeorm';
 import { IsBoolean, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { DatabaseModule } from '@icms/database';
@@ -135,23 +135,24 @@ export class CatalogosService {
     buscar?: string,
   ) {
     const { entidad } = this.admin(catalogo);
-    const repo = this.dataSource.getRepository(entidad);
-    const where = {
-      ...(incluirInactivos ? {} : { activo: true }),
-      ...(buscar ? { nombre: ILike(`%${buscar.trim()}%`) } : {}),
-    };
-    const order = { nombre: 'ASC' } as never;
+    const qb = this.dataSource.getRepository(entidad).createQueryBuilder('c');
+    if (!incluirInactivos) qb.andWhere('c.activo = true');
+    if (buscar) qb.andWhere('c.nombre ILIKE :buscar', { buscar: `%${buscar.trim()}%` });
+    // Orden natural "menor a mayor": nombres con número inicial (JUEZ 1..21)
+    // se ordenan numéricamente antes que los alfabéticos.
+    qb.orderBy("substring(c.nombre from '^[0-9]+')::bigint", 'ASC', 'NULLS LAST').addOrderBy(
+      'c.nombre',
+      'ASC',
+    );
 
     if (page && limit) {
-      const [items, total] = await repo.findAndCount({
-        where,
-        order,
-        skip: (page - 1) * limit,
-        take: limit,
-      });
+      const [items, total] = await qb
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getManyAndCount();
       return paginate(items, total, { page, limit });
     }
-    return repo.find({ where, order });
+    return qb.getMany();
   }
 
   /** RF-CAT-010: los formularios consumen los fijos por UUID; solo valores activos. */

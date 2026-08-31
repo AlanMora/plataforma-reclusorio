@@ -166,13 +166,17 @@
         </div>
         <div>
           <label class="campo-etiqueta" for="adscripcion">Adscripción</label>
-          <input
-            class="campo"
-            id="adscripcion"
+          <rw-select-buscable
+            idCampo="adscripcion"
             name="adscripcion"
-            maxlength="255"
+            placeholder="— Seleccione o escriba —"
+            [opciones]="adscripcionesOpciones()"
+            [permitirLibre]="true"
             [(ngModel)]="forma.adscripcion"
           />
+          <p class="mt-1 text-[11px] text-slate-600">
+            Catálogo derivado del padrón; puede escribirse una adscripción nueva.
+          </p>
         </div>
       </form>
       <div modal-acciones class="modal-footer-actions">

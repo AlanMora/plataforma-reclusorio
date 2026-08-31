@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, input, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
@@ -6,6 +14,7 @@ import { CatalogosService } from '../../core/catalogos.service';
 import { ToastService } from '../../core/toast.service';
 import { PermisoDirective } from '../../core/permiso.directive';
 import { ArchivosPanelComponent } from '../../shared/archivos-panel.component';
+import { ArchivosCapturaComponent } from '../../shared/archivos-captura.component';
 import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
 import { SelectBuscableComponent, aOpciones } from '../../shared/select-buscable.component';
 import { ElementoPickerComponent, nombreElemento } from '../../shared/elemento-picker.component';
@@ -30,6 +39,7 @@ import {
     FormsModule,
     PermisoDirective,
     ArchivosPanelComponent,
+    ArchivosCapturaComponent,
     ElementoPickerComponent,
     ElementoCardComponent,
     SelectorFechaComponent,
@@ -114,7 +124,7 @@ export class ActividadTrasladosComponent implements OnInit {
       unidades: '',
       observaciones: '',
     };
-    this.archivosCaptura = [];
+    this.archivosCaptura()?.limpiar();
     this.elementosCaptura.set([]);
     this.errorForm.set(null);
   }
@@ -148,28 +158,7 @@ export class ActividadTrasladosComponent implements OnInit {
   }
 
   /** Archivos elegidos durante la captura (carga integrada, req. 11/08/2026). */
-  private archivosCaptura: File[] = [];
-
-  seleccionarArchivosCaptura(evento: Event): void {
-    this.archivosCaptura = Array.from((evento.target as HTMLInputElement).files ?? []);
-  }
-
-  /** Sube lo elegido al registro recién creado; un fallo no revierte la captura. */
-  private async subirArchivosCaptura(referencia: string, id: string): Promise<void> {
-    for (const archivo of this.archivosCaptura) {
-      const form = new FormData();
-      form.append('file', archivo);
-      form.append(referencia, id);
-      try {
-        await this.api.postForm('/api/v1/archivos', form);
-      } catch (err) {
-        this.toast.error(
-          `El registro se guardó, pero "${archivo.name}" no se pudo subir: ${mensajeDe(err)}`,
-        );
-      }
-    }
-    this.archivosCaptura = [];
-  }
+  private readonly archivosCaptura = viewChild<ArchivosCapturaComponent>('archivosCaptura');
 
   async crear(formulario: NgForm, evento: SubmitEvent): Promise<void> {
     const errorValidacion = validarFormulario(formulario, evento);
@@ -188,7 +177,7 @@ export class ActividadTrasladosComponent implements OnInit {
           fecha: fechaParaApi(this.forma['fecha']),
         },
       );
-      await this.subirArchivosCaptura('idTraslado', creado['idTraslado']);
+      await this.archivosCaptura()?.subirA('idTraslado', creado['idTraslado']);
       await this.asociarElementosCaptura(creado['idTraslado']);
       this.toast.ok('Traslado registrado.');
       this.mostrarForm.set(false);
