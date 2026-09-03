@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Injectable, Module, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Injectable, Module, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -215,6 +215,40 @@ export class IncidenciasService {
   revisar(id: string, estado: EstadoRevision) {
     return marcarRevision(this.repo as never, 'idIncidencia', id, estado, 'Incidencia');
   }
+
+  /** QA 03/09: las asociaciones solo se modifican mientras la incidencia sigue PENDIENTE. */
+  private async asegurarPendiente(idIncidencia: string): Promise<void> {
+    const incidencia = await this.obtener(idIncidencia);
+    if (incidencia.estadoRevision !== 'PENDIENTE') {
+      throw new BusinessRuleException(
+        'Las asociaciones solo pueden modificarse mientras la incidencia está pendiente de revisión',
+      );
+    }
+  }
+
+  async desasociarPersona(idIncidencia: string, idPersona: string) {
+    await this.asegurarPendiente(idIncidencia);
+    const relacion = await this.rePersonas.findOne({ where: { idIncidencia, idPersona } });
+    if (!relacion) throw new EntityNotFoundException('Persona asociada', idPersona);
+    await this.rePersonas.remove(relacion);
+    return { eliminado: true };
+  }
+
+  async desasociarAutoridad(idIncidencia: string, idAutoridad: string) {
+    await this.asegurarPendiente(idIncidencia);
+    const relacion = await this.reAutoridades.findOne({ where: { idIncidencia, idAutoridad } });
+    if (!relacion) throw new EntityNotFoundException('Autoridad asociada', idAutoridad);
+    await this.reAutoridades.remove(relacion);
+    return { eliminado: true };
+  }
+
+  async desasociarElemento(idIncidencia: string, idElemento: string) {
+    await this.asegurarPendiente(idIncidencia);
+    const relacion = await this.reElementos.findOne({ where: { idIncidencia, idElemento } });
+    if (!relacion) throw new EntityNotFoundException('Elemento asociado', idElemento);
+    await this.reElementos.remove(relacion);
+    return { eliminado: true };
+  }
 }
 
 @ApiTags('incidencias')
@@ -272,6 +306,27 @@ export class IncidenciasController {
   @ApiOperation({ summary: 'Asociar elemento; puede marcarse como primer respondiente (RF-INC-005/007)' })
   asociarElemento(@Param('id') id: string, @Body() dto: AsociarElementoIncidenciaDto) {
     return this.service.asociarElemento(id, dto);
+  }
+
+  @Delete(':id/personas/:idPersona')
+  @RequirePermissions('incidencias:asociar')
+  @ApiOperation({ summary: 'Quitar persona asociada mientras la incidencia está pendiente (QA 03/09)' })
+  desasociarPersona(@Param('id') id: string, @Param('idPersona') idPersona: string) {
+    return this.service.desasociarPersona(id, idPersona);
+  }
+
+  @Delete(':id/autoridades/:idAutoridad')
+  @RequirePermissions('incidencias:asociar')
+  @ApiOperation({ summary: 'Quitar autoridad de apoyo mientras la incidencia está pendiente (QA 03/09)' })
+  desasociarAutoridad(@Param('id') id: string, @Param('idAutoridad') idAutoridad: string) {
+    return this.service.desasociarAutoridad(id, idAutoridad);
+  }
+
+  @Delete(':id/elementos/:idElemento')
+  @RequirePermissions('incidencias:asociar')
+  @ApiOperation({ summary: 'Quitar elemento participante mientras la incidencia está pendiente (QA 03/09)' })
+  desasociarElemento(@Param('id') id: string, @Param('idElemento') idElemento: string) {
+    return this.service.desasociarElemento(id, idElemento);
   }
 
   @Post(':id/confirmar')

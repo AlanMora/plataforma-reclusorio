@@ -115,23 +115,37 @@ class CrearDomicilioDto {
   @IsOptional() @IsNumber() @Min(-180) @Max(180) longitud?: number;
 }
 
+/** Modificación de domicilio (QA 03/09): mismos campos del alta, todos opcionales. */
+class ModificarDomicilioDto {
+  @IsOptional() @IsString() @MaxLength(150) calle?: string;
+  @IsOptional() @IsString() @MaxLength(30) numeroExterior?: string;
+  @IsOptional() @IsString() @MaxLength(30) numeroInterior?: string;
+  @IsOptional() @IsString() @MaxLength(150) cruce1?: string;
+  @IsOptional() @IsString() @MaxLength(150) cruce2?: string;
+  @IsOptional() @IsString() @MaxLength(150) colonia?: string;
+  @IsOptional() @IsString() @MaxLength(150) estado?: string;
+  @IsOptional() @IsString() @MaxLength(150) municipio?: string;
+  @IsOptional() @IsString() @MaxLength(150) pais?: string;
+  @IsOptional() @IsNumber() @Min(-90) @Max(90) latitud?: number;
+  @IsOptional() @IsNumber() @Min(-180) @Max(180) longitud?: number;
+}
+
 /** Serializa la persona incluyendo la edad calculada (RF-GEN-008). */
 function conEdad(persona: Persona) {
   return { ...persona, edad: persona.edad };
 }
 
 /**
- * La fecha de nacimiento debe ser ANTERIOR al día en curso (el backend es la
- * autoridad, RF-GEN-004): ni hoy ni fechas futuras.
+ * La fecha de nacimiento no admite fechas FUTURAS (el backend es la
+ * autoridad, RF-GEN-004). QA 03/09: hoy sí se permite (reemplaza la regla
+ * "anterior al día en curso" del QA 31/08).
  */
 function validarFechaNacimiento(fecha?: string): void {
   if (!fecha) return;
   const dia = fecha.slice(0, 10);
   const hoy = new Date().toISOString().slice(0, 10);
-  if (dia >= hoy) {
-    throw new BusinessRuleException(
-      'fechaNacimiento debe ser una fecha anterior al día en curso',
-    );
+  if (dia > hoy) {
+    throw new BusinessRuleException('fechaNacimiento no puede ser una fecha futura');
   }
 }
 
@@ -165,7 +179,41 @@ export class PersonasService {
       .skip((query.page - 1) * query.limit)
       .take(query.limit);
     const [items, total] = await qb.getManyAndCount();
-    return paginate(items.map(conEdad), total, query);
+    const ubicaciones = await this.ubicacionesActuales(items.map((p) => p.idPersona));
+    return paginate(
+      items.map((p) => ({ ...conEdad(p), ubicacionFisica: ubicaciones.get(p.idPersona) ?? null })),
+      total,
+      query,
+    );
+  }
+
+  /**
+   * Ubicación física del PPL (QA 03/09): centro del último ingreso/egreso no
+   * descartado — si es un INGRESO está en ese centro; si no, está en libertad.
+   * Mismo criterio que el mapa Penitenciarios (P11). Sin registros → null.
+   */
+  private async ubicacionesActuales(ids: string[]): Promise<Map<string, string>> {
+    if (ids.length === 0) return new Map();
+    const filas: Array<{ idPersona: string; tipo: string; centro?: string }> =
+      await this.personas.query(
+        `SELECT u."idPersona", t.nombre AS tipo, c.nombre AS centro
+         FROM (
+           SELECT DISTINCT ON (ie."idPersona")
+                  ie."idPersona", ie."idTipoIngresoEgreso", ie."idCentroPenitenciario"
+           FROM ingreso_egreso ie
+           WHERE ie."idPersona" = ANY($1) AND ie."estadoRevision" <> 'DESCARTADO'
+           ORDER BY ie."idPersona", ie.fecha DESC, ie."idIngresoEgreso" DESC
+         ) u
+         JOIN tipo_ingreso_egreso t ON t."idTipoIngresoEgreso" = u."idTipoIngresoEgreso"
+         LEFT JOIN centros c ON c."idCentro" = u."idCentroPenitenciario"`,
+        [ids],
+      );
+    return new Map(
+      filas.map((f) => [
+        f.idPersona,
+        f.tipo === 'INGRESO' ? (f.centro ?? 'CENTRO NO ESPECIFICADO') : 'EN LIBERTAD',
+      ]),
+    );
   }
 
   /** RF-PER-003: alta con idPersona UUID; la edad nunca se persiste. */
@@ -186,7 +234,8 @@ export class PersonasService {
   async detalle(idPersona: string) {
     const persona = await this.obtener(idPersona);
     const domicilios = await this.domicilios.find({ where: { idPersona } });
-    return { ...conEdad(persona), domicilios };
+    const ubicaciones = await this.ubicacionesActuales([idPersona]);
+    return { ...conEdad(persona), domicilios, ubicacionFisica: ubicaciones.get(idPersona) ?? null };
   }
 
   async obtener(idPersona: string): Promise<Persona> {
@@ -215,6 +264,14 @@ export class PersonasService {
   async listarDomicilios(idPersona: string) {
     await this.obtener(idPersona);
     return this.domicilios.find({ where: { idPersona } });
+  }
+
+  /** QA 03/09: los domicilios registrados deben poder corregirse. */
+  async modificarDomicilio(idPersona: string, idDomicilio: string, dto: ModificarDomicilioDto) {
+    const domicilio = await this.domicilios.findOne({ where: { idDomicilio, idPersona } });
+    if (!domicilio) throw new EntityNotFoundException('Domicilio', idDomicilio);
+    Object.assign(domicilio, dto);
+    return this.domicilios.save(domicilio);
   }
 }
 
@@ -266,6 +323,17 @@ export class PersonasController {
   @ApiOperation({ summary: 'Agregar un domicilio (RF-PER-007: números alfanuméricos como 12-A o S/N)' })
   agregarDomicilio(@Param('idPersona') idPersona: string, @Body() dto: CrearDomicilioDto) {
     return this.service.agregarDomicilio(idPersona, dto);
+  }
+
+  @Patch(':idPersona/domicilios/:idDomicilio')
+  @RequirePermissions('personas:modificar')
+  @ApiOperation({ summary: 'Modificar un domicilio registrado (QA 03/09)' })
+  modificarDomicilio(
+    @Param('idPersona') idPersona: string,
+    @Param('idDomicilio') idDomicilio: string,
+    @Body() dto: ModificarDomicilioDto,
+  ) {
+    return this.service.modificarDomicilio(idPersona, idDomicilio, dto);
   }
 }
 

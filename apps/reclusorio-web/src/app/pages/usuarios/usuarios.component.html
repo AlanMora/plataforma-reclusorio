@@ -105,7 +105,7 @@
             name="buscar"
             maxlength="100"
             [(ngModel)]="texto"
-            placeholder="correo@institucion.gob.mx..."
+            placeholder="correo@institucion.gob.mx…"
           />
           @if (texto) {
             <button
@@ -180,7 +180,7 @@
             <th class="pl-4">Usuario / Correo</th>
             <th>Estado</th>
             <th>Permisos asignados</th>
-            <th>Fecha de Creación</th>
+            <th>Fecha de creación</th>
             <th class="w-56 text-right pr-4">Acciones</th>
           </tr>
         </thead>
@@ -223,8 +223,8 @@
                     >
                       {{ (u.email[0] || 'U').toUpperCase() }}
                     </div>
-                    <div class="flex items-center gap-2 min-w-0">
-                      <span class="font-medium text-slate-100 truncate">
+                    <div class="flex items-center gap-2 min-w-0 max-w-[34ch]">
+                      <span class="font-medium text-slate-100 truncate" [title]="u.email">
                         {{ u.email }}
                       </span>
                       @if (esYo(u)) {
@@ -266,7 +266,7 @@
                 </td>
 
                 <!-- Acciones -->
-                <td class="text-right pr-4">
+                <td class="celda-acciones text-right pr-4">
                   <div class="flex justify-end items-center gap-1.5">
                     <button
                       *rwPermiso="'permissions:write'"

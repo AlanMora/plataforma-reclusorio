@@ -75,7 +75,7 @@ Registradas conforme al mandato §22.10 (no asumir silenciosamente):
 
 Observaciones del equipo atendidas sin tocar el esquema del modelo:
 
-- **fechaNacimiento**: bloqueada la captura del día en curso y posteriores (selector con máximo = ayer + validación en backend, RF-GEN-004). La edad se muestra calculada en vivo en el formulario y como respaldo en listado/detalle.
+- **fechaNacimiento**: bloqueadas las fechas futuras; el día en curso SÍ se permite (QA 03/09, reemplaza al "máximo ayer" del 31/08; selector con `soloPasado` + validación en backend, RF-GEN-004). La edad se muestra calculada en vivo en el formulario y como respaldo en listado/detalle.
 - **numeroTelefono**: acotado a **10 dígitos** (numeración nacional) en frontend y DTOs; la columna sigue VARCHAR(50) fiel al modelo. *Si el equipo requiere teléfonos internacionales (>10), ajustar el límite.*
 - **Captura manual en selects** (`permitirLibre` del select buscable): ocupación, nacionalidad y país/estado/municipio de domicilio aceptan texto libre además del catálogo dummy (los campos ya eran texto en el modelo).
 - **Adscripción de elementos**: catálogo **derivado** del padrón (`GET /elementos/adscripciones`, valores distintos ya capturados) + escritura libre. NO se creó tabla de adscripciones (no existe en el modelo v1.0); si el equipo la aprueba, se migra a catálogo administrable.

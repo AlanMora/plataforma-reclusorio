@@ -21,7 +21,7 @@ interface ItemMenu {
 
 /** El menú se construye con los permisos del JWT (RF-SEG-001, RF-UI). */
 const MENU: ItemMenu[] = [
-  { ruta: '/', etiqueta: 'Dashboard', icono: 'panel', exacto: true },
+  { ruta: '/', etiqueta: 'Panel', icono: 'panel', exacto: true },
   { ruta: '/penitenciarios', etiqueta: 'Penitenciarios', icono: 'centro' },
   { ruta: '/personas', etiqueta: 'Personas', icono: 'usuarios', permiso: 'personas:consultar' },
   { ruta: '/incidencias', etiqueta: 'Incidencias', icono: 'incidencias', permiso: 'incidencias:consultar' },
@@ -88,7 +88,7 @@ export class ShellComponent {
   /** Título de la sección actual para la barra superior. */
   readonly tituloPagina = computed(() => {
     const url = this.urlActual();
-    if (url === '/' || url === '') return 'Dashboard operativo';
+    if (url === '/' || url === '') return 'Panel operativo';
     return (
       MENU.find((item) => item.ruta !== '/' && url.startsWith(item.ruta))?.etiqueta ?? 'Consola'
     );

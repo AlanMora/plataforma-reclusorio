@@ -20,6 +20,7 @@
     <rw-modal-formulario
       titulo="Registrar ingreso o libertad"
       descripcion="Captura el movimiento de ingreso o egreso sin perder de vista el historial de la persona."
+      [amplio]="true"
       [bloquearCierre]="guardando()"
       (cerrar)="alternarForm()"
     >
@@ -44,6 +45,7 @@
           <label class="campo-etiqueta obligatorio" for="ieFecha">Fecha y hora</label>
           <rw-selector-fecha
             idCampo="ieFecha"
+            [soloPasado]="true"
             name="fecha"
             [conHora]="true"
             required
@@ -129,59 +131,114 @@
       Sin ingresos ni libertades registrados.
     </p>
   } @else {
-    <table class="tabla">
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Tipo</th>
-          <th>Centro</th>
-          <th>Delito</th>
-          <th>Ubicación</th>
-          <th>Autoridad</th>
-          <th>Revisión</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (r of registros(); track r.idIngresoEgreso) {
+    <div class="overflow-x-auto">
+      <table class="tabla">
+        <thead>
           <tr>
-            <td class="font-mono text-xs">{{ r.fecha | date: 'dd/MM/yy HH:mm' }}</td>
-            <td>
-              <span class="chip-neon">{{ nombreTipo(r.idTipoIngresoEgreso) }}</span>
-            </td>
-            <td>{{ nombreCentro(r.idCentroPenitenciario) }}</td>
-            <td class="max-w-[200px] truncate" [title]="nombreDelito(r.idDelito)">
-              {{ nombreDelito(r.idDelito) }}
-            </td>
-            <td>{{ r.ubicacion || '—' }}</td>
-            <td>{{ r.autoridad || '—' }}</td>
-            <td>
-              <rw-revision-registro
-                recurso="ingresos-egresos"
-                [id]="r.idIngresoEgreso"
-                [estado]="r.estadoRevision"
-                permiso="ingresos:crear"
-              />
-            </td>
-            <td class="text-right">
-              <button
-                class="btn-secundario btn-mini"
-                type="button"
-                (click)="alternarExpandido(r.idIngresoEgreso)"
-              >
-                {{ expandido() === r.idIngresoEgreso ? 'Ocultar' : 'Archivos' }}
-              </button>
-            </td>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Centro</th>
+            <th>Delito</th>
+            <th>Ubicación</th>
+            <th>Autoridad</th>
+            <th>Revisión</th>
+            <th></th>
           </tr>
-          @if (expandido() === r.idIngresoEgreso) {
+        </thead>
+        <tbody>
+          @for (r of registros(); track r.idIngresoEgreso) {
             <tr>
-              <td colspan="7" class="bg-panel-2/40 px-4 py-4">
-                <rw-archivos-panel referencia="idIngresoEgreso" [id]="r.idIngresoEgreso" />
+              <td class="font-mono text-xs whitespace-nowrap">
+                {{ r.fecha | date: 'dd/MM/yy HH:mm' }}
+              </td>
+              <td>
+                <span class="chip-neon">{{ nombreTipo(r.idTipoIngresoEgreso) }}</span>
+              </td>
+              <td>
+                <span class="celda-texto" [title]="nombreCentro(r.idCentroPenitenciario)">
+                  {{ nombreCentro(r.idCentroPenitenciario) }}
+                </span>
+              </td>
+              <td>
+                <span class="celda-texto" [title]="nombreDelito(r.idDelito)">
+                  {{ nombreDelito(r.idDelito) }}
+                </span>
+              </td>
+              <td>
+                <span class="celda-texto" [title]="r.ubicacion || '—'">
+                  {{ r.ubicacion || '—' }}
+                </span>
+              </td>
+              <td>
+                <span class="celda-texto" [title]="r.autoridad || '—'">
+                  {{ r.autoridad || '—' }}
+                </span>
+              </td>
+              <td class="celda-acciones">
+                <rw-revision-registro
+                  recurso="ingresos-egresos"
+                  [id]="r.idIngresoEgreso"
+                  [estado]="r.estadoRevision"
+                  permiso="ingresos:crear"
+                />
+              </td>
+              <td class="celda-acciones text-right">
+                <button
+                  class="btn-secundario btn-mini"
+                  type="button"
+                  (click)="alternarExpandido(r.idIngresoEgreso)"
+                >
+                  {{ expandido() === r.idIngresoEgreso ? 'Ocultar' : 'Detalle' }}
+                </button>
               </td>
             </tr>
+            @if (expandido() === r.idIngresoEgreso) {
+              <tr>
+                <td colspan="8" class="bg-panel-2/40 px-4 py-4">
+                  @let d = detalle() ?? r;
+                  <div class="space-y-5">
+                    <div>
+                      <p class="etiqueta mb-2">Detalle del registro</p>
+                      <div
+                        class="grid gap-x-6 gap-y-2 text-sm text-slate-400 md:grid-cols-2 xl:grid-cols-3"
+                      >
+                        <p class="break-words">
+                          <span class="etiqueta">Tipo:</span>
+                          {{ nombreTipo(d.idTipoIngresoEgreso) }}
+                        </p>
+                        <p class="break-words">
+                          <span class="etiqueta">Fecha y hora:</span>
+                          {{ d.fecha | date: 'dd/MM/yyyy HH:mm' }}
+                        </p>
+                        <p class="break-words">
+                          <span class="etiqueta">Centro penitenciario:</span>
+                          {{ nombreCentro(d.idCentroPenitenciario) }}
+                        </p>
+                        <p class="break-words">
+                          <span class="etiqueta">Delito:</span>
+                          {{ nombreDelito(d.idDelito) }}
+                        </p>
+                        <p class="break-words">
+                          <span class="etiqueta">Ubicación:</span>
+                          {{ d.ubicacion || '—' }}
+                        </p>
+                        <p class="break-words">
+                          <span class="etiqueta">Autoridad que pone a disposición:</span>
+                          {{ d.autoridad || '—' }}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <p class="etiqueta mb-2">Expediente digital</p>
+                      <rw-archivos-panel referencia="idIngresoEgreso" [id]="r.idIngresoEgreso" />
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            }
           }
-        }
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
   }
 </div>

@@ -10,7 +10,7 @@
         Agregar valor
       </button>
     } @else {
-      <span class="chip-apagado">catálogo fijo · sin edición (RF-CAT-008)</span>
+      <span class="chip-apagado">catálogo fijo · sin edición</span>
     }
   </div>
 
@@ -115,6 +115,7 @@
     @if (cargando()) {
       <p class="etiqueta animate-pulse">Cargando valores…</p>
     } @else {
+      <div class="overflow-x-auto">
       <table class="tabla">
         <thead>
           <tr>
@@ -129,7 +130,7 @@
         <tbody>
           @for (v of pagina().items; track v.id) {
             <tr>
-              <td class="text-slate-100">
+              <td class="max-w-[32ch] break-words text-slate-100">
                 {{ v.nombre }}
                 @if (esCentros() && v.latitud != null && v.longitud != null) {
                   <span
@@ -145,8 +146,10 @@
                   >
                 }
               </td>
-              <td class="max-w-[280px] truncate" [title]="v.descripcion || ''">
-                {{ v.descripcion || '—' }}
+              <td>
+                <span class="celda-texto max-w-[280px]" [title]="v.descripcion || ''">
+                  {{ v.descripcion || '—' }}
+                </span>
               </td>
               <td>
                 <span [class]="v.activo ? 'chip-ok' : 'chip-apagado'">{{
@@ -154,7 +157,7 @@
                 }}</span>
               </td>
               @if (!esFijo()) {
-                <td class="text-right">
+                <td class="celda-acciones text-right">
                   <button
                     class="btn-secundario btn-mini"
                     type="button"
@@ -180,6 +183,7 @@
           }
         </tbody>
       </table>
+      </div>
       @if (!esFijo()) {
         <rw-paginador
           [page]="pagina().page"

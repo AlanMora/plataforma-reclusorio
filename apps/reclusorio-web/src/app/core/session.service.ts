@@ -59,7 +59,7 @@ export class SessionService {
       const siguiente = actual - 1;
       this.restante.set(siguiente);
       if (siguiente <= 0) {
-        this.auth.forzarLogout('Tu sesión de 30 minutos expiró (RF-SES-002).');
+        this.auth.forzarLogout('Tu sesión de 30 minutos expiró.');
       }
     }, 1000);
     this.sincronizador = setInterval(() => void this.sincronizar(), 60_000);

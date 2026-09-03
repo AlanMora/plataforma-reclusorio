@@ -7,7 +7,7 @@
   <div class="grid gap-5 lg:grid-cols-2">
     <!-- Sesión -->
     <div class="panel space-y-4 p-6">
-      <p class="etiqueta">Sesión vigente (RF-CUE-001)</p>
+      <p class="etiqueta">Sesión vigente</p>
       <div class="flex items-baseline gap-3">
         <span class="font-mono text-4xl text-neon">{{ minutos() }}</span>
         <span class="text-sm text-slate-500">minutos restantes de 30 (renovables)</span>
@@ -35,7 +35,7 @@
 
     <!-- Cambio de contraseña -->
     <div class="panel space-y-4 p-6">
-      <p class="etiqueta">Cambio de contraseña (RF-CUE-002)</p>
+      <p class="etiqueta">Cambio de contraseña</p>
       <form
         #formularioPassword="ngForm"
         class="space-y-3"
@@ -97,12 +97,13 @@
   <!-- Sesiones activas -->
   <div class="panel space-y-3 p-6">
     <div class="flex items-center justify-between">
-      <p class="etiqueta">Sesiones activas (auditoría con IP, DP-003)</p>
+      <p class="etiqueta">Sesiones activas (auditoría con IP)</p>
       <button class="btn-peligro btn-mini" type="button" (click)="cerrarTodas()">
         <rw-icono nombre="salir" [tamano]="14" />
         Cerrar todas
       </button>
     </div>
+    <div class="overflow-x-auto">
     <table class="tabla">
       <thead>
         <tr>
@@ -123,15 +124,20 @@
               }
             </td>
             <td class="font-mono text-xs">{{ s.ipAddress || '—' }}</td>
-            <td class="max-w-[280px] truncate text-xs" [title]="s.userAgent || ''">
-              {{ s.userAgent || '—' }}
+            <td class="text-xs">
+              <span class="celda-texto max-w-[280px]" [title]="s.userAgent || ''">
+                {{ s.userAgent || '—' }}
+              </span>
             </td>
-            <td class="font-mono text-xs">{{ s.createdAt | date: 'dd/MM/yy HH:mm' }}</td>
+            <td class="font-mono text-xs whitespace-nowrap">
+              {{ s.createdAt | date: 'dd/MM/yy HH:mm' }}
+            </td>
             <td></td>
           </tr>
         }
       </tbody>
     </table>
+    </div>
   </div>
 
   @if (usuario(); as u) {

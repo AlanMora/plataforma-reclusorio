@@ -1,6 +1,10 @@
 <div class="grid gap-x-5 gap-y-4 md:grid-cols-3">
   <div class="md:col-span-3">
-    <rw-mapa-domicilio (domicilio)="alUbicar($event)" />
+    <rw-mapa-domicilio
+      [lat]="domicilio.latitud"
+      [lng]="domicilio.longitud"
+      (domicilio)="alUbicar($event)"
+    />
     @if (domicilio.latitud !== null && domicilio.longitud !== null) {
       <p class="mt-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">
         Coordenadas capturadas: {{ domicilio.latitud | number: '1.5-6' }},

@@ -58,7 +58,7 @@
           placeholder="18 caracteres"
           [(ngModel)]="modelo.curp"
         />
-        <p class="mt-1 text-[11px] text-slate-600">El backend valida el formato oficial.</p>
+        <p class="mt-1 text-[11px] text-slate-600">Se verificará que cumpla el formato oficial.</p>
       </div>
       <div>
         <label class="campo-etiqueta obligatorio" for="fechaNacimiento">Fecha de nacimiento</label>
@@ -66,15 +66,14 @@
           idCampo="fechaNacimiento"
           name="fechaNacimiento"
           required
-          [max]="fechaMaximaNacimiento"
+          [soloPasado]="true"
           [(ngModel)]="modelo.fechaNacimiento"
         />
         <p class="mt-1 text-[11px] text-slate-600">
           @if (edadCalculada() !== null) {
-            Edad calculada: <span class="font-semibold text-neon">{{ edadCalculada() }} años</span>
-            (RF-GEN-008).
+            Edad calculada: <span class="font-semibold text-neon">{{ edadCalculada() }} años</span>.
           } @else {
-            Solo fechas anteriores al día en curso; la edad SIEMPRE se calcula (RF-GEN-008).
+            No admite fechas futuras; la edad se calcula automáticamente.
           }
         </p>
       </div>
@@ -211,7 +210,7 @@
   @if (mostrarAcciones()) {
     <div class="flex flex-wrap items-center gap-3 border-t border-borde pt-5">
       <p class="mr-auto text-[11px] text-slate-600">
-        Los campos marcados con <span class="text-neon">*</span> son obligatorios (DP-007).
+        Los campos marcados con <span class="text-neon">*</span> son obligatorios.
       </p>
       <button class="btn-primario" type="submit" [disabled]="guardando()">
         <rw-icono [nombre]="guardando() ? 'cargando' : 'guardar'" [tamano]="15" />

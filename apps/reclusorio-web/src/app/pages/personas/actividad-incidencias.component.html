@@ -20,6 +20,7 @@
     <rw-modal-formulario
       titulo="Registrar incidencia"
       descripcion="La persona quedará vinculada automáticamente al nuevo registro."
+      [amplio]="true"
       [bloquearCierre]="guardando()"
       (cerrar)="alternarForm()"
     >
@@ -31,8 +32,7 @@
         (ngSubmit)="crear(formularioIncidencia, $event)"
       >
         <p class="text-xs text-slate-500 md:col-span-2">
-          La persona de este expediente quedará asociada automáticamente a la incidencia
-          (RF-INC-003); autoridades de apoyo, elementos y archivos pueden capturarse aquí mismo.
+          La persona de este expediente quedará asociada automáticamente a la incidencia; autoridades de apoyo, elementos y archivos pueden capturarse aquí mismo.
         </p>
         <div>
           <label class="campo-etiqueta obligatorio" for="incTabCentro">Centro penitenciario</label>
@@ -98,7 +98,7 @@
             [(ngModel)]="forma.primerRespondiente"
           />
           <p class="mt-1 text-[11px] text-slate-600">
-            Úsalo cuando el elemento NO está en el padrón (RF-INC-007); si está registrado (o lo das
+            Úsalo cuando el elemento NO está en el padrón; si está registrado (o lo das
             de alta), asócialo abajo en «Elementos participantes».
           </p>
         </div>
@@ -238,6 +238,7 @@
       incidencia» (queda asociada automáticamente) o desde el módulo Incidencias.
     </p>
   } @else {
+    <div class="overflow-x-auto">
     <table class="tabla">
       <thead>
         <tr>
@@ -252,15 +253,26 @@
       <tbody>
         @for (r of registros(); track r.idIncidencia) {
           <tr>
-            <td class="font-mono text-xs">{{ r.fecha | date: 'dd/MM/yy HH:mm' }}</td>
+            <td class="font-mono text-xs whitespace-nowrap">
+              {{ r.fecha | date: 'dd/MM/yy HH:mm' }}
+            </td>
             <td>
               <span class="chip-alerta">{{ nombre(mapaTipos, r.idTipoIncidencia) }}</span>
             </td>
-            <td class="max-w-[200px] truncate">
-              {{ nombre(mapaCentros, r.idCentroPenitenciario) }}
-            </td>
-            <td class="max-w-[320px] truncate" [title]="r.descripcion">{{ r.descripcion }}</td>
             <td>
+              <span
+                class="celda-texto max-w-[200px]"
+                [title]="nombre(mapaCentros, r.idCentroPenitenciario)"
+              >
+                {{ nombre(mapaCentros, r.idCentroPenitenciario) }}
+              </span>
+            </td>
+            <td>
+              <span class="celda-texto max-w-[320px]" [title]="r.descripcion">
+                {{ r.descripcion }}
+              </span>
+            </td>
+            <td class="celda-acciones">
               <rw-revision-registro
                 recurso="incidencias"
                 [id]="r.idIncidencia"
@@ -268,7 +280,7 @@
                 permiso="incidencias:crear"
               />
             </td>
-            <td class="text-right">
+            <td class="celda-acciones text-right">
               <button
                 class="btn-secundario btn-mini"
                 type="button"
@@ -281,23 +293,84 @@
           @if (expandido() === r.idIncidencia) {
             <tr>
               <td colspan="6" class="bg-panel-2/40 px-4 py-4">
+                @let d = detalle() ?? r;
                 <div class="space-y-5">
-                  <div class="text-sm text-slate-400">
-                    <p><span class="etiqueta">Descripción:</span> {{ r.descripcion }}</p>
-                    @if (r.narrativa) {
-                      <p class="mt-1"><span class="etiqueta">Narrativa:</span> {{ r.narrativa }}</p>
-                    }
+                  <div>
+                    <p class="etiqueta mb-2">Detalle de la incidencia</p>
+                    <div class="grid gap-x-6 gap-y-2 text-sm text-slate-400 md:grid-cols-2">
+                      <p class="break-words">
+                        <span class="etiqueta">Tipo:</span>
+                        {{ nombre(mapaTipos, d.idTipoIncidencia) }}
+                      </p>
+                      <p class="break-words">
+                        <span class="etiqueta">Fecha y hora:</span>
+                        {{ d.fecha | date: 'dd/MM/yyyy HH:mm' }}
+                      </p>
+                      <p class="break-words">
+                        <span class="etiqueta">Centro penitenciario:</span>
+                        {{ nombre(mapaCentros, d.idCentroPenitenciario) }}
+                      </p>
+                      <p class="break-words">
+                        <span class="etiqueta">IPH:</span>
+                        {{ d.iph || '—' }}
+                      </p>
+                      <p class="break-words md:col-span-2">
+                        <span class="etiqueta">Primer respondiente (texto libre):</span>
+                        {{ d.primerRespondiente || '—' }}
+                      </p>
+                      <p class="break-words md:col-span-2">
+                        <span class="etiqueta">Descripción:</span>
+                        {{ d.descripcion }}
+                      </p>
+                      @if (d.narrativa) {
+                        <p class="break-words md:col-span-2">
+                          <span class="etiqueta">Narrativa:</span>
+                          {{ d.narrativa }}
+                        </p>
+                      }
+                    </div>
                     <p class="mt-2">
                       <a
                         class="etiqueta hover:text-neon"
                         [routerLink]="['/incidencias', r.idIncidencia]"
                       >
-                        Abrir la incidencia completa (personas y autoridades) →
+                        Abrir la incidencia completa →
                       </a>
                     </p>
                   </div>
+                  @if (detalle(); as det) {
+                    @if (det.personas.length > 0) {
+                      <div>
+                        <p class="etiqueta mb-2">Personas asociadas</p>
+                        @if (personasAsociadas().length > 0) {
+                          <ul class="space-y-1 text-sm text-slate-400">
+                            @for (p of personasAsociadas(); track p.idPersona) {
+                              <li class="break-words">{{ nombreDePersona(p) }}</li>
+                            }
+                          </ul>
+                        } @else {
+                          <p class="text-sm text-slate-600">
+                            {{ det.personas.length }} persona(s) asociada(s); no fue posible
+                            consultar sus nombres.
+                          </p>
+                        }
+                      </div>
+                    }
+                    @if (det.autoridades.length > 0) {
+                      <div>
+                        <p class="etiqueta mb-2">Autoridades de apoyo</p>
+                        <div class="flex flex-wrap gap-2">
+                          @for (idAutoridad of det.autoridades; track idAutoridad) {
+                            <span class="chip-neon break-words">
+                              {{ nombreAutoridad(idAutoridad) }}
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    }
+                  }
                   <div>
-                    <p class="etiqueta mb-2">Elementos participantes (RF-INC-005/007)</p>
+                    <p class="etiqueta mb-2">Elementos participantes</p>
                     @if (elementosAsociados().length === 0) {
                       <p class="text-sm text-slate-600">Sin elementos asociados.</p>
                     }
@@ -332,5 +405,6 @@
         }
       </tbody>
     </table>
+    </div>
   }
 </div>

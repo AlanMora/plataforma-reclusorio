@@ -60,7 +60,7 @@ export class AuthService {
 
   private async ejecutarRefresh(): Promise<string> {
     const refreshToken = this.tokens()?.refreshToken;
-    if (!refreshToken) throw new Error('Sin refresh token');
+    if (!refreshToken) throw new Error('No hay una sesión activa que renovar.');
     const res = await firstValueFrom(
       this.http.post<ApiEnvelope<TokenPair>>('/api/v1/auth/refresh', { refreshToken }),
     );

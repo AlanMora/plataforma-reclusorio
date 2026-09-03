@@ -18,12 +18,12 @@
           class="campo pl-9 pr-24"
           id="mapaBusqueda"
           name="mapaBusqueda"
-          placeholder="Ej. Sexta Pte. 427, Nuevo México, Jalisco"
+          placeholder="Calle, número, colonia, municipio…"
           autocomplete="off"
           [(ngModel)]="consulta"
           (ngModelChange)="alTeclear()"
           (keydown.enter)="$event.preventDefault(); buscar()"
-          (keydown.escape)="cerrarResultados()"
+          (keydown.escape)="cerrarResultados($event)"
         />
         @if (buscando()) {
           <span

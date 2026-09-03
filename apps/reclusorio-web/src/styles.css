@@ -293,6 +293,18 @@ rw-root {
   }
   .tabla td {
     @apply border-b border-borde/60 px-3 py-2.5 text-slate-300;
+    /* Cadenas largas sin espacios no deben estirar la columna ni desbordar el panel */
+    overflow-wrap: anywhere;
+  }
+  /* Celda de texto libre potencialmente largo: acotada con elipsis (title muestra el completo) */
+  .celda-texto {
+    @apply block max-w-[26ch] truncate;
+  }
+  /* Celda de acciones: ancho estable, los botones nunca se parten ni se encogen */
+  .tabla td.celda-acciones {
+    @apply whitespace-nowrap;
+    overflow-wrap: normal;
+    width: 1%;
   }
   .tabla tbody tr {
     @apply transition-colors;
@@ -992,6 +1004,12 @@ body:has(.modal-layer) rw-persona-detail .modal-layer {
   -webkit-backdrop-filter: blur(30px) saturate(145%);
   backdrop-filter: blur(30px) saturate(145%);
   animation: modal-surface-in 160ms ease-out both;
+}
+
+/* Variante con altura mínima generosa: los formularios con catálogos
+   desplegables y calendario necesitan espacio para abrirlos sin recortes. */
+.modal-glass-amplio {
+  min-height: min(78dvh, 44rem);
 }
 
 .modal-glass::before {

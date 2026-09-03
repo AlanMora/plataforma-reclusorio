@@ -82,6 +82,8 @@ export class PersonaDetailComponent {
   readonly mostrarFormDomicilio = signal(false);
   readonly guardandoDomicilio = signal(false);
   readonly errorDomicilio = signal<string | null>(null);
+  /** Domicilio en edición dentro del modal; null = alta de domicilio. */
+  readonly domicilioEnEdicion = signal<Domicilio | null>(null);
 
   readonly pestanas = PESTANAS;
 
@@ -149,11 +151,19 @@ export class PersonaDetailComponent {
 
   alternarFormDomicilio(): void {
     this.mostrarFormDomicilio.update((visible) => !visible);
+    if (!this.mostrarFormDomicilio()) this.domicilioEnEdicion.set(null);
     this.errorDomicilio.set(null);
   }
 
-  /** Alta de domicilio desde el expediente usando el formulario compartido. */
-  async agregarDomicilio(
+  /** Abre el modal precargado con un domicilio ya guardado. */
+  editarDomicilio(domicilio: Domicilio): void {
+    this.domicilioEnEdicion.set(domicilio);
+    this.mostrarFormDomicilio.set(true);
+    this.errorDomicilio.set(null);
+  }
+
+  /** Alta o edición de domicilio desde el expediente usando el formulario compartido. */
+  async guardarDomicilio(
     formulario: DomicilioFormComponent,
     formularioAngular: NgForm,
     evento: SubmitEvent,
@@ -166,13 +176,23 @@ export class PersonaDetailComponent {
     }
     this.guardandoDomicilio.set(true);
     this.errorDomicilio.set(null);
+    const enEdicion = this.domicilioEnEdicion();
     try {
-      await this.api.post<Domicilio>(
-        `/api/v1/personas/${this.idPersona()}/domicilios`,
-        formulario.domicilio,
-      );
-      this.toast.ok('Domicilio agregado.');
+      if (enEdicion?.idDomicilio) {
+        await this.api.patch<Domicilio>(
+          `/api/v1/personas/${this.idPersona()}/domicilios/${enEdicion.idDomicilio}`,
+          formulario.domicilio,
+        );
+        this.toast.ok('Domicilio actualizado.');
+      } else {
+        await this.api.post<Domicilio>(
+          `/api/v1/personas/${this.idPersona()}/domicilios`,
+          formulario.domicilio,
+        );
+        this.toast.ok('Domicilio agregado.');
+      }
       this.mostrarFormDomicilio.set(false);
+      this.domicilioEnEdicion.set(null);
       formulario.reiniciar();
       await this.cargar(this.idPersona());
     } catch (err) {

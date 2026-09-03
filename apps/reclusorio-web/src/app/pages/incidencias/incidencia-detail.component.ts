@@ -55,6 +55,11 @@ export class IncidenciaDetailComponent {
 
   nombreDePersona = nombreCompleto;
 
+  /** Solo una incidencia pendiente de revisión admite quitar asociaciones. */
+  esPendiente(): boolean {
+    return this.incidencia()?.estadoRevision === 'PENDIENTE';
+  }
+
   constructor() {
     effect(() => {
       const id = this.idIncidencia();
@@ -136,6 +141,38 @@ export class IncidenciaDetailComponent {
       });
       this.toast.ok('Elemento asociado.');
       this.marcarPrimerRespondiente = false;
+      await this.cargar(this.idIncidencia());
+    } catch (err) {
+      this.toast.error(mensajeDe(err));
+    }
+  }
+
+  async quitarPersona(p: Persona): Promise<void> {
+    try {
+      await this.api.delete(`/api/v1/incidencias/${this.idIncidencia()}/personas/${p.idPersona}`);
+      this.toast.ok('Persona quitada de la incidencia.');
+      await this.cargar(this.idIncidencia());
+    } catch (err) {
+      this.toast.error(mensajeDe(err));
+    }
+  }
+
+  async quitarAutoridad(idAutoridad: string): Promise<void> {
+    try {
+      await this.api.delete(
+        `/api/v1/incidencias/${this.idIncidencia()}/autoridades/${idAutoridad}`,
+      );
+      this.toast.ok('Autoridad quitada de la incidencia.');
+      await this.cargar(this.idIncidencia());
+    } catch (err) {
+      this.toast.error(mensajeDe(err));
+    }
+  }
+
+  async quitarElemento(idElemento: string): Promise<void> {
+    try {
+      await this.api.delete(`/api/v1/incidencias/${this.idIncidencia()}/elementos/${idElemento}`);
+      this.toast.ok('Elemento quitado de la incidencia.');
       await this.cargar(this.idIncidencia());
     } catch (err) {
       this.toast.error(mensajeDe(err));

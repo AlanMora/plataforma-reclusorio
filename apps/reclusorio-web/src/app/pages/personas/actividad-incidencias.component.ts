@@ -25,8 +25,10 @@ import {
   Incidencia,
   IncidenciaDetalle,
   Paginado,
+  Persona,
   ValorCatalogo,
 } from '../../core/models';
+import { nombreCompleto } from './personas-list.component';
 import { mensajeDe } from '../../core/problem';
 import { RevisionRegistroComponent } from '../../shared/revision-registro.component';
 import { ModalFormulario } from '../../shared/modal-formulario/modal-formulario';
@@ -83,6 +85,10 @@ export class ActividadIncidenciasComponent implements OnInit {
   readonly errorForm = signal<string | null>(null);
   readonly mostrarForm = signal(false);
   readonly expandido = signal<string | null>(null);
+  /** Detalle completo de la incidencia expandida (GET por id); la fila es el respaldo. */
+  readonly detalle = signal<IncidenciaDetalle | null>(null);
+  /** Personas asociadas al detalle expandido, con nombre resuelto (nunca UUIDs). */
+  readonly personasAsociadas = signal<Persona[]>([]);
   readonly elementosAsociados = signal<{ elemento: Elemento; primerRespondiente: boolean }[]>([]);
   /** Elementos elegidos durante la captura; se asocian al crear (RF-INC-005/007). */
   readonly elementosCaptura = signal<{ elemento: Elemento; primerRespondiente: boolean }[]>([]);
@@ -102,6 +108,9 @@ export class ActividadIncidenciasComponent implements OnInit {
 
   mapaTipos = new Map<string, string>();
   mapaCentros = new Map<string, string>();
+  private mapaAutoridades = new Map<string, string>();
+
+  nombreDePersona = nombreCompleto;
 
   forma: Record<string, string> = {
     idCentroPenitenciario: '',
@@ -122,12 +131,18 @@ export class ActividadIncidenciasComponent implements OnInit {
     return mapa.get(id) ?? '…';
   }
 
+  nombreAutoridad(id: string): string {
+    return this.mapaAutoridades.get(id) ?? '…';
+  }
+
   alternarExpandido(id: string): void {
     const nuevo = this.expandido() === id ? null : id;
     this.expandido.set(nuevo);
+    this.detalle.set(null);
+    this.personasAsociadas.set([]);
     this.elementosAsociados.set([]);
     this.marcarPrimerRespondiente = false;
-    if (nuevo) void this.cargarElementos(nuevo);
+    if (nuevo) void this.cargarDetalle(nuevo);
   }
 
   /** Abre/cierra la captura descartando lo tecleado en un intento previo. */
@@ -270,15 +285,31 @@ export class ActividadIncidenciasComponent implements OnInit {
       });
       this.toast.ok('Elemento asociado a la incidencia.');
       this.marcarPrimerRespondiente = false;
-      await this.cargarElementos(idIncidencia);
+      await this.cargarDetalle(idIncidencia);
     } catch (err) {
       this.toast.error(mensajeDe(err));
     }
   }
 
-  private async cargarElementos(idIncidencia: string): Promise<void> {
+  /** Trae la incidencia completa con sus asociaciones para el detalle expandido. */
+  private async cargarDetalle(idIncidencia: string): Promise<void> {
+    let detalle: IncidenciaDetalle;
     try {
-      const detalle = await this.api.get<IncidenciaDetalle>(`/api/v1/incidencias/${idIncidencia}`);
+      detalle = await this.api.get<IncidenciaDetalle>(`/api/v1/incidencias/${idIncidencia}`);
+      this.detalle.set(detalle);
+    } catch {
+      // si el detalle falla, el expandido muestra los datos ya cargados en la fila
+      return;
+    }
+    try {
+      const personas = await Promise.all(
+        (detalle.personas ?? []).map((id) => this.api.get<Persona>(`/api/v1/personas/${id}`)),
+      );
+      this.personasAsociadas.set(personas);
+    } catch {
+      // sin permiso personas:consultar solo se muestra el conteo
+    }
+    try {
       const elementos = await Promise.all(
         (detalle.elementos ?? []).map(async (e) => ({
           elemento: await this.api.get<Elemento>(`/api/v1/elementos/${e.idElemento}`),
@@ -303,6 +334,7 @@ export class ActividadIncidenciasComponent implements OnInit {
       this.autoridades.set(autoridades);
       this.mapaTipos = new Map(tipos.map((v) => [v.id, v.nombre]));
       this.mapaCentros = new Map(centros.map((v) => [v.id, v.nombre]));
+      this.mapaAutoridades = new Map(autoridades.map((v) => [v.id, v.nombre]));
     } catch (err) {
       this.error.set(mensajeDe(err));
     }

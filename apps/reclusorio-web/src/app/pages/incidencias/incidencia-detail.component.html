@@ -20,15 +20,15 @@
           <span class="chip-apagado">IPH {{ incidencia()!.iph }}</span>
         }
       </div>
-      <p class="text-slate-200">{{ incidencia()!.descripcion }}</p>
+      <p class="break-words text-slate-200">{{ incidencia()!.descripcion }}</p>
       @if (incidencia()!.primerRespondiente) {
-        <p class="text-sm text-slate-400">
+        <p class="break-words text-sm text-slate-400">
           <span class="etiqueta">Primer respondiente (no registrado):</span>
           {{ incidencia()!.primerRespondiente }}
         </p>
       }
       @if (incidencia()!.narrativa) {
-        <p class="whitespace-pre-line border-t border-borde pt-3 text-sm text-slate-400">
+        <p class="break-words whitespace-pre-line border-t border-borde pt-3 text-sm text-slate-400">
           {{ incidencia()!.narrativa }}
         </p>
       }
@@ -37,20 +37,34 @@
     <div class="grid gap-5 lg:grid-cols-2">
       <!-- Personas asociadas -->
       <div class="panel space-y-3 p-5">
-        <p class="etiqueta">Personas asociadas (RF-INC-003)</p>
+        <p class="etiqueta">Personas asociadas</p>
         @if (personasAsociadas().length === 0) {
           <p class="text-sm text-slate-600">
             Sin personas asociadas — la incidencia es válida así.
           </p>
         }
         @for (p of personasAsociadas(); track p.idPersona) {
-          <a
-            class="block rounded-lg border border-borde px-3 py-2 text-sm text-slate-200 hover:border-neon/40"
-            [routerLink]="['/personas', p.idPersona]"
-          >
-            {{ nombreDePersona(p) }}
-            <span class="ml-2 font-mono text-xs text-slate-500">{{ p.curp }}</span>
-          </a>
+          <div class="flex items-center gap-2">
+            <a
+              class="flex min-w-0 flex-1 items-baseline gap-2 rounded-lg border border-borde px-3 py-2 text-sm text-slate-200 hover:border-neon/40"
+              [routerLink]="['/personas', p.idPersona]"
+            >
+              <span class="truncate" [title]="nombreDePersona(p)">{{ nombreDePersona(p) }}</span>
+              @if (p.curp) {
+                <span class="ml-auto shrink-0 font-mono text-xs text-slate-500">{{ p.curp }}</span>
+              }
+            </a>
+            @if (esPendiente()) {
+              <button
+                *rwPermiso="'incidencias:asociar'"
+                class="btn-secundario btn-mini shrink-0"
+                type="button"
+                (click)="quitarPersona(p)"
+              >
+                Quitar
+              </button>
+            }
+          </div>
         }
         <div
           *rwPermiso="'incidencias:asociar'"
@@ -76,8 +90,10 @@
               class="flex w-full items-center justify-between rounded-lg border border-borde px-3 py-2 text-left text-sm hover:border-neon/50 hover:bg-neon/5"
               (click)="asociarPersona(p)"
             >
-              <span>{{ nombreDePersona(p) }}</span>
-              <span class="font-mono text-xs text-slate-500">{{ p.curp }}</span>
+              <span class="min-w-0 truncate" [title]="nombreDePersona(p)">{{
+                nombreDePersona(p)
+              }}</span>
+              <span class="ml-2 shrink-0 font-mono text-xs text-slate-500">{{ p.curp }}</span>
             </button>
           }
         </div>
@@ -86,13 +102,26 @@
       <!-- Autoridades + elementos -->
       <div class="space-y-5">
         <div class="panel space-y-3 p-5">
-          <p class="etiqueta">Autoridades de apoyo (RF-INC-004)</p>
+          <p class="etiqueta">Autoridades de apoyo</p>
           @if (incidencia()!.autoridades.length === 0) {
             <p class="text-sm text-slate-600">Sin autoridades asociadas.</p>
           }
           <div class="flex flex-wrap gap-2">
             @for (id of incidencia()!.autoridades; track id) {
-              <span class="chip-neon">{{ nombreAutoridad(id) }}</span>
+              <span class="chip-neon max-w-full gap-1.5">
+                <span class="truncate" [title]="nombreAutoridad(id)">{{ nombreAutoridad(id) }}</span>
+                @if (esPendiente()) {
+                  <button
+                    *rwPermiso="'incidencias:asociar'"
+                    class="shrink-0 text-slate-500 hover:text-red-400"
+                    type="button"
+                    title="Quitar autoridad"
+                    (click)="quitarAutoridad(id)"
+                  >
+                    <rw-icono nombre="cerrar" [tamano]="12" />
+                  </button>
+                }
+              </span>
             }
           </div>
           <div *rwPermiso="'incidencias:asociar'" class="flex gap-2">
@@ -115,16 +144,30 @@
         </div>
 
         <div class="panel space-y-3 p-5">
-          <p class="etiqueta">Elementos participantes (RF-INC-005/007)</p>
+          <p class="etiqueta">Elementos participantes</p>
           @if (elementosAsociados().length === 0) {
             <p class="text-sm text-slate-600">Sin elementos asociados.</p>
           }
           <div class="grid gap-2">
             @for (x of elementosAsociados(); track x.elemento.idElemento) {
-              <rw-elemento-card
-                [elemento]="x.elemento"
-                [insignia]="x.primerRespondiente ? '1er respondiente' : ''"
-              />
+              <div class="flex min-w-0 items-center gap-2">
+                <div class="min-w-0 flex-1">
+                  <rw-elemento-card
+                    [elemento]="x.elemento"
+                    [insignia]="x.primerRespondiente ? '1er respondiente' : ''"
+                  />
+                </div>
+                @if (esPendiente()) {
+                  <button
+                    *rwPermiso="'incidencias:asociar'"
+                    class="btn-secundario btn-mini shrink-0"
+                    type="button"
+                    (click)="quitarElemento(x.elemento.idElemento)"
+                  >
+                    Quitar
+                  </button>
+                }
+              </div>
             }
           </div>
           <div *rwPermiso="'incidencias:asociar'">
@@ -144,7 +187,7 @@
     </div>
 
     <div class="panel p-5">
-      <p class="etiqueta mb-3">Expediente digital de la incidencia (RF-ARC-004)</p>
+      <p class="etiqueta mb-3">Expediente digital de la incidencia</p>
       <rw-archivos-panel referencia="idIncidencia" [id]="idIncidencia()" />
     </div>
   }

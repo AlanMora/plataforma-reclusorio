@@ -158,6 +158,14 @@ export class SelectBuscableComponent implements ControlValueAccessor {
     else if (this.textoLibre()) this.elegir(this.textoLibre());
   }
 
+  /** Esc con el desplegable abierto solo lo cierra, sin llegar al modal contenedor. */
+  cerrarConEscape(evento: Event): void {
+    if (!this.abierto()) return;
+    evento.preventDefault();
+    evento.stopPropagation();
+    this.cerrar();
+  }
+
   @HostListener('document:click', ['$event'])
   clicFuera(evento: MouseEvent): void {
     if (this.abierto() && !this.host.nativeElement.contains(evento.target as Node)) {

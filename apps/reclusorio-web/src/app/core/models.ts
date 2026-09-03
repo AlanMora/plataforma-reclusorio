@@ -90,6 +90,8 @@ export interface Persona {
   numeroTelefono?: string;
   /** SIEMPRE calculada por el backend, nunca persistida (RF-GEN-008). */
   edad?: number | null;
+  /** Centro penitenciario del último ingreso, "EN LIBERTAD" o null sin historial. */
+  ubicacionFisica?: string | null;
   fechaRegistro?: string;
   fechaActualizacion?: string;
 }

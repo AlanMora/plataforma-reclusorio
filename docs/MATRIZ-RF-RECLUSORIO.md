@@ -14,7 +14,7 @@ restricción verificada en la base de datos.
 | RF-GEN-001 | UUID v7 en todas las PKs (`@BeforeInsert`) | E2E |
 | RF-GEN-002 / RF-CAT-010 | Tablas operativas guardan UUID de catálogo (FKs) | E2E + BD |
 | RF-GEN-003 / RF-CAT-004 | Sin DELETE físico; `activo=false` | E2E |
-| RF-GEN-004 | Validación DTO backend + reglas en services (autoridad final); QA 31/08: `fechaNacimiento` debe ser anterior al día en curso (`validarFechaNacimiento` en crear y modificar) y `numeroTelefono` acotado a 10 dígitos (DTOs) | E2E (hoy/futura → 422; teléfono >10 → 400) |
+| RF-GEN-004 | Validación DTO backend + reglas en services (autoridad final); QA 03/09 (reemplaza al 31/08): `fechaNacimiento` no admite fechas futuras — hoy sí se permite (`validarFechaNacimiento` en crear y modificar); `numeroTelefono` acotado a 10 dígitos (DTOs) | E2E (futura → 422; teléfono >10 → 400) |
 | RF-GEN-005 | Errores RFC 9457 `application/problem+json` sin detalles internos | E2E + UT plataforma |
 | RF-GEN-006 | 5 tablas asociativas con PK compuesta | BD + E2E |
 | RF-GEN-007 / RF-ELE-001..005 | `GET /elementos/coincidencias` (número → nombre+adscripción), alta condicionada, asociaciones sin duplicar; QA 31/08: `GET /elementos/adscripciones` (catálogo DERIVADO de valores distintos del padrón, sin tabla nueva) consumido por el select con escritura libre del módulo Elementos | E2E completo (adscripción nueva aparece en el derivado) |
@@ -33,7 +33,7 @@ restricción verificada en la base de datos.
 | RF-SES-002/008 (cliente) | Cuenta regresiva sincronizada con `GET /auth/session`; refresh rota tokens y reinicia 30 min (`core/auth.service` single-flight; reintento ante 401 en `auth.interceptor`) | build + revisión |
 | RF-SES-009 (cliente) | `core/realtime.service`: socket.io autenticado con el access token; al recibir `session.revoked` de la propia sesión fuerza logout inmediato con motivo | build + revisión |
 | RF-NOT-001..004 | `GET /notifications/inbox` (búsqueda + paginación), `POST /inbox/:id/leida` | E2E completo |
-| RF-PER-001..005 | `GET/POST/PATCH /personas` con búsqueda por nombre/apellidos/alias/CURP; DP-007 en validación. QA 31/08: selector de nacimiento con máximo = ayer, teléfono a 10 dígitos, y ocupación/nacionalidad con texto libre además del catálogo (`permitirLibre` del select buscable) | E2E (sin CURP → 400; ocupación/nacionalidad libres guardadas) |
+| RF-PER-001..005 | `GET/POST/PATCH /personas` con búsqueda por nombre/apellidos/alias/CURP; DP-007 en validación. QA 31/08 ajustado el 03/09: selector de nacimiento sin fechas futuras (hoy permitido, `soloPasado`), teléfono a 10 dígitos, y ocupación/nacionalidad con texto libre además del catálogo (`permitirLibre` del select buscable) | E2E (sin CURP → 400; ocupación/nacionalidad libres guardadas) |
 | RF-PER-006..007 | `POST /personas/:id/domicilios` (números alfanuméricos). QA 31/08: país/estado/municipio aceptan texto libre además del catálogo dummy (P9) | E2E ("12-A", "S/N"; Belice/Cayo/San Ignacio fuera de catálogo) |
 | RF-PER-008 / RF-ARC-004 | `POST /archivos` con `idPersona`; múltiples permitidos | E2E |
 | RF-IEG-001..005 | `personas/:id/ingresos-egresos` + catálogos activos + archivos por `idIngresoEgreso` | E2E |

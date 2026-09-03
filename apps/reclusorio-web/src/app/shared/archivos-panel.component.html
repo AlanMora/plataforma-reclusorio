@@ -33,8 +33,9 @@
   @if (cargando()) {
     <p class="etiqueta animate-pulse">Cargando archivos…</p>
   } @else if (archivos().length === 0) {
-    <p class="py-6 text-center text-sm text-slate-600">Sin archivos para esta entidad.</p>
+    <p class="py-6 text-center text-sm text-slate-600">Sin archivos para este registro.</p>
   } @else {
+    <div class="overflow-x-auto">
     <table class="tabla">
       <thead>
         <tr>
@@ -65,24 +66,62 @@
                 <rw-archivo-miniatura [archivo]="a" />
               }
             </td>
-            <td class="max-w-[220px] truncate" [title]="a.nombreOriginal">
-              {{ a.nombreOriginal }}
+            <td>
+              <span class="celda-texto max-w-[220px]" [title]="a.nombreOriginal">
+                {{ a.nombreOriginal }}
+              </span>
             </td>
-            <td class="max-w-[200px] truncate text-xs text-slate-400" [title]="a.descripcion || ''">
-              {{ a.descripcion || '—' }}
+            <td class="text-xs text-slate-400">
+              @if (editandoId() === a.idArchivo) {
+                <div class="flex items-center gap-1">
+                  <input
+                    class="campo min-w-[160px] text-xs"
+                    type="text"
+                    maxlength="500"
+                    [attr.aria-label]="'Descripción de ' + a.nombreOriginal"
+                    [(ngModel)]="descripcionEdicion"
+                    [disabled]="guardandoDescripcion()"
+                    (keydown.enter)="$event.preventDefault(); guardarDescripcion(a)"
+                    (keydown.escape)="cancelarEdicion()"
+                  />
+                  <button
+                    class="btn-secundario btn-mini"
+                    type="button"
+                    title="Guardar descripción"
+                    [disabled]="guardandoDescripcion()"
+                    (click)="guardarDescripcion(a)"
+                  >
+                    <rw-icono [nombre]="guardandoDescripcion() ? 'cargando' : 'guardar'" [tamano]="14" />
+                  </button>
+                  <button
+                    class="btn-secundario btn-mini"
+                    type="button"
+                    title="Cancelar edición"
+                    [disabled]="guardandoDescripcion()"
+                    (click)="cancelarEdicion()"
+                  >
+                    <rw-icono nombre="cerrar" [tamano]="14" />
+                  </button>
+                </div>
+              } @else {
+                <span class="celda-texto max-w-[200px]" [title]="a.descripcion || ''">
+                  {{ a.descripcion || '—' }}
+                </span>
+              }
             </td>
             <td>
               <span class="chip-neon">{{ a.tipoArchivo }}</span>
             </td>
-            <td class="font-mono text-xs">{{ formatoBytes(a.tamanoBytes) }}</td>
-            <td
-              class="max-w-[140px] truncate font-mono text-[10px] text-slate-500"
-              [title]="a.hashSha256"
-            >
-              {{ a.hashSha256 }}
+            <td class="font-mono text-xs whitespace-nowrap">{{ formatoBytes(a.tamanoBytes) }}</td>
+            <td class="font-mono text-[10px] text-slate-500">
+              <span class="celda-texto max-w-[140px]" [title]="a.hashSha256">
+                {{ a.hashSha256 }}
+              </span>
             </td>
-            <td class="font-mono text-xs">{{ a.fechaRegistro | date: 'dd/MM/yy HH:mm' }}</td>
-            <td class="text-right">
+            <td class="font-mono text-xs whitespace-nowrap">
+              {{ a.fechaRegistro | date: 'dd/MM/yy HH:mm' }}
+            </td>
+            <td class="celda-acciones text-right">
               @if (puedePrevisualizar(a)) {
                 <button
                   class="btn-secundario btn-mini"
@@ -93,6 +132,17 @@
                   Vista previa
                 </button>
               }
+              <button
+                *rwPermiso="'archivos:crear'"
+                class="btn-secundario btn-mini ml-2"
+                type="button"
+                title="Editar la descripción del archivo"
+                [disabled]="editandoId() === a.idArchivo"
+                (click)="editarDescripcion(a)"
+              >
+                <rw-icono nombre="editar" [tamano]="14" />
+                Descripción
+              </button>
               <button class="btn-secundario btn-mini ml-2" type="button" (click)="descargar(a)">
                 <rw-icono nombre="descargar" [tamano]="14" />
                 Descargar
@@ -111,6 +161,7 @@
         }
       </tbody>
     </table>
+    </div>
   }
   <rw-vista-previa #visor />
 </div>

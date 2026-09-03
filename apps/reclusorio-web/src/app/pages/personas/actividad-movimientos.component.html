@@ -20,6 +20,7 @@
     <rw-modal-formulario
       titulo="Registrar movimiento"
       descripcion="Documenta el traslado interno o externo; el historial permanecerá visible al cerrar."
+      [amplio]="true"
       [bloquearCierre]="guardando()"
       (cerrar)="alternarForm()"
     >
@@ -54,6 +55,7 @@
           <label class="campo-etiqueta obligatorio" for="movFecha">Fecha y hora</label>
           <rw-selector-fecha
             idCampo="movFecha"
+            [soloPasado]="true"
             name="fecha"
             [conHora]="true"
             required
@@ -128,59 +130,108 @@
   } @else if (registros().length === 0) {
     <p class="tabla-estado py-6 text-center text-sm text-slate-600">Sin movimientos registrados.</p>
   } @else {
-    <table class="tabla">
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Tipo</th>
-          <th>Motivo</th>
-          <th>Trayecto</th>
-          <th>Ubicación</th>
-          <th>Revisión</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (r of registros(); track r.idMovimiento) {
+    <div class="overflow-x-auto">
+      <table class="tabla">
+        <thead>
           <tr>
-            <td class="font-mono text-xs">{{ r.fecha | date: 'dd/MM/yy HH:mm' }}</td>
-            <td>
-              <span class="chip-neon">{{ nombre(mapaTipos, r.idTipoMovimiento) }}</span>
-            </td>
-            <td>{{ nombre(mapaMotivos, r.idMotivoMovimiento) }}</td>
-            <td class="text-xs">
-              {{ nombre(mapaCentros, r.idCentroOrigen) }}
-              <span class="text-neon">→</span>
-              {{ nombre(mapaCentros, r.idCentroDestino) }}
-            </td>
-            <td>{{ r.ubicacion || '—' }}</td>
-            <td>
-              <rw-revision-registro
-                recurso="movimientos"
-                [id]="r.idMovimiento"
-                [estado]="r.estadoRevision"
-                permiso="movimientos:crear"
-              />
-            </td>
-            <td class="text-right">
-              <button
-                class="btn-secundario btn-mini"
-                type="button"
-                (click)="alternarExpandido(r.idMovimiento)"
-              >
-                {{ expandido() === r.idMovimiento ? 'Ocultar' : 'Archivos' }}
-              </button>
-            </td>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Motivo</th>
+            <th>Trayecto</th>
+            <th>Ubicación</th>
+            <th>Revisión</th>
+            <th></th>
           </tr>
-          @if (expandido() === r.idMovimiento) {
+        </thead>
+        <tbody>
+          @for (r of registros(); track r.idMovimiento) {
             <tr>
-              <td colspan="6" class="bg-panel-2/40 px-4 py-4">
-                <rw-archivos-panel referencia="idMovimiento" [id]="r.idMovimiento" />
+              <td class="font-mono text-xs whitespace-nowrap">
+                {{ r.fecha | date: 'dd/MM/yy HH:mm' }}
+              </td>
+              <td>
+                <span class="chip-neon">{{ nombre(mapaTipos, r.idTipoMovimiento) }}</span>
+              </td>
+              <td>
+                <span class="celda-texto" [title]="nombre(mapaMotivos, r.idMotivoMovimiento)">
+                  {{ nombre(mapaMotivos, r.idMotivoMovimiento) }}
+                </span>
+              </td>
+              <td class="max-w-[30ch] text-xs break-words">
+                {{ nombre(mapaCentros, r.idCentroOrigen) }}
+                <span class="text-neon">→</span>
+                {{ nombre(mapaCentros, r.idCentroDestino) }}
+              </td>
+              <td>
+                <span class="celda-texto" [title]="r.ubicacion || '—'">
+                  {{ r.ubicacion || '—' }}
+                </span>
+              </td>
+              <td class="celda-acciones">
+                <rw-revision-registro
+                  recurso="movimientos"
+                  [id]="r.idMovimiento"
+                  [estado]="r.estadoRevision"
+                  permiso="movimientos:crear"
+                />
+              </td>
+              <td class="celda-acciones text-right">
+                <button
+                  class="btn-secundario btn-mini"
+                  type="button"
+                  (click)="alternarExpandido(r.idMovimiento)"
+                >
+                  {{ expandido() === r.idMovimiento ? 'Ocultar' : 'Detalle' }}
+                </button>
               </td>
             </tr>
+            @if (expandido() === r.idMovimiento) {
+              <tr>
+                <td colspan="7" class="bg-panel-2/40 px-4 py-4">
+                  @let d = detalle() ?? r;
+                  <div class="space-y-5">
+                    <div>
+                      <p class="etiqueta mb-2">Detalle del movimiento</p>
+                      <div
+                        class="grid gap-x-6 gap-y-2 text-sm text-slate-400 md:grid-cols-2 xl:grid-cols-3"
+                      >
+                        <p class="break-words">
+                          <span class="etiqueta">Tipo:</span>
+                          {{ nombre(mapaTipos, d.idTipoMovimiento) }}
+                        </p>
+                        <p class="break-words">
+                          <span class="etiqueta">Motivo:</span>
+                          {{ nombre(mapaMotivos, d.idMotivoMovimiento) }}
+                        </p>
+                        <p class="break-words">
+                          <span class="etiqueta">Fecha y hora:</span>
+                          {{ d.fecha | date: 'dd/MM/yyyy HH:mm' }}
+                        </p>
+                        <p class="break-words">
+                          <span class="etiqueta">Centro de origen:</span>
+                          {{ nombre(mapaCentros, d.idCentroOrigen) }}
+                        </p>
+                        <p class="break-words">
+                          <span class="etiqueta">Centro de destino:</span>
+                          {{ nombre(mapaCentros, d.idCentroDestino) }}
+                        </p>
+                        <p class="break-words">
+                          <span class="etiqueta">Ubicación:</span>
+                          {{ d.ubicacion || '—' }}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <p class="etiqueta mb-2">Expediente digital</p>
+                      <rw-archivos-panel referencia="idMovimiento" [id]="r.idMovimiento" />
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            }
           }
-        }
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
   }
 </div>

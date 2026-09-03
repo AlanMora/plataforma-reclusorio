@@ -22,6 +22,7 @@
             <span><b>Alias</b> {{ persona()!.alias }}</span>
           }
           <span><b>CURP</b> {{ persona()!.curp || '—' }}</span>
+          <span><b>Ubicación</b> {{ persona()!.ubicacionFisica || '—' }}</span>
         </div>
       </div>
       <div class="expediente-registro">
@@ -144,19 +145,24 @@
             </div>
             @if (mostrarFormDomicilio()) {
               <rw-modal-formulario
-                titulo="Agregar domicilio"
-                descripcion="Registra la ubicación y referencia geográfica de la persona."
+                [titulo]="domicilioEnEdicion() ? 'Editar domicilio' : 'Agregar domicilio'"
+                [etiqueta]="domicilioEnEdicion() ? 'Edición de registro' : 'Nuevo registro'"
+                [descripcion]="
+                  domicilioEnEdicion()
+                    ? 'Actualiza la ubicación y referencia geográfica de la persona.'
+                    : 'Registra la ubicación y referencia geográfica de la persona.'
+                "
                 [bloquearCierre]="guardandoDomicilio()"
                 (cerrar)="alternarFormDomicilio()"
               >
                 <form
-                  #formularioAltaDomicilio="ngForm"
-                  id="form-alta-domicilio"
+                  #formularioDomicilio="ngForm"
+                  id="form-domicilio"
                   modal-contenido
                   class="space-y-5"
-                  (ngSubmit)="agregarDomicilio(formDomicilio, formularioAltaDomicilio, $event)"
+                  (ngSubmit)="guardarDomicilio(formDomicilio, formularioDomicilio, $event)"
                 >
-                  <rw-domicilio-form #formDomicilio />
+                  <rw-domicilio-form #formDomicilio [inicial]="domicilioEnEdicion()" />
                 </form>
                 <div modal-acciones class="modal-footer-actions">
                   <button
@@ -171,14 +177,20 @@
                   <button
                     class="btn-primario"
                     type="submit"
-                    form="form-alta-domicilio"
+                    form="form-domicilio"
                     [disabled]="guardandoDomicilio() || !formDomicilio.capturado()"
                   >
                     <rw-icono
                       [nombre]="guardandoDomicilio() ? 'cargando' : 'guardar'"
                       [tamano]="15"
                     />
-                    {{ guardandoDomicilio() ? 'Guardando…' : 'Agregar domicilio' }}
+                    {{
+                      guardandoDomicilio()
+                        ? 'Guardando…'
+                        : domicilioEnEdicion()
+                          ? 'Guardar cambios'
+                          : 'Agregar domicilio'
+                    }}
                   </button>
                 </div>
               </rw-modal-formulario>
@@ -188,13 +200,24 @@
             }
             <div class="grid gap-3 md:grid-cols-2">
               @for (d of persona()!.domicilios; track $index) {
-                <div class="rounded-lg border border-borde bg-panel-2/50 p-4 text-sm">
-                  <p class="font-medium text-slate-100">
-                    {{ d.calle }} {{ d.numeroExterior || '' }}
-                    @if (d.numeroInterior) {
-                      int. {{ d.numeroInterior }}
-                    }
-                  </p>
+                <div class="min-w-0 rounded-lg border border-borde bg-panel-2/50 p-4 text-sm break-words">
+                  <div class="flex items-start justify-between gap-2">
+                    <p class="font-medium text-slate-100">
+                      {{ d.calle }} {{ d.numeroExterior || '' }}
+                      @if (d.numeroInterior) {
+                        int. {{ d.numeroInterior }}
+                      }
+                    </p>
+                    <button
+                      *rwPermiso="'personas:modificar'"
+                      class="btn-secundario btn-mini shrink-0"
+                      type="button"
+                      (click)="editarDomicilio(d)"
+                    >
+                      <rw-icono nombre="editar" [tamano]="13" />
+                      Editar
+                    </button>
+                  </div>
                   <p class="mt-1 text-slate-400">
                     {{ [d.colonia, d.municipio, d.estado, d.pais].join(' · ') }}
                   </p>

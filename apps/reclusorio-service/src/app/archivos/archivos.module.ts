@@ -6,6 +6,7 @@ import {
   Logger,
   Module,
   Param,
+  Patch,
   Post,
   UploadedFile,
   UseInterceptors,
@@ -53,6 +54,24 @@ class SubirArchivoDto {
   @IsOptional() @IsUUID() idIncidencia?: string;
   @IsOptional() @IsString() @MaxLength(500) descripcion?: string;
 }
+
+class EditarDescripcionDto {
+  @IsOptional() @IsString() @MaxLength(500) descripcion?: string;
+}
+
+/**
+ * Tabla y PK del registro dueño de cada referencia, para validar su estado de
+ * revisión (QA 03/09): la descripción solo es editable mientras el dueño sigue
+ * PENDIENTE. Los archivos del expediente de la persona no pasan por revisión.
+ */
+const DUENO_POR_REFERENCIA: Record<Referencia, { tabla: string; pk: string } | null> = {
+  idPersona: null,
+  idIngresoEgreso: { tabla: 'ingreso_egreso', pk: 'idIngresoEgreso' },
+  idMovimiento: { tabla: 'movimientos', pk: 'idMovimiento' },
+  idAudiencia: { tabla: 'audiencias', pk: 'idAudiencia' },
+  idTraslado: { tabla: 'traslados', pk: 'idTraslado' },
+  idIncidencia: { tabla: 'incidencias', pk: 'idIncidencia' },
+};
 
 /** Clasificación simple del tipo lógico a partir del MIME (FOTO | PDF | DOCUMENTO). */
 function clasificar(mimeType: string): string {
@@ -219,6 +238,31 @@ export class ArchivosService {
     archivo.activo = false;
     return this.archivos.save(archivo);
   }
+
+  /** QA 03/09: editar la descripción mientras el registro dueño no esté confirmado/descartado. */
+  async editarDescripcion(idArchivo: string, descripcion?: string): Promise<Archivo> {
+    const archivo = await this.obtener(idArchivo);
+    if (!archivo.activo) throw new BusinessRuleException('El archivo está desactivado');
+
+    const referencia = REFERENCIAS.find((r) => archivo[r]);
+    const dueno = referencia ? DUENO_POR_REFERENCIA[referencia] : null;
+    if (dueno && referencia) {
+      const filas: Array<{ estadoRevision?: string }> = await this.archivos.query(
+        `SELECT "estadoRevision" FROM ${dueno.tabla} WHERE "${dueno.pk}" = $1`,
+        [archivo[referencia]],
+      );
+      const estado = filas[0]?.estadoRevision;
+      if (estado && estado !== 'PENDIENTE') {
+        throw new BusinessRuleException(
+          'La descripción solo puede modificarse mientras el registro está pendiente de revisión',
+        );
+      }
+    }
+
+    // null (no undefined): TypeORM omite undefined y no limpiaría la columna.
+    archivo.descripcion = (descripcion?.trim() || null) as unknown as string | undefined;
+    return this.archivos.save(archivo);
+  }
 }
 
 @ApiTags('archivos')
@@ -262,6 +306,15 @@ export class ArchivosController {
   @ApiOperation({ summary: 'Desactivar sin eliminar el histórico (RF-ARC-007)' })
   desactivar(@Param('id') id: string) {
     return this.service.desactivar(id);
+  }
+
+  @Patch(':id/descripcion')
+  @RequirePermissions('archivos:crear')
+  @ApiOperation({
+    summary: 'Editar la descripción mientras el registro dueño está pendiente de revisión (QA 03/09)',
+  })
+  editarDescripcion(@Param('id') id: string, @Body() dto: EditarDescripcionDto) {
+    return this.service.editarDescripcion(id, dto.descripcion);
   }
 }
 

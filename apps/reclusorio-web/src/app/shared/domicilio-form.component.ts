@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, input } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Domicilio } from '../core/models';
 import {
   PAISES_DUMMY,
   canonizar,
@@ -32,7 +33,8 @@ export function nuevoDomicilio() {
  * Captura de domicilio reutilizable (RF-PER-006/007): mapa con buscador de
  * dirección (autollenado + coordenadas), selects en cascada de país/estado/
  * municipio y campos del modelo. NO envía nada: el contenedor lee `domicilio`
- * al momento de guardar (alta de persona o alta de domicilio en el detalle).
+ * al momento de guardar (alta de persona, alta o edición de domicilio en el
+ * detalle; en edición se precarga vía `inicial`/`cargar`).
  */
 @Component({
   selector: 'rw-domicilio-form',
@@ -41,10 +43,18 @@ export function nuevoDomicilio() {
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './domicilio-form.component.html',
 })
-export class DomicilioFormComponent {
+export class DomicilioFormComponent implements OnInit {
+  /** Domicilio existente para precargar el formulario (modo edición). */
+  readonly inicial = input<Domicilio | null>(null);
+
   domicilio = nuevoDomicilio();
 
   readonly paises = PAISES_DUMMY.map((p) => p.nombre);
+
+  ngOnInit(): void {
+    const valores = this.inicial();
+    if (valores) this.cargar(valores);
+  }
 
   /** true si hay algo que guardar (la calle es el campo obligatorio). */
   capturado(): boolean {
@@ -53,6 +63,23 @@ export class DomicilioFormComponent {
 
   reiniciar(): void {
     this.domicilio = nuevoDomicilio();
+  }
+
+  /** Rellena el modelo desde un domicilio ya guardado (modo edición). */
+  cargar(valores: Domicilio): void {
+    this.domicilio = {
+      calle: valores.calle ?? '',
+      numeroExterior: valores.numeroExterior ?? '',
+      numeroInterior: valores.numeroInterior ?? '',
+      cruce1: valores.cruce1 ?? '',
+      cruce2: valores.cruce2 ?? '',
+      colonia: valores.colonia ?? '',
+      municipio: valores.municipio ?? '',
+      estado: valores.estado ?? '',
+      pais: valores.pais ?? '',
+      latitud: valores.latitud ?? null,
+      longitud: valores.longitud ?? null,
+    };
   }
 
   paisesOpciones(): string[] {

@@ -143,7 +143,7 @@ export class MapaDomicilioComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     if (!this.token) {
-      this.errorMapa.set('No se configuró el token público de Mapbox para este entorno.');
+      this.errorMapa.set('No se configuró la clave pública de Mapbox para este entorno.');
       return;
     }
 
@@ -212,8 +212,13 @@ export class MapaDomicilioComponent implements AfterViewInit, OnDestroy {
     this.temporizadorBusqueda = setTimeout(() => void this.buscar(), 350);
   }
 
-  cerrarResultados(): void {
+  cerrarResultados(evento?: Event): void {
     if (this.temporizadorBusqueda) clearTimeout(this.temporizadorBusqueda);
+    // Esc con resultados abiertos solo cierra la lista, no el modal contenedor.
+    if (evento && this.resultados().length > 0) {
+      evento.preventDefault();
+      evento.stopPropagation();
+    }
     this.resultados.set([]);
   }
 

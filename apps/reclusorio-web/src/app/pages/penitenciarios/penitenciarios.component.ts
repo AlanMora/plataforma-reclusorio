@@ -168,7 +168,7 @@ export class PenitenciariosComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     if (!this.tokenMapbox) {
-      this.error.set('No se configuró el token público de Mapbox para este entorno.');
+      this.error.set('No se configuró la clave pública de Mapbox para este entorno.');
       void this.cargar();
       return;
     }

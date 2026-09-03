@@ -65,12 +65,8 @@ export class PersonaFormComponent implements OnInit {
   /** Sección de domicilio integrada al alta (solo modo crear). */
   private readonly formDomicilio = viewChild<DomicilioFormComponent>('formDomicilio');
 
-  /** Máximo elegible para nacimiento: AYER (ni hoy ni futuras). */
-  readonly fechaMaximaNacimiento = (() => {
-    const ayer = new Date();
-    ayer.setDate(ayer.getDate() - 1);
-    return `${ayer.getFullYear()}-${String(ayer.getMonth() + 1).padStart(2, '0')}-${String(ayer.getDate()).padStart(2, '0')}`;
-  })();
+  // Nacimiento: hoy incluido, sin futuras (QA 03/09 reemplaza al "máximo ayer"
+  // del 31/08). El selector lo acota con [soloPasado]; el backend valida igual.
 
   modelo: Record<string, string> = {
     primerNombre: '',

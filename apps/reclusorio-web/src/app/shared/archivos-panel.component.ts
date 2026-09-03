@@ -41,7 +41,11 @@ export class ArchivosPanelComponent {
   readonly cargando = signal(false);
   readonly subiendo = signal(false);
   readonly error = signal<string | null>(null);
+  /** Archivo cuya descripción se está editando en línea (null = ninguno). */
+  readonly editandoId = signal<string | null>(null);
+  readonly guardandoDescripcion = signal(false);
   descripcion = '';
+  descripcionEdicion = '';
   seleccionado: File | null = null;
 
   constructor() {
@@ -101,6 +105,36 @@ export class ArchivosPanelComponent {
       window.open(url, '_blank');
     } catch (err) {
       this.toast.error(mensajeDe(err));
+    }
+  }
+
+  editarDescripcion(archivo: Archivo): void {
+    this.editandoId.set(archivo.idArchivo);
+    this.descripcionEdicion = archivo.descripcion ?? '';
+  }
+
+  cancelarEdicion(): void {
+    this.editandoId.set(null);
+    this.descripcionEdicion = '';
+  }
+
+  async guardarDescripcion(archivo: Archivo): Promise<void> {
+    if (this.guardandoDescripcion()) return;
+    this.guardandoDescripcion.set(true);
+    try {
+      const actualizado = await this.api.patch<Archivo>(
+        `/api/v1/archivos/${archivo.idArchivo}/descripcion`,
+        { descripcion: this.descripcionEdicion.trim() },
+      );
+      this.archivos.update((lista) =>
+        lista.map((a) => (a.idArchivo === archivo.idArchivo ? { ...a, ...actualizado } : a)),
+      );
+      this.toast.ok('Descripción actualizada.');
+      this.cancelarEdicion();
+    } catch (err) {
+      this.toast.error(mensajeDe(err));
+    } finally {
+      this.guardandoDescripcion.set(false);
     }
   }
 

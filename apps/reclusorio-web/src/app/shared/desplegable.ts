@@ -27,5 +27,7 @@ export function abrirHaciaArriba(boton: HTMLElement, alturaEstimada: number): bo
 
   const espacioAbajo = limiteInferior - rect.bottom;
   const espacioArriba = rect.top - limiteSuperior;
-  return espacioAbajo < alturaEstimada && espacioArriba > espacioAbajo;
+  // Hacia arriba SOLO si el panel cabe completo: recortado por arriba no hay
+  // forma de verlo; hacia abajo el contenedor con scroll sí permite llegar.
+  return espacioAbajo < alturaEstimada && espacioArriba >= alturaEstimada;
 }

@@ -1,16 +1,18 @@
 <section class="modal-layer">
   <div class="modal-backdrop" aria-hidden="true"></div>
 
-  <div class="modal-position" (click)="solicitarCierre()">
+  <!-- El clic en el fondo NO cierra: un formulario a medio capturar se perdería.
+       El cierre es explícito: botón X, Cancelar o tecla Esc. -->
+  <div class="modal-position">
     <article
       #dialogo
       class="modal-glass"
+      [class.modal-glass-amplio]="amplio()"
       role="dialog"
       aria-modal="true"
       [attr.aria-labelledby]="idTitulo"
       [attr.aria-describedby]="descripcion() ? idDescripcion : null"
       tabindex="-1"
-      (click)="$event.stopPropagation()"
       (keydown)="manejarTeclado($event)"
     >
       <header class="modal-header">

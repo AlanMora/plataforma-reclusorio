@@ -64,6 +64,8 @@ export class ActividadMovimientosComponent implements OnInit {
   readonly errorForm = signal<string | null>(null);
   readonly mostrarForm = signal(false);
   readonly expandido = signal<string | null>(null);
+  /** Registro completo del renglón expandido (GET por id); la fila es el respaldo. */
+  readonly detalle = signal<Movimiento | null>(null);
 
   readonly tipos = signal<ValorCatalogo[]>([]);
   readonly motivos = signal<ValorCatalogo[]>([]);
@@ -91,7 +93,19 @@ export class ActividadMovimientosComponent implements OnInit {
   }
 
   alternarExpandido(id: string): void {
-    this.expandido.set(this.expandido() === id ? null : id);
+    const nuevo = this.expandido() === id ? null : id;
+    this.expandido.set(nuevo);
+    this.detalle.set(null);
+    if (nuevo) void this.cargarDetalle(nuevo);
+  }
+
+  /** Trae el registro completo para el detalle expandido. */
+  private async cargarDetalle(id: string): Promise<void> {
+    try {
+      this.detalle.set(await this.api.get<Movimiento>(`/api/v1/movimientos/${id}`));
+    } catch {
+      // si el detalle falla, el expandido muestra los datos ya cargados en la fila
+    }
   }
 
   /** Abre/cierra la captura descartando lo tecleado en un intento previo. */

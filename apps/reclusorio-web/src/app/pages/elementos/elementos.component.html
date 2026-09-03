@@ -50,9 +50,9 @@
     @if (busquedaHecha()) {
       @if (coincidencias().length > 0) {
         <p class="alerta-info">
-          {{ coincidencias().length }} coincidencia(s). Verifica antes de crear un registro nuevo
-          (RF-ELE-002).
+          {{ coincidencias().length }} coincidencia(s). Verifica antes de crear un registro nuevo.
         </p>
+        <div class="overflow-x-auto">
         <table class="tabla">
           <thead>
             <tr>
@@ -65,10 +65,18 @@
           <tbody>
             @for (e of coincidencias(); track e.idElemento) {
               <tr>
-                <td class="text-slate-100">{{ nombreDe(e) }}</td>
+                <td class="text-slate-100">
+                  <span class="celda-texto max-w-[32ch]" [title]="nombreDe(e)">
+                    {{ nombreDe(e) }}
+                  </span>
+                </td>
                 <td class="font-mono text-xs">{{ e.numeroElemento || 's/n' }}</td>
-                <td>{{ e.adscripcion || '—' }}</td>
-                <td class="text-right">
+                <td>
+                  <span class="celda-texto" [title]="e.adscripcion || '—'">
+                    {{ e.adscripcion || '—' }}
+                  </span>
+                </td>
+                <td class="celda-acciones text-right">
                   <button
                     *rwPermiso="'elementos:modificar'"
                     class="btn-secundario btn-mini"
@@ -83,6 +91,7 @@
             }
           </tbody>
         </table>
+        </div>
       } @else {
         <p class="text-sm text-slate-400">Sin coincidencias en el padrón.</p>
       }
@@ -227,13 +236,26 @@
         }
         @for (e of pagina().items; track e.idElemento) {
           <tr>
-            <td>{{ e.grado || '—' }}</td>
+            <td>
+              <span class="celda-texto max-w-[20ch]" [title]="e.grado || '—'">
+                {{ e.grado || '—' }}
+              </span>
+            </td>
             <td class="text-slate-100">
-              {{ [e.primerNombre, e.apellidoPaterno, e.apellidoMaterno].join(' ') }}
+              <span
+                class="celda-texto max-w-[32ch]"
+                [title]="[e.primerNombre, e.apellidoPaterno, e.apellidoMaterno].join(' ')"
+              >
+                {{ [e.primerNombre, e.apellidoPaterno, e.apellidoMaterno].join(' ') }}
+              </span>
             </td>
             <td class="font-mono text-xs">{{ e.numeroElemento || 's/n' }}</td>
-            <td>{{ e.adscripcion || '—' }}</td>
-            <td class="text-right">
+            <td>
+              <span class="celda-texto" [title]="e.adscripcion || '—'">
+                {{ e.adscripcion || '—' }}
+              </span>
+            </td>
+            <td class="celda-acciones text-right">
               <button
                 *rwPermiso="'elementos:modificar'"
                 class="btn-secundario btn-mini"

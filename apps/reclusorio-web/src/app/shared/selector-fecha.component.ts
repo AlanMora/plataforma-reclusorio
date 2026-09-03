@@ -67,6 +67,8 @@ export class SelectorFechaComponent implements ControlValueAccessor {
   readonly idCampo = input('');
   /** Fecha máxima elegible 'YYYY-MM-DD' (p. ej. ayer para fecha de nacimiento). */
   readonly max = input('');
+  /** true → no admite fechas futuras (tope = hoy, recalculado al momento). */
+  readonly soloPasado = input(false);
 
   readonly valor = signal('');
   readonly abierto = signal(false);
@@ -83,7 +85,7 @@ export class SelectorFechaComponent implements ControlValueAccessor {
   readonly horas = Array.from({ length: 24 }, (_, i) => dosDigitos(i));
   readonly minutos = Array.from({ length: 60 }, (_, i) => dosDigitos(i));
   readonly anios = computed(() => {
-    const partes = descomponer(this.max());
+    const partes = descomponer(this.maxEfectivo());
     const tope = partes ? partes.anio : new Date().getFullYear() + 5;
     return Array.from({ length: tope + 1 - ANIO_MINIMO }, (_, i) => ANIO_MINIMO + i);
   });
@@ -166,6 +168,14 @@ export class SelectorFechaComponent implements ControlValueAccessor {
     this.alTocar();
   }
 
+  /** Esc con el calendario abierto solo lo cierra, sin llegar al modal contenedor. */
+  cerrarConEscape(evento: Event): void {
+    if (!this.abierto()) return;
+    evento.preventDefault();
+    evento.stopPropagation();
+    this.cerrar();
+  }
+
   mesAnterior(): void {
     const mes = this.mesVisible();
     if (mes === 0 && this.anioVisible() > ANIO_MINIMO) {
@@ -210,8 +220,17 @@ export class SelectorFechaComponent implements ControlValueAccessor {
     return this.excedeMax(this.anioVisible(), this.mesVisible(), dia);
   }
 
+  /** Tope vigente: el `max` recibido acotado además a hoy cuando `soloPasado`. */
+  private maxEfectivo(): string {
+    const max = this.max();
+    if (!this.soloPasado()) return max;
+    const ahora = new Date();
+    const hoy = `${ahora.getFullYear()}-${dosDigitos(ahora.getMonth() + 1)}-${dosDigitos(ahora.getDate())}`;
+    return max && max < hoy ? max : hoy;
+  }
+
   private excedeMax(anio: number, mes: number, dia: number): boolean {
-    const partes = descomponer(this.max());
+    const partes = descomponer(this.maxEfectivo());
     if (!partes) return false;
     const fecha = `${anio}-${dosDigitos(mes + 1)}-${dosDigitos(dia)}`;
     const tope = `${partes.anio}-${dosDigitos(partes.mes + 1)}-${dosDigitos(partes.dia)}`;

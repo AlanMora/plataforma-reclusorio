@@ -27,6 +27,8 @@ export class ModalFormulario implements OnDestroy {
   readonly etiqueta = input('Nuevo registro');
   readonly descripcion = input('');
   readonly bloquearCierre = input(false);
+  /** true → altura mínima generosa para que desplegables y calendario quepan sin recortarse. */
+  readonly amplio = input(false);
   readonly cerrar = output<void>();
 
   readonly idTitulo = `modal-formulario-titulo-${++consecutivoModal}`;
@@ -59,6 +61,9 @@ export class ModalFormulario implements OnDestroy {
   }
 
   manejarTeclado(evento: KeyboardEvent): void {
+    // Un control interno ya consumió la tecla (p. ej. Esc cerró su desplegable).
+    if (evento.defaultPrevented) return;
+
     if (evento.key === 'Escape') {
       evento.preventDefault();
       this.solicitarCierre();
