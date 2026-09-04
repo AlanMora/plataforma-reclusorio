@@ -3,6 +3,7 @@
     <rw-mapa-domicilio
       [lat]="domicilio.latitud"
       [lng]="domicilio.longitud"
+      [consultaInicial]="direccionInicial()"
       (domicilio)="alUbicar($event)"
     />
     @if (domicilio.latitud !== null && domicilio.longitud !== null) {

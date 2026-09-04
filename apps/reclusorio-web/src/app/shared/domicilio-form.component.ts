@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Domicilio } from '../core/models';
 import {
   PAISES_DUMMY,
-  canonizar,
+  canonizarUbicacion,
   conValorActual,
   estadosDe,
   municipiosDe,
@@ -65,8 +65,18 @@ export class DomicilioFormComponent implements OnInit {
     this.domicilio = nuevoDomicilio();
   }
 
-  /** Rellena el modelo desde un domicilio ya guardado (modo edición). */
+  /**
+   * Rellena el modelo desde un domicilio ya guardado (modo edición). País,
+   * estado y municipio se canonizan contra el catálogo para que registros
+   * previos ("estado de Jalisco", "JALISCO", "Jal.") caigan en la opción real
+   * del select y se guarden ya normalizados al editar.
+   */
   cargar(valores: Domicilio): void {
+    const ubicacion = canonizarUbicacion({
+      pais: valores.pais ?? '',
+      estado: valores.estado ?? '',
+      municipio: valores.municipio ?? '',
+    });
     this.domicilio = {
       calle: valores.calle ?? '',
       numeroExterior: valores.numeroExterior ?? '',
@@ -74,12 +84,32 @@ export class DomicilioFormComponent implements OnInit {
       cruce1: valores.cruce1 ?? '',
       cruce2: valores.cruce2 ?? '',
       colonia: valores.colonia ?? '',
-      municipio: valores.municipio ?? '',
-      estado: valores.estado ?? '',
-      pais: valores.pais ?? '',
+      ...ubicacion,
       latitud: valores.latitud ?? null,
       longitud: valores.longitud ?? null,
     };
+  }
+
+  /**
+   * Dirección legible del domicilio cargado, para precargar el buscador del
+   * mapa en modo edición ("Calle 123, Colonia, Municipio, Estado, País").
+   */
+  direccionInicial(): string {
+    const valores = this.inicial();
+    if (!valores) return '';
+    const calleYNumero = [valores.calle, valores.numeroExterior]
+      .map((v) => (v ?? '').trim())
+      .filter(Boolean)
+      .join(' ');
+    const { pais, estado, municipio } = canonizarUbicacion({
+      pais: valores.pais ?? '',
+      estado: valores.estado ?? '',
+      municipio: valores.municipio ?? '',
+    });
+    return [calleYNumero, valores.colonia, municipio, estado, pais]
+      .map((v) => (v ?? '').trim())
+      .filter(Boolean)
+      .join(', ');
   }
 
   paisesOpciones(): string[] {
@@ -109,19 +139,24 @@ export class DomicilioFormComponent implements OnInit {
     this.domicilio.municipio = '';
   }
 
-  /** El mapa geocodificó una dirección: llena los campos y guarda lat/lon. */
+  /**
+   * El mapa geocodificó una dirección: llena los campos y guarda lat/lon.
+   * País/estado/municipio se canonizan en cascada ("Estado de Jalisco" →
+   * "Jalisco") para que coincidan con las opciones reales de los selects.
+   */
   alUbicar(dom: DomicilioGeocodificado): void {
     const d = this.domicilio;
     if (dom.calle) d.calle = dom.calle;
     if (dom.numeroExterior) d.numeroExterior = dom.numeroExterior;
     if (dom.colonia) d.colonia = dom.colonia;
-    if (dom.pais) d.pais = canonizar(dom.pais, this.paises);
-    if (dom.estado)
-      d.estado = canonizar(
-        dom.estado,
-        estadosDe(d.pais).map((e) => e.nombre),
-      );
-    if (dom.municipio) d.municipio = canonizar(dom.municipio, municipiosDe(d.pais, d.estado));
+    const ubicacion = canonizarUbicacion({
+      pais: dom.pais || d.pais,
+      estado: dom.estado || d.estado,
+      municipio: dom.municipio || d.municipio,
+    });
+    if (dom.pais) d.pais = ubicacion.pais;
+    if (dom.estado) d.estado = ubicacion.estado;
+    if (dom.municipio) d.municipio = ubicacion.municipio;
     d.latitud = dom.latitud;
     d.longitud = dom.longitud;
   }

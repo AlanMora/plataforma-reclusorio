@@ -5,6 +5,7 @@ import {
   ElementRef,
   NgZone,
   OnDestroy,
+  OnInit,
   inject,
   input,
   output,
@@ -115,7 +116,7 @@ function desarmarDireccion(resultado: ResultadoMapbox): DomicilioGeocodificado {
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './mapa-domicilio.component.html',
 })
-export class MapaDomicilioComponent implements AfterViewInit, OnDestroy {
+export class MapaDomicilioComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly zone = inject(NgZone);
   private readonly contenedor = viewChild.required<ElementRef<HTMLDivElement>>('contenedor');
   private readonly token = obtenerTokenMapbox();
@@ -125,6 +126,8 @@ export class MapaDomicilioComponent implements AfterViewInit, OnDestroy {
   readonly lng = input<number | null>(null);
   /** En falso solo muestra el marcador, sin buscador ni clic (visor). */
   readonly interactivo = input(true);
+  /** Texto con el que arranca el buscador (dirección ya guardada, en edición). */
+  readonly consultaInicial = input('');
   readonly domicilio = output<DomicilioGeocodificado>();
 
   consulta = '';
@@ -140,6 +143,10 @@ export class MapaDomicilioComponent implements AfterViewInit, OnDestroy {
   private temporizadorBusqueda?: ReturnType<typeof setTimeout>;
   private abortadorBusqueda?: AbortController;
   private abortadorInverso?: AbortController;
+
+  ngOnInit(): void {
+    this.consulta = this.consultaInicial();
+  }
 
   ngAfterViewInit(): void {
     if (!this.token) {
