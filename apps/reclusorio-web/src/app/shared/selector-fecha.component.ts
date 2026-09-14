@@ -10,7 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { abrirHaciaArriba } from './desplegable';
+import { abrirHaciaArriba, alinearHaciaIzquierda } from './desplegable';
 import { IconoComponent } from './icono.component';
 
 const MESES = [
@@ -79,6 +79,8 @@ export class SelectorFechaComponent implements ControlValueAccessor {
   readonly minuto = signal('00');
   /** true → el calendario se abre hacia arriba (sin espacio abajo). */
   readonly haciaArriba = signal(false);
+  /** true → alinea el calendario a la derecha para evitar recortes laterales. */
+  readonly haciaIzquierda = signal(false);
 
   readonly meses = MESES;
   readonly diasSemana = DIAS_SEMANA;
@@ -151,6 +153,9 @@ export class SelectorFechaComponent implements ControlValueAccessor {
     }
     // ~420px: navegación + calendario (+hora). Sin espacio abajo, se abre arriba.
     this.haciaArriba.set(boton ? abrirHaciaArriba(boton, 420) : false);
+    // El panel mide 18rem; en la última columna puede rebasar el modal aunque
+    // el botón sí quepa completo.
+    this.haciaIzquierda.set(boton ? alinearHaciaIzquierda(boton, 288) : false);
     const partes = descomponer(this.valor());
     const ahora = new Date();
     this.mesVisible.set(partes?.mes ?? ahora.getMonth());

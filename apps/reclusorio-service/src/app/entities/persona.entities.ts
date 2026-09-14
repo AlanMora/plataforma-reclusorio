@@ -1,4 +1,4 @@
-import { BeforeInsert, Column, Entity, Index, PrimaryColumn } from 'typeorm';
+import { BeforeInsert, Column, CreateDateColumn, Entity, Index, PrimaryColumn } from 'typeorm';
 import { v7 as uuidv7 } from 'uuid';
 
 /**
@@ -17,6 +17,13 @@ import { v7 as uuidv7 } from 'uuid';
 export class Persona {
   @PrimaryColumn('uuid')
   idPersona!: string;
+
+  @CreateDateColumn({
+    type: 'timestamptz',
+    name: 'fechaRegistro',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  fechaRegistro!: Date;
 
   @Index()
   @Column({ type: 'varchar', length: 150, nullable: true })

@@ -15,7 +15,9 @@
 
   @if (abierto()) {
     <div
-      class="absolute left-0 z-[1100] w-72 rounded-lg border border-borde bg-panel-2 p-3 shadow-xl shadow-black/50"
+      class="absolute z-[1100] w-72 max-w-[calc(100vw-2rem)] rounded-lg border border-borde bg-panel-2 p-3 shadow-xl shadow-black/50"
+      [class.left-0]="!haciaIzquierda()"
+      [class.right-0]="haciaIzquierda()"
       [class.top-full]="!haciaArriba()"
       [class.mt-1]="!haciaArriba()"
       [class.bottom-full]="haciaArriba()"

@@ -31,3 +31,38 @@ export function abrirHaciaArriba(boton: HTMLElement, alturaEstimada: number): bo
   // forma de verlo; hacia abajo el contenedor con scroll sí permite llegar.
   return espacioAbajo < alturaEstimada && espacioArriba >= alturaEstimada;
 }
+
+/**
+ * Alinea el panel con el borde derecho del botón cuando abrirlo desde la
+ * izquierda haría que se recortara en el viewport o en el contenedor con
+ * scroll más cercano. Es común en la última columna de los formularios.
+ */
+export function alinearHaciaIzquierda(boton: HTMLElement, anchoEstimado: number): boolean {
+  const rect = boton.getBoundingClientRect();
+
+  // Límite horizontal visible: viewport ∩ contenedor que recorta el panel.
+  let limiteIzquierdo = 0;
+  let limiteDerecho = window.innerWidth;
+  let ancestro = boton.parentElement;
+  while (ancestro) {
+    const { overflowX, overflowY } = getComputedStyle(ancestro);
+    if (
+      overflowX === 'auto' ||
+      overflowX === 'scroll' ||
+      overflowX === 'hidden' ||
+      overflowY === 'auto' ||
+      overflowY === 'scroll' ||
+      overflowY === 'hidden'
+    ) {
+      const r = ancestro.getBoundingClientRect();
+      limiteIzquierdo = Math.max(limiteIzquierdo, r.left);
+      limiteDerecho = Math.min(limiteDerecho, r.right);
+      break;
+    }
+    ancestro = ancestro.parentElement;
+  }
+
+  const espacioDesdeIzquierda = limiteDerecho - rect.left;
+  const espacioHastaDerecha = rect.right - limiteIzquierdo;
+  return espacioDesdeIzquierda < anchoEstimado && espacioHastaDerecha >= anchoEstimado;
+}
