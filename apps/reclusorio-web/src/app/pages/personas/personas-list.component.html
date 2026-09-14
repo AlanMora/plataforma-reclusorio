@@ -7,7 +7,12 @@
         Consulta y gestión del padrón de personas registradas en el sistema.
       </p>
     </div>
-    <button *rwPermiso="'personas:crear'" class="btn-primario" type="button" (click)="mostrarAlta.set(true)">
+    <button
+      *rwPermiso="'personas:crear'"
+      class="btn-primario"
+      type="button"
+      (click)="mostrarAlta.set(true)"
+    >
       <rw-icono nombre="agregar" [tamano]="16" />
       Nueva persona
     </button>
@@ -135,7 +140,9 @@
       </div>
       <div class="flex items-center gap-2">
         @if (hayFiltros) {
-          <span class="hidden md:inline-flex items-center gap-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/20 px-2.5 py-0.5 font-mono text-[10px] text-cyan-300">
+          <span
+            class="hidden md:inline-flex items-center gap-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/20 px-2.5 py-0.5 font-mono text-[10px] text-cyan-300"
+          >
             <span class="h-1.5 w-1.5 rounded-full bg-cyan-400"></span>
             Filtros activos
           </span>
@@ -161,7 +168,7 @@
             <th class="pl-4">Persona / Expediente</th>
             <th>CURP</th>
             <th>Edad</th>
-            <th>Ubicación</th>
+            <th>Ubicación física</th>
             <th>Contacto</th>
             <th>Fecha de registro</th>
             <th class="w-20 text-right pr-4"></th>
@@ -173,7 +180,9 @@
               <td colspan="7" class="py-14 text-center text-slate-400">
                 <div class="flex items-center justify-center gap-2.5">
                   <rw-icono nombre="cargando" [tamano]="20" class="text-cyan-400 animate-spin" />
-                  <span class="text-sm font-medium text-slate-300">Consultando padrón de personas…</span>
+                  <span class="text-sm font-medium text-slate-300"
+                    >Consultando padrón de personas…</span
+                  >
                 </div>
               </td>
             </tr>
@@ -182,7 +191,9 @@
               <td colspan="7" class="py-14 text-center">
                 <div class="flex flex-col items-center gap-2 text-slate-500">
                   <rw-icono nombre="buscar" [tamano]="28" class="opacity-40" />
-                  <p class="text-sm font-medium text-slate-400">No se encontraron personas registradas</p>
+                  <p class="text-sm font-medium text-slate-400">
+                    No se encontraron personas registradas
+                  </p>
                   @if (hayFiltros) {
                     <button
                       class="btn-secundario btn-mini mt-1"
@@ -251,7 +262,10 @@
 
                 <!-- Ubicación física (RF: centro del último ingreso o en libertad) -->
                 <td>
-                  <span class="celda-texto text-xs text-slate-300" [title]="p.ubicacionFisica || '—'">
+                  <span
+                    class="celda-texto max-w-[34ch] text-xs text-slate-300"
+                    [title]="p.ubicacionFisica || '—'"
+                  >
                     {{ p.ubicacionFisica || '—' }}
                   </span>
                 </td>
