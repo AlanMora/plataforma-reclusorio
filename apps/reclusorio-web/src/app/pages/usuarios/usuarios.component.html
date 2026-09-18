@@ -100,7 +100,7 @@
         <label class="campo-etiqueta" for="buscarUsr">Buscar usuario por correo</label>
         <div class="relative">
           <input
-            class="campo pr-8"
+            class="campo pr-8 sin-mayusculas"
             id="buscarUsr"
             name="buscar"
             maxlength="100"
@@ -224,7 +224,7 @@
                       {{ (u.email[0] || 'U').toUpperCase() }}
                     </div>
                     <div class="flex items-center gap-2 min-w-0 max-w-[34ch]">
-                      <span class="font-medium text-slate-100 truncate" [title]="u.email">
+                      <span class="font-medium text-slate-100 truncate sin-mayusculas" [title]="u.email">
                         {{ u.email }}
                       </span>
                       @if (esYo(u)) {

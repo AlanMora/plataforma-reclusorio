@@ -283,6 +283,33 @@ rw-root {
     @apply px-2.5 py-1 text-xs;
   }
 
+  /* --- mayúsculas de los datos ---
+     Los datos capturados y los valores de catálogo se MUESTRAN en mayúsculas en
+     todo el sistema. Es una regla de presentación: `text-transform` no altera el
+     valor del control ni lo que viaja al backend, así que la base de datos sigue
+     guardando exactamente lo que se tecleó. No aplica al texto propio de la
+     interfaz (títulos, botones, descripciones, estados vacíos), que ya tiene su
+     propia jerarquía tipográfica.
+
+     Los selectores van en `:where()` para que no sumen especificidad: así basta
+     `.sin-mayusculas` en cualquier elemento para quedar exento. */
+  :where(.dato, .campo, .tabla td, p:has(> .etiqueta)) {
+    text-transform: uppercase;
+  }
+
+  /* Exentos: se leen tal cual o se cotejan carácter por carácter. */
+  .sin-mayusculas,
+  .campo::placeholder,
+  :where(
+    input[type='email'],
+    input[type='password'],
+    input[type='url'],
+    .tabla td[colspan],
+    .tabla td.celda-acciones
+  ) {
+    text-transform: none;
+  }
+
   /* --- tablas --- */
   .tabla {
     @apply w-full border-collapse text-sm;

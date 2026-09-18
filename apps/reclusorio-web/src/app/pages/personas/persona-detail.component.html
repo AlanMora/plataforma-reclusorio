@@ -12,12 +12,12 @@
     <header class="expediente-identidad panel panel-glow">
       <div class="min-w-0 grow">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h2 class="truncate text-xl font-bold text-slate-100">{{ nombre() }}</h2>
+          <h2 class="dato truncate text-xl font-bold text-slate-100">{{ nombre() }}</h2>
           <span class="font-mono text-[10px] text-slate-500">
             {{ edad() ?? '—' }} años
           </span>
         </div>
-        <div class="expediente-identificadores">
+        <div class="dato expediente-identificadores">
           @if (persona()!.alias) {
             <span><b>Alias</b> {{ persona()!.alias }}</span>
           }
@@ -113,7 +113,7 @@
               @for (d of datosGenerales(); track d.etiqueta) {
                 <div>
                   <p class="etiqueta">{{ d.etiqueta }}</p>
-                  <p class="mt-0.5 text-sm text-slate-200">{{ d.valor || '—' }}</p>
+                  <p class="dato mt-0.5 text-sm text-slate-200">{{ d.valor || '—' }}</p>
                 </div>
               }
             </div>
@@ -202,7 +202,7 @@
               @for (d of persona()!.domicilios; track $index) {
                 <div class="min-w-0 rounded-lg border border-borde bg-panel-2/50 p-4 text-sm break-words">
                   <div class="flex items-start justify-between gap-2">
-                    <p class="font-medium text-slate-100">
+                    <p class="dato font-medium text-slate-100">
                       {{ d.calle }} {{ d.numeroExterior || '' }}
                       @if (d.numeroInterior) {
                         int. {{ d.numeroInterior }}
@@ -218,11 +218,11 @@
                       Editar
                     </button>
                   </div>
-                  <p class="mt-1 text-slate-400">
+                  <p class="dato mt-1 text-slate-400">
                     {{ [d.colonia, d.municipio, d.estado, d.pais].join(' · ') }}
                   </p>
                   @if (d.cruce1 || d.cruce2) {
-                    <p class="mt-1 text-xs text-slate-500">
+                    <p class="dato mt-1 text-xs text-slate-500">
                       Entre {{ d.cruce1 || '—' }} y {{ d.cruce2 || '—' }}
                     </p>
                   }

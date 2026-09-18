@@ -7,7 +7,7 @@
     [disabled]="deshabilitado()"
     (click)="alternar(botonSelect)"
   >
-    <span class="truncate" [class.text-slate-600]="!valor()">{{
+    <span class="truncate" [class.text-slate-600]="!valor()" [class.sin-mayusculas]="!valor()">{{
       etiquetaSeleccionada() || placeholder()
     }}</span>
     <rw-icono class="text-slate-500" nombre="seleccionar" [tamano]="15" />
@@ -47,7 +47,7 @@
         @for (o of filtradas(); track o.valor) {
           <li>
             <button
-              class="block w-full px-3 py-2 text-left text-xs hover:bg-neon/10 hover:text-neon"
+              class="dato block w-full px-3 py-2 text-left text-xs hover:bg-neon/10 hover:text-neon"
               [class.text-neon]="o.valor === valor()"
               [class.text-slate-300]="o.valor !== valor()"
               type="button"

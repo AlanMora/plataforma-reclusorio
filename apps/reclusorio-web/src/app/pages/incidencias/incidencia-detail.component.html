@@ -20,7 +20,7 @@
           <span class="chip-apagado">IPH {{ incidencia()!.iph }}</span>
         }
       </div>
-      <p class="break-words text-slate-200">{{ incidencia()!.descripcion }}</p>
+      <p class="dato break-words text-slate-200">{{ incidencia()!.descripcion }}</p>
       @if (incidencia()!.primerRespondiente) {
         <p class="break-words text-sm text-slate-400">
           <span class="etiqueta">Primer respondiente (no registrado):</span>
@@ -28,7 +28,7 @@
         </p>
       }
       @if (incidencia()!.narrativa) {
-        <p class="break-words whitespace-pre-line border-t border-borde pt-3 text-sm text-slate-400">
+        <p class="dato break-words whitespace-pre-line border-t border-borde pt-3 text-sm text-slate-400">
           {{ incidencia()!.narrativa }}
         </p>
       }
@@ -49,7 +49,7 @@
               class="flex min-w-0 flex-1 items-baseline gap-2 rounded-lg border border-borde px-3 py-2 text-sm text-slate-200 hover:border-neon/40"
               [routerLink]="['/personas', p.idPersona]"
             >
-              <span class="truncate" [title]="nombreDePersona(p)">{{ nombreDePersona(p) }}</span>
+              <span class="dato truncate" [title]="nombreDePersona(p)">{{ nombreDePersona(p) }}</span>
               @if (p.curp) {
                 <span class="ml-auto shrink-0 font-mono text-xs text-slate-500">{{ p.curp }}</span>
               }
@@ -126,7 +126,7 @@
           </div>
           <div *rwPermiso="'incidencias:asociar'" class="flex gap-2">
             <select class="campo" name="autoridadNueva" [(ngModel)]="autoridadSeleccionada">
-              <option value="" disabled>Selecciona autoridad…</option>
+              <option class="sin-mayusculas" value="" disabled>Selecciona autoridad…</option>
               @for (a of autoridades(); track a.id) {
                 <option [value]="a.id">{{ a.nombre }}</option>
               }

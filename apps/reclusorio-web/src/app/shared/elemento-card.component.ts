@@ -26,8 +26,8 @@ import { nombreElemento } from './elemento-picker.component';
         {{ iniciales() }}
       </span>
       <div class="min-w-0">
-        <p class="truncate text-sm text-slate-100">{{ nombreDe(elemento()) }}</p>
-        <p class="truncate font-mono text-[11px] text-slate-500">
+        <p class="dato truncate text-sm text-slate-100">{{ nombreDe(elemento()) }}</p>
+        <p class="dato truncate font-mono text-[11px] text-slate-500">
           No. {{ elemento().numeroElemento || 's/n' }} ·
           {{ elemento().adscripcion || 'sin adscripción' }}
         </p>

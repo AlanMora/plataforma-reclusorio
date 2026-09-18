@@ -117,7 +117,7 @@
       <tbody>
         @for (s of sesiones(); track s.sessionId) {
           <tr>
-            <td class="font-mono text-xs">
+            <td class="font-mono text-xs sin-mayusculas">
               {{ s.sessionId.slice(0, 8) }}…
               @if (s.sessionId === auth.sid()) {
                 <span class="chip-ok ml-2">actual</span>
@@ -125,7 +125,7 @@
             </td>
             <td class="font-mono text-xs">{{ s.ipAddress || '—' }}</td>
             <td class="text-xs">
-              <span class="celda-texto max-w-[280px]" [title]="s.userAgent || ''">
+              <span class="celda-texto max-w-[280px] sin-mayusculas" [title]="s.userAgent || ''">
                 {{ s.userAgent || '—' }}
               </span>
             </td>
