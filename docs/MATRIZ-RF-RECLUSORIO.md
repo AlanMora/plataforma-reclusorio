@@ -39,7 +39,7 @@ restricción verificada en la base de datos.
 | RF-IEG-001..005 | `personas/:id/ingresos-egresos` + catálogos activos + archivos por `idIngresoEgreso` | E2E |
 | RF-MOV-001..005 | `personas/:id/movimientos` (tipo/motivo fijos, origen/destino centros) | E2E |
 | RF-AUD-001..008 | `personas/:id/audiencias`, coherencia próxima audiencia, `audiencias/:id/elementos`. QA 31/08: jueces en orden natural "menor a mayor" (backend `ORDER BY` numérico inicial + `Intl.Collator numeric` en frontend) y etiqueta «Nombre del juez» sin "(texto)" | E2E (NO+fecha → 422; duplicado → 422; jueces 1..12 en orden) |
-| RF-TRA-001..007 | `personas/:id/traslados` (tipo/destino/estatus), `traslados/:id/elementos` | E2E |
+| RF-TRA-001..007 | `personas/:id/traslados` (tipo/**centro de origen**/destino/estatus — P12), `traslados/:id/elementos` | E2E |
 | RF-INC-001..009 | `POST /incidencias` sin personas + asociaciones (personas/autoridades/elementos con `primerRespondiente`); `GET /incidencias?idPersona=` alimenta el tab Incidencias del expediente (consulta + asociación de elementos desde ahí). QA 31/08: personas, autoridades de apoyo y archivos capturables EN el alta (módulo Incidencias y expediente) — se asocian/suben al crear el registro | E2E completo (crear + persona + autoridad + elemento + archivo; detalle regresa todo) |
 | RF-ARC-001..002 | Subida a MinIO, metadatos completos, SHA-256. QA 31/08: descripción POR ARCHIVO desde la captura integrada (`shared/archivos-captura.component` en ingresos/movimientos/audiencias/traslados/incidencias) y columna Descripción en el panel de archivos | E2E (hash local = hash servidor; `descripcion` persistida desde la captura) |
 | RF-ARC-005..007 | Listado por entidad, URL presignada, desactivación bloquea | E2E |

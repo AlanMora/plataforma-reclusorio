@@ -269,7 +269,10 @@
           <rw-actividad-audiencias [idPersona]="idPersona()" />
         }
         @case ('traslados') {
-          <rw-actividad-traslados [idPersona]="idPersona()" />
+          <rw-actividad-traslados
+            [idPersona]="idPersona()"
+            [idCentroActual]="persona()!.idCentroActual ?? null"
+          />
         }
         @case ('incidencias') {
           <rw-actividad-incidencias [idPersona]="idPersona()" />

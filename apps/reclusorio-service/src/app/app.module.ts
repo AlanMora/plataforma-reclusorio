@@ -29,6 +29,7 @@ import { DomicilioCoordenadas1786457865399 } from '../migrations/1786457865399-D
 import { CentroCoordenadas1786480000000 } from '../migrations/1786480000000-CentroCoordenadas';
 import { EstadoRevision1786500000000 } from '../migrations/1786500000000-EstadoRevision';
 import { PersonaFechaRegistro1786600000000 } from '../migrations/1786600000000-PersonaFechaRegistro';
+import { TrasladoCentroOrigen1786700000000 } from '../migrations/1786700000000-TrasladoCentroOrigen';
 
 /**
  * Servicio de dominio de la Plataforma de Gestión de Reclusorio.
@@ -55,6 +56,7 @@ import { PersonaFechaRegistro1786600000000 } from '../migrations/1786600000000-P
         CentroCoordenadas1786480000000,
         EstadoRevision1786500000000,
         PersonaFechaRegistro1786600000000,
+        TrasladoCentroOrigen1786700000000,
       ],
     }),
     OutboxModule.forRoot({ withRelay: true }),

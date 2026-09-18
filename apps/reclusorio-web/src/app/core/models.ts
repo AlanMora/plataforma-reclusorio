@@ -92,6 +92,8 @@ export interface Persona {
   edad?: number | null;
   /** Centro penitenciario del último ingreso, "EN LIBERTAD" o null sin historial. */
   ubicacionFisica?: string | null;
+  /** Centro donde está ahora; precarga el origen al registrar un traslado. */
+  idCentroActual?: string | null;
   fechaRegistro?: string;
   fechaActualizacion?: string;
 }
@@ -180,6 +182,8 @@ export interface Traslado {
   idPersona: string;
   fecha: string;
   idTipoTraslado: string;
+  /** Centro del que sale la persona (decisión del equipo 2026-09-18). */
+  idCentroOrigen: string;
   idDestinoTraslado: string;
   descripcion?: string;
   unidades?: string;

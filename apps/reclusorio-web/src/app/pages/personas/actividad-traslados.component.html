@@ -53,6 +53,16 @@
           />
         </div>
         <div>
+          <label class="campo-etiqueta obligatorio" for="traOrigen">Centro de origen</label>
+          <rw-select-buscable
+            idCampo="traOrigen"
+            name="idCentroOrigen"
+            required
+            [opciones]="aOpciones(centros())"
+            [(ngModel)]="forma.idCentroOrigen"
+          />
+        </div>
+        <div>
           <label class="campo-etiqueta obligatorio" for="traDestino">Destino</label>
           <rw-select-buscable
             idCampo="traDestino"
@@ -227,6 +237,12 @@
             <tr>
               <td colspan="6" class="bg-panel-2/40 px-4 py-4">
                 <div class="space-y-5">
+                  <div class="text-sm text-slate-400">
+                    <p>
+                      <span class="etiqueta">Centro de origen:</span>
+                      {{ nombre(mapaCentros, r.idCentroOrigen) }}
+                    </p>
+                  </div>
                   @if (r.descripcion || r.observaciones) {
                     <div class="text-sm text-slate-400">
                       @if (r.descripcion) {

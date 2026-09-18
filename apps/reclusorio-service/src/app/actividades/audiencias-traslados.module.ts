@@ -12,7 +12,13 @@ import {
   Traslado,
   TrasladoElemento,
 } from '../entities/actividades.entities';
-import { DestinoTraslado, JuezJuzgado, Juzgado, TipoAudiencia } from '../entities/catalogos-administrables.entities';
+import {
+  Centro,
+  DestinoTraslado,
+  JuezJuzgado,
+  Juzgado,
+  TipoAudiencia,
+} from '../entities/catalogos-administrables.entities';
 import {
   EstatusTraslado,
   FormaIngresoAudiencia,
@@ -46,6 +52,8 @@ class CrearAudienciaDto {
 class CrearTrasladoDto {
   @IsDateString() fecha!: string;
   @IsUUID() idTipoTraslado!: string;
+  /** Centro del que sale la persona (decisión del equipo 2026-09-18). */
+  @IsUUID() idCentroOrigen!: string;
   @IsUUID() idDestinoTraslado!: string;
   @IsOptional() @IsString() @MaxLength(2000) descripcion?: string;
   @IsOptional() @IsString() @MaxLength(255) unidades?: string;
@@ -141,6 +149,7 @@ export class TrasladosService {
   async crear(idPersona: string, dto: CrearTrasladoDto) {
     await this.personas.obtener(idPersona);
     await this.catalogos.asegurarActivo(TipoTraslado, 'idTipoTraslado', dto.idTipoTraslado, 'Tipo de traslado');
+    await this.catalogos.asegurarActivo(Centro, 'idCentro', dto.idCentroOrigen, 'Centro de origen');
     await this.catalogos.asegurarActivo(DestinoTraslado, 'idDestinoTraslado', dto.idDestinoTraslado, 'Destino de traslado');
     await this.catalogos.asegurarActivo(EstatusTraslado, 'idEstatusTraslado', dto.idEstatusTraslado, 'Estatus de traslado');
     const registro = await this.repo.save(this.repo.create({ ...dto, idPersona }));
@@ -158,8 +167,9 @@ export class TrasladosService {
   }
 
   /**
-   * Traslados recientes con la persona y su centro de ORIGEN (centro del
-   * último INGRESO) para dibujarlos en el mapa Penitenciarios (P11).
+   * Traslados recientes con la persona y su centro de ORIGEN para dibujarlos
+   * en el mapa Penitenciarios (P11). Desde 2026-09-18 el origen se lee de la
+   * columna del traslado en vez de inferirlo del último INGRESO.
    * Los DESCARTADOS (P10) no se muestran.
    */
   async paraMapa(query: TrasladosMapaQuery) {
@@ -188,23 +198,15 @@ export class TrasladosService {
       apellidoPaterno?: string;
       apellidoMaterno?: string;
       alias?: string;
-      idCentroOrigen?: string;
+      idCentroOrigen: string;
     }> = await this.repo.query(
       `
       SELECT t."idTraslado", t.fecha, t."idPersona", t."idTipoTraslado", t."idDestinoTraslado",
              t."idEstatusTraslado", t.unidades, t.descripcion, t.observaciones, t."estadoRevision",
-             p."primerNombre", p."apellidoPaterno", p."apellidoMaterno", p.alias,
-             u."idCentroPenitenciario" AS "idCentroOrigen"
+             t."idCentroOrigen",
+             p."primerNombre", p."apellidoPaterno", p."apellidoMaterno", p.alias
       FROM traslados t
       JOIN personas p ON p."idPersona" = t."idPersona"
-      LEFT JOIN (
-        SELECT DISTINCT ON (ie."idPersona") ie."idPersona", ie."idCentroPenitenciario", ie."idTipoIngresoEgreso"
-        FROM ingreso_egreso ie
-        ORDER BY ie."idPersona", ie.fecha DESC, ie."idIngresoEgreso" DESC
-      ) u ON u."idPersona" = t."idPersona"
-         AND u."idTipoIngresoEgreso" IN (
-           SELECT "idTipoIngresoEgreso" FROM tipo_ingreso_egreso WHERE nombre = 'INGRESO'
-         )
       WHERE ${condiciones.join(' AND ')}
       ORDER BY t.fecha DESC
       LIMIT 100
@@ -226,7 +228,7 @@ export class TrasladosService {
       descripcion: f.descripcion ?? undefined,
       observaciones: f.observaciones ?? undefined,
       estadoRevision: f.estadoRevision,
-      idCentroOrigen: f.idCentroOrigen ?? undefined,
+      idCentroOrigen: f.idCentroOrigen,
     }));
   }
 

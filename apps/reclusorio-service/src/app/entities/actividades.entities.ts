@@ -177,6 +177,15 @@ export class Traslado {
   @Column({ type: 'uuid' })
   idTipoTraslado!: string;
 
+  /**
+   * Centro del que sale la persona. Campo acordado con el equipo el
+   * 2026-09-18 (no viene del Modelo de Datos Consolidado v1.0): antes el
+   * origen se INFERÍA del último INGRESO, lo que dejaba sin origen a quien
+   * no tuviera ingreso y cambiaba de valor al corregir el historial.
+   */
+  @Column({ type: 'uuid' })
+  idCentroOrigen!: string;
+
   @Column({ type: 'uuid' })
   idDestinoTraslado!: string;
 

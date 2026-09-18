@@ -181,7 +181,10 @@ export class PersonasService {
     const [items, total] = await qb.getManyAndCount();
     const ubicaciones = await this.ubicacionesActuales(items.map((p) => p.idPersona));
     return paginate(
-      items.map((p) => ({ ...conEdad(p), ubicacionFisica: ubicaciones.get(p.idPersona) ?? null })),
+      items.map((p) => ({
+        ...conEdad(p),
+        ubicacionFisica: ubicaciones.get(p.idPersona)?.nombre ?? null,
+      })),
       total,
       query,
     );
@@ -191,12 +194,18 @@ export class PersonasService {
    * Ubicación física del PPL (QA 03/09): centro del último ingreso/egreso no
    * descartado — si es un INGRESO está en ese centro; si no, está en libertad.
    * Mismo criterio que el mapa Penitenciarios (P11). Sin registros → null.
+   *
+   * Devuelve también el id del centro (no solo el nombre) porque el alta de
+   * traslados precarga con él su centro de origen.
    */
-  private async ubicacionesActuales(ids: string[]): Promise<Map<string, string>> {
+  private async ubicacionesActuales(
+    ids: string[],
+  ): Promise<Map<string, { nombre: string; idCentro: string | null }>> {
     if (ids.length === 0) return new Map();
-    const filas: Array<{ idPersona: string; tipo: string; centro?: string }> =
+    const filas: Array<{ idPersona: string; tipo: string; idCentro?: string; centro?: string }> =
       await this.personas.query(
-        `SELECT u."idPersona", t.nombre AS tipo, c.nombre AS centro
+        `SELECT u."idPersona", t.nombre AS tipo, u."idCentroPenitenciario" AS "idCentro",
+                c.nombre AS centro
          FROM (
            SELECT DISTINCT ON (ie."idPersona")
                   ie."idPersona", ie."idTipoIngresoEgreso", ie."idCentroPenitenciario"
@@ -209,10 +218,16 @@ export class PersonasService {
         [ids],
       );
     return new Map(
-      filas.map((f) => [
-        f.idPersona,
-        f.tipo === 'INGRESO' ? (f.centro ?? 'CENTRO NO ESPECIFICADO') : 'EN LIBERTAD',
-      ]),
+      filas.map((f) => {
+        const dentro = f.tipo === 'INGRESO';
+        return [
+          f.idPersona,
+          {
+            nombre: dentro ? (f.centro ?? 'CENTRO NO ESPECIFICADO') : 'EN LIBERTAD',
+            idCentro: dentro ? (f.idCentro ?? null) : null,
+          },
+        ];
+      }),
     );
   }
 
@@ -235,7 +250,14 @@ export class PersonasService {
     const persona = await this.obtener(idPersona);
     const domicilios = await this.domicilios.find({ where: { idPersona } });
     const ubicaciones = await this.ubicacionesActuales([idPersona]);
-    return { ...conEdad(persona), domicilios, ubicacionFisica: ubicaciones.get(idPersona) ?? null };
+    const ubicacion = ubicaciones.get(idPersona);
+    return {
+      ...conEdad(persona),
+      domicilios,
+      ubicacionFisica: ubicacion?.nombre ?? null,
+      /** Centro donde está ahora; precarga el origen al registrar un traslado. */
+      idCentroActual: ubicacion?.idCentro ?? null,
+    };
   }
 
   async obtener(idPersona: string): Promise<Persona> {

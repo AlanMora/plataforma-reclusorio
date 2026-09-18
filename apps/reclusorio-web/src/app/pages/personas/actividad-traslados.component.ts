@@ -60,6 +60,8 @@ export class ActividadTrasladosComponent implements OnInit {
   private readonly toast = inject(ToastService);
 
   readonly idPersona = input.required<string>();
+  /** Centro donde está la persona ahora; precarga el origen del traslado. */
+  readonly idCentroActual = input<string | null>(null);
 
   readonly registros = signal<Traslado[]>([]);
   readonly cargando = signal(false);
@@ -73,9 +75,11 @@ export class ActividadTrasladosComponent implements OnInit {
   readonly elementosCaptura = signal<Elemento[]>([]);
 
   readonly tipos = signal<ValorCatalogo[]>([]);
+  readonly centros = signal<ValorCatalogo[]>([]);
   readonly destinos = signal<ValorCatalogo[]>([]);
   readonly estatus = signal<ValorCatalogo[]>([]);
   mapaTipos = new Map<string, string>();
+  mapaCentros = new Map<string, string>();
   mapaDestinos = new Map<string, string>();
   mapaEstatus = new Map<string, string>();
 
@@ -84,6 +88,7 @@ export class ActividadTrasladosComponent implements OnInit {
   forma: Record<string, string> = {
     fecha: '',
     idTipoTraslado: '',
+    idCentroOrigen: '',
     idDestinoTraslado: '',
     idEstatusTraslado: '',
     descripcion: '',
@@ -92,6 +97,7 @@ export class ActividadTrasladosComponent implements OnInit {
   };
 
   ngOnInit(): void {
+    this.forma['idCentroOrigen'] = this.idCentroActual() ?? '';
     void this.cargarCatalogos();
     void this.cargar();
   }
@@ -118,6 +124,7 @@ export class ActividadTrasladosComponent implements OnInit {
     this.forma = {
       fecha: '',
       idTipoTraslado: '',
+      idCentroOrigen: this.idCentroActual() ?? '',
       idDestinoTraslado: '',
       idEstatusTraslado: '',
       descripcion: '',
@@ -216,15 +223,18 @@ export class ActividadTrasladosComponent implements OnInit {
 
   private async cargarCatalogos(): Promise<void> {
     try {
-      const [tipos, destinos, estatus] = await Promise.all([
+      const [tipos, centros, destinos, estatus] = await Promise.all([
         this.catalogos.valores('tipo_traslado'),
+        this.catalogos.valores('centros'),
         this.catalogos.valores('destino_traslado'),
         this.catalogos.valores('estatus_traslado'),
       ]);
       this.tipos.set(tipos);
+      this.centros.set(centros);
       this.destinos.set(destinos);
       this.estatus.set(estatus);
       this.mapaTipos = new Map(tipos.map((v) => [v.id, v.nombre]));
+      this.mapaCentros = new Map(centros.map((v) => [v.id, v.nombre]));
       this.mapaDestinos = new Map(destinos.map((v) => [v.id, v.nombre]));
       this.mapaEstatus = new Map(estatus.map((v) => [v.id, v.nombre]));
     } catch (err) {
