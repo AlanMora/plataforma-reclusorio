@@ -83,9 +83,9 @@
       <thead>
         <tr>
           <th>Fecha</th>
-          <th>Tipo</th>
-          <th>Centro</th>
-          <th>Descripción</th>
+          <th class="min-w-[6rem]">Tipo</th>
+          <th class="min-w-[9rem]">Centro</th>
+          <th class="celda-elastica">Descripción</th>
           <th>IPH</th>
           <th>Revisión</th>
         </tr>
@@ -115,9 +115,9 @@
                   {{ centroDe(i.idCentroPenitenciario) }}
                 </span>
               </td>
-              <td>
-                <span class="celda-texto max-w-[320px]" [title]="i.descripcion">
-                  {{ i.descripcion }}
+              <td class="celda-elastica">
+                <span class="celda-texto" [title]="i.descripcion">
+                  {{ i.descripcion | resumen }}
                 </span>
               </td>
               <td class="font-mono text-xs">

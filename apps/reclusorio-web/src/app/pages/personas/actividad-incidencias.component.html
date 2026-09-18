@@ -243,9 +243,9 @@
       <thead>
         <tr>
           <th>Fecha</th>
-          <th>Tipo</th>
-          <th>Centro</th>
-          <th>Descripción</th>
+          <th class="min-w-[6rem]">Tipo</th>
+          <th class="min-w-[9rem]">Centro</th>
+          <th class="celda-elastica">Descripción</th>
           <th>Revisión</th>
           <th></th>
         </tr>
@@ -267,9 +267,9 @@
                 {{ nombre(mapaCentros, r.idCentroPenitenciario) }}
               </span>
             </td>
-            <td>
-              <span class="celda-texto max-w-[320px]" [title]="r.descripcion">
-                {{ r.descripcion }}
+            <td class="celda-elastica">
+              <span class="celda-texto" [title]="r.descripcion">
+                {{ r.descripcion | resumen }}
               </span>
             </td>
             <td class="celda-acciones">

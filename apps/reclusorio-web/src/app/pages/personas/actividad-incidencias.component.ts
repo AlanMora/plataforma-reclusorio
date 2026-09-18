@@ -33,6 +33,7 @@ import { mensajeDe } from '../../core/problem';
 import { RevisionRegistroComponent } from '../../shared/revision-registro.component';
 import { ModalFormulario } from '../../shared/modal-formulario/modal-formulario';
 import { IconoComponent } from '../../shared/icono.component';
+import { ResumenPipe } from '../../shared/resumen.pipe';
 import {
   fechaParaApi,
   presentarErrorFormulario,
@@ -64,6 +65,7 @@ import {
     RevisionRegistroComponent,
     ModalFormulario,
     IconoComponent,
+    ResumenPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './actividad-incidencias.component.html',

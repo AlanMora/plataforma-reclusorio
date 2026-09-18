@@ -331,6 +331,20 @@ rw-root {
   .celda-texto {
     @apply block max-w-[26ch] truncate;
   }
+
+  /* Columna de texto libre que absorbe el espacio sobrante de la tabla.
+     `max-width: 0` le quita el ancho mínimo, así que puede encogerse todo lo
+     que haga falta en vez de empujar la tabla fuera del panel y sacar el
+     scroll horizontal; `width: 100%` hace que sea ESTA columna la que se
+     quede con el espacio libre, en lugar de repartirlo entre las demás.
+     El texto se recorta con elipsis y el `title` conserva el completo. */
+  .tabla :is(th, td).celda-elastica {
+    width: 100%;
+    max-width: 0;
+  }
+  .tabla td.celda-elastica > .celda-texto {
+    max-width: 100%;
+  }
   /* Celda de acciones: ancho estable, los botones nunca se parten ni se encogen */
   .tabla td.celda-acciones {
     @apply whitespace-nowrap;

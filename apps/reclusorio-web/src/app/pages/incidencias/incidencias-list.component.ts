@@ -19,6 +19,7 @@ import { RevisionRegistroComponent } from '../../shared/revision-registro.compon
 import { ModalFormulario } from '../../shared/modal-formulario/modal-formulario';
 import { IncidenciaNuevaComponent } from './incidencia-nueva.component';
 import { IconoComponent } from '../../shared/icono.component';
+import { ResumenPipe } from '../../shared/resumen.pipe';
 
 /** Consulta paginada de incidencias (RF-INC-009). */
 @Component({
@@ -34,6 +35,7 @@ import { IconoComponent } from '../../shared/icono.component';
     ModalFormulario,
     IncidenciaNuevaComponent,
     IconoComponent,
+    ResumenPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './incidencias-list.component.html',
