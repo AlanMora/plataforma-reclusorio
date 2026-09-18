@@ -1306,8 +1306,14 @@ body:has(.modal-layer) rw-persona-detail .modal-layer {
   opacity: 1;
 }
 
+/* Los pines son el elemento raíz de un `mapboxgl.Marker`: Mapbox los coloca
+   con `position: absolute; top: 0; left: 0` y un `transform` por fotograma.
+   Deben declararlo también aquí porque estas reglas van DESPUÉS de las de
+   mapbox-gl.css y tienen la misma especificidad: con `relative` los marcadores
+   vuelven al flujo, se apilan uno bajo otro y quedan despegados de sus
+   coordenadas al hacer zoom. */
 .mapbox-pin-centro {
-  position: relative;
+  position: absolute;
   display: grid;
   width: 22px;
   height: 22px;
@@ -1370,8 +1376,10 @@ body:has(.modal-layer) rw-persona-detail .modal-layer {
     0 5px 14px rgba(0, 0, 0, 0.55);
 }
 
+/* Elemento raíz de un `mapboxgl.Marker`: `absolute` por el mismo motivo que
+   en `.mapbox-pin-centro`. */
 .mapbox-pin-futurista {
-  position: relative;
+  position: absolute;
   display: grid;
   width: 26px;
   height: 26px;
