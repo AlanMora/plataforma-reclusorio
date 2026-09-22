@@ -12,7 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { normalizarUbicacion } from '../core/ubicaciones-dummy';
+import { normalizarUbicacion } from '../core/ubicaciones';
 import { abrirHaciaArriba } from './desplegable';
 import { IconoComponent } from './icono.component';
 

@@ -34,7 +34,7 @@ restricción verificada en la base de datos.
 | RF-SES-009 (cliente) | `core/realtime.service`: socket.io autenticado con el access token; al recibir `session.revoked` de la propia sesión fuerza logout inmediato con motivo | build + revisión |
 | RF-NOT-001..004 | `GET /notifications/inbox` (búsqueda + paginación), `POST /inbox/:id/leida` | E2E completo |
 | RF-PER-001..005 | `GET/POST/PATCH /personas` con búsqueda por nombre/apellidos/alias/CURP; DP-007 en validación. QA 31/08 ajustado el 03/09: selector de nacimiento sin fechas futuras (hoy permitido, `soloPasado`), teléfono a 10 dígitos, y ocupación/nacionalidad con texto libre además del catálogo (`permitirLibre` del select buscable) | E2E (sin CURP → 400; ocupación/nacionalidad libres guardadas) |
-| RF-PER-006..007 | `POST /personas/:id/domicilios` (números alfanuméricos). QA 31/08: país/estado/municipio aceptan texto libre además del catálogo dummy (P9) | E2E ("12-A", "S/N"; Belice/Cayo/San Ignacio fuera de catálogo) |
+| RF-PER-006..007 | `POST /personas/:id/domicilios` (números alfanuméricos). país/estado/municipio con catálogo INEGI/Wikidata en el frontend y captura manual además del catálogo (P9) | E2E ("12-A", "S/N"; Belice/Cayo/San Ignacio fuera de catálogo) |
 | RF-PER-008 / RF-ARC-004 | `POST /archivos` con `idPersona`; múltiples permitidos | E2E |
 | RF-IEG-001..005 | `personas/:id/ingresos-egresos` + catálogos activos + archivos por `idIngresoEgreso` | E2E |
 | RF-MOV-001..005 | `personas/:id/movimientos` (tipo/motivo fijos, origen/destino centros) | E2E |

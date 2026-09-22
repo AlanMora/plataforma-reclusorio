@@ -1,11 +1,21 @@
 /**
- * DATA DUMMY de ubicaciones (país → estado → municipio) para los selects del
- * formulario de domicilio.
+ * Catálogo de ubicaciones (país → estado → municipio).
  *
- * ⚠️ TEMPORAL: sustituir por los seeders/catálogos reales cuando el equipo los
- * entregue (P9 del PLAN). La forma esperada del catálogo real es la misma:
- * país con sus estados y cada estado con sus municipios, de modo que solo haya
- * que cambiar la fuente (endpoint de catálogos) sin tocar los componentes.
+ * Los valores NO viven en este archivo: se cargan una sola vez al arrancar la
+ * aplicación desde `public/catalogos/ubicaciones.json` (~200 KB), generado por
+ * `tools/catalogos/generar-catalogos.py` a partir de fuentes oficiales:
+ *
+ * - México: servicio de catálogos geoestadísticos del INEGI
+ *   (gaia.inegi.org.mx/wscatgeo) — 32 entidades federativas y sus 2 478
+ *   municipios y demarcaciones territoriales.
+ * - Resto del mundo: Wikidata (ISO 3166-1 y divisiones de primer nivel) —
+ *   196 países con sus estados/provincias/departamentos. SIN municipios: no
+ *   existe una fuente homogénea para todos, por eso los selects de estado y
+ *   municipio admiten captura manual (`permitirLibre`).
+ *
+ * Cuando el equipo apruebe los catálogos de ubicación en el backend (P9 del
+ * PLAN) basta con que `cargarUbicaciones()` consulte al gateway: ni el resto
+ * de este archivo ni los componentes cambian.
  */
 
 export interface EstadoUbicacion {
@@ -18,109 +28,43 @@ export interface PaisUbicacion {
   estados: EstadoUbicacion[];
 }
 
-export const PAISES_DUMMY: PaisUbicacion[] = [
-  {
-    nombre: 'México',
-    estados: [
-      { nombre: 'Aguascalientes', municipios: ['Aguascalientes', 'Calvillo', 'Jesús María'] },
-      { nombre: 'Baja California', municipios: ['Mexicali', 'Tijuana', 'Ensenada'] },
-      { nombre: 'Baja California Sur', municipios: ['La Paz', 'Los Cabos', 'Comondú'] },
-      { nombre: 'Campeche', municipios: ['Campeche', 'Carmen', 'Champotón'] },
-      {
-        nombre: 'Chiapas',
-        municipios: ['Tuxtla Gutiérrez', 'San Cristóbal de las Casas', 'Tapachula'],
-      },
-      { nombre: 'Chihuahua', municipios: ['Chihuahua', 'Ciudad Juárez', 'Delicias'] },
-      {
-        nombre: 'Ciudad de México',
-        municipios: [
-          'Álvaro Obregón',
-          'Azcapotzalco',
-          'Benito Juárez',
-          'Coyoacán',
-          'Cuauhtémoc',
-          'Gustavo A. Madero',
-          'Iztapalapa',
-          'Miguel Hidalgo',
-          'Tlalpan',
-          'Xochimilco',
-        ],
-      },
-      { nombre: 'Coahuila', municipios: ['Saltillo', 'Torreón', 'Monclova'] },
-      { nombre: 'Colima', municipios: ['Colima', 'Manzanillo', 'Tecomán'] },
-      { nombre: 'Durango', municipios: ['Durango', 'Gómez Palacio', 'Lerdo'] },
-      { nombre: 'Guanajuato', municipios: ['Guanajuato', 'León', 'Irapuato', 'Celaya'] },
-      { nombre: 'Guerrero', municipios: ['Chilpancingo', 'Acapulco', 'Iguala'] },
-      { nombre: 'Hidalgo', municipios: ['Pachuca', 'Tulancingo', 'Tula de Allende'] },
-      {
-        nombre: 'Jalisco',
-        municipios: ['Guadalajara', 'Zapopan', 'Tlaquepaque', 'Tonalá', 'Puerto Vallarta'],
-      },
-      {
-        nombre: 'Estado de México',
-        municipios: ['Toluca', 'Ecatepec', 'Naucalpan', 'Nezahualcóyotl', 'Tlalnepantla'],
-      },
-      { nombre: 'Michoacán', municipios: ['Morelia', 'Uruapan', 'Zamora'] },
-      { nombre: 'Morelos', municipios: ['Cuernavaca', 'Jiutepec', 'Cuautla'] },
-      { nombre: 'Nayarit', municipios: ['Tepic', 'Bahía de Banderas', 'Xalisco'] },
-      {
-        nombre: 'Nuevo León',
-        municipios: [
-          'Monterrey',
-          'San Nicolás de los Garza',
-          'Guadalupe',
-          'Apodaca',
-          'San Pedro Garza García',
-        ],
-      },
-      { nombre: 'Oaxaca', municipios: ['Oaxaca de Juárez', 'Salina Cruz', 'Juchitán'] },
-      { nombre: 'Puebla', municipios: ['Puebla', 'Tehuacán', 'Cholula'] },
-      { nombre: 'Querétaro', municipios: ['Querétaro', 'San Juan del Río', 'Corregidora'] },
-      { nombre: 'Quintana Roo', municipios: ['Othón P. Blanco', 'Benito Juárez', 'Solidaridad'] },
-      {
-        nombre: 'San Luis Potosí',
-        municipios: ['San Luis Potosí', 'Soledad de Graciano Sánchez', 'Ciudad Valles'],
-      },
-      { nombre: 'Sinaloa', municipios: ['Culiacán', 'Mazatlán', 'Ahome'] },
-      { nombre: 'Sonora', municipios: ['Hermosillo', 'Cajeme', 'Nogales'] },
-      { nombre: 'Tabasco', municipios: ['Centro', 'Cárdenas', 'Comalcalco'] },
-      { nombre: 'Tamaulipas', municipios: ['Ciudad Victoria', 'Reynosa', 'Matamoros', 'Tampico'] },
-      { nombre: 'Tlaxcala', municipios: ['Tlaxcala', 'Apizaco', 'Huamantla'] },
-      { nombre: 'Veracruz', municipios: ['Xalapa', 'Veracruz', 'Coatzacoalcos', 'Córdoba'] },
-      { nombre: 'Yucatán', municipios: ['Mérida', 'Valladolid', 'Progreso'] },
-      { nombre: 'Zacatecas', municipios: ['Zacatecas', 'Fresnillo', 'Guadalupe'] },
-    ],
-  },
-  {
-    nombre: 'Estados Unidos',
-    estados: [
-      { nombre: 'Texas', municipios: ['Houston', 'San Antonio', 'El Paso'] },
-      { nombre: 'California', municipios: ['Los Ángeles', 'San Diego', 'Sacramento'] },
-      { nombre: 'Arizona', municipios: ['Phoenix', 'Tucson', 'Yuma'] },
-    ],
-  },
-  {
-    nombre: 'Guatemala',
-    estados: [
-      { nombre: 'Guatemala', municipios: ['Ciudad de Guatemala', 'Mixco', 'Villa Nueva'] },
-      { nombre: 'Quetzaltenango', municipios: ['Quetzaltenango', 'Coatepeque'] },
-    ],
-  },
-  {
-    nombre: 'Honduras',
-    estados: [
-      { nombre: 'Francisco Morazán', municipios: ['Tegucigalpa', 'Valle de Ángeles'] },
-      { nombre: 'Cortés', municipios: ['San Pedro Sula', 'Puerto Cortés'] },
-    ],
-  },
-  {
-    nombre: 'Colombia',
-    estados: [
-      { nombre: 'Cundinamarca', municipios: ['Bogotá', 'Soacha', 'Chía'] },
-      { nombre: 'Antioquia', municipios: ['Medellín', 'Envigado', 'Bello'] },
-    ],
-  },
-];
+/** Asset estático servido por Angular desde `public/` (base href `/`). */
+const RUTA_CATALOGO = '/catalogos/ubicaciones.json';
+
+let catalogoPaises: PaisUbicacion[] = [];
+
+/**
+ * Carga el catálogo una sola vez al arrancar la aplicación. Si el asset no
+ * responde la aplicación sigue operando con los selects vacíos y captura
+ * manual: la captura de un domicilio nunca queda bloqueada por el catálogo.
+ */
+export async function cargarUbicaciones(): Promise<void> {
+  if (catalogoPaises.length > 0) return;
+  try {
+    const respuesta = await fetch(RUTA_CATALOGO);
+    if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
+    const datos = (await respuesta.json()) as { paises?: PaisUbicacion[] };
+    catalogoPaises = datos.paises ?? [];
+  } catch (error) {
+    console.error('No se pudo cargar el catálogo de ubicaciones', error);
+    catalogoPaises = [];
+  }
+}
+
+/** Países del catálogo, en el orden del archivo (México primero). */
+export function paises(): PaisUbicacion[] {
+  return catalogoPaises;
+}
+
+/** Nombres de los países, para los selects. */
+export function nombresPaises(): string[] {
+  return catalogoPaises.map((p) => p.nombre);
+}
+
+/** Entidades federativas de México, para el estado de nacimiento. */
+export function estadosDeMexico(): string[] {
+  return estadosDe('México').map((e) => e.nombre);
+}
 
 /** Normaliza para comparar: sin acentos, minúsculas, espacios colapsados. */
 export function normalizarUbicacion(valor: string): string {
@@ -133,7 +77,7 @@ export function normalizarUbicacion(valor: string): string {
 }
 
 export function estadosDe(pais: string): EstadoUbicacion[] {
-  const p = PAISES_DUMMY.find(
+  const p = catalogoPaises.find(
     (x) => normalizarUbicacion(x.nombre) === normalizarUbicacion(pais ?? ''),
   );
   return p?.estados ?? [];
@@ -248,9 +192,9 @@ const ALIAS_UBICACION: Record<string, string> = {
   'veracruz llave': 'Veracruz',
   yuc: 'Yucatán',
   zac: 'Zacatecas',
-  // Municipios con nombre largo habitual en geocodificadores
-  'san pedro tlaquepaque': 'Tlaquepaque',
-  'los angeles': 'Los Ángeles',
+  // Municipios: el catálogo del INEGI ya trae el nombre oficial, así que aquí
+  // solo va la forma corta de uso común que devuelve el geocodificador.
+  tlaquepaque: 'San Pedro Tlaquepaque',
 };
 
 /**
@@ -328,10 +272,7 @@ export function canonizarUbicacion(ubicacion: {
   estado: string;
   municipio: string;
 } {
-  const pais = canonizar(
-    ubicacion.pais,
-    PAISES_DUMMY.map((p) => p.nombre),
-  );
+  const pais = canonizar(ubicacion.pais, nombresPaises());
   const estado = canonizar(
     ubicacion.estado,
     estadosDe(pais).map((e) => e.nombre),
@@ -342,7 +283,7 @@ export function canonizarUbicacion(ubicacion: {
 
 /**
  * Asegura que el valor vigente aparezca como opción del select aunque no esté
- * en el catálogo dummy (registros previos capturados como texto libre).
+ * en el catálogo (registros previos capturados como texto libre).
  */
 export function conValorActual(opciones: string[], actual: string): string[] {
   return actual && !opciones.includes(actual) ? [actual, ...opciones] : opciones;

@@ -3,12 +3,12 @@ import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Domicilio } from '../core/models';
 import {
-  PAISES_DUMMY,
   canonizarUbicacion,
   conValorActual,
   estadosDe,
   municipiosDe,
-} from '../core/ubicaciones-dummy';
+  nombresPaises,
+} from '../core/ubicaciones';
 import { DomicilioGeocodificado, MapaDomicilioComponent } from './mapa-domicilio.component';
 import { SelectBuscableComponent } from './select-buscable.component';
 
@@ -48,8 +48,6 @@ export class DomicilioFormComponent implements OnInit {
   readonly inicial = input<Domicilio | null>(null);
 
   domicilio = nuevoDomicilio();
-
-  readonly paises = PAISES_DUMMY.map((p) => p.nombre);
 
   ngOnInit(): void {
     const valores = this.inicial();
@@ -113,7 +111,7 @@ export class DomicilioFormComponent implements OnInit {
   }
 
   paisesOpciones(): string[] {
-    return conValorActual(this.paises, this.domicilio.pais);
+    return conValorActual(nombresPaises(), this.domicilio.pais);
   }
 
   estadosOpciones(): string[] {

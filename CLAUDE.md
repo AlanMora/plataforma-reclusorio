@@ -28,6 +28,13 @@ sobre una plataforma base reutilizable; el dominio vive en `apps/reclusorio-serv
   completo (angular.json + package.json propios, estilo `ng new`): levantar con
   `pnpm --filter reclusorio-web start` o `cd apps/reclusorio-web && pnpm start`
   (:4200, proxy `/api`→gateway :3000 y `/socket.io`→:3009).
+- **Catálogos que NO están en el backend** (son texto libre en el modelo, P9 y
+  P13): país/estado/municipio en `public/catalogos/ubicaciones.json` (INEGI para
+  México — 32 entidades y 2 478 municipios — y Wikidata para el resto, sin
+  municipios extranjeros) y nacionalidad/ocupación en
+  `core/persona-opciones.data.ts` (gentilicios de Wikipedia; CIUO-08 vía ESCO).
+  Se regeneran con `python3 tools/catalogos/generar-catalogos.py`; los selects
+  siguen admitiendo captura manual.
 - **Pendientes P1–P7** (decisiones del equipo, ver PLAN): listados faltantes de
   3 catálogos, valores ENUM Gender/MaritalStatus, baja de personas, bitácora de
   dominio, políticas de archivos y contraseñas.

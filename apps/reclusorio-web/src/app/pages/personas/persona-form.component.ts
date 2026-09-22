@@ -15,15 +15,15 @@ import { Persona } from '../../core/models';
 import { mensajeDe } from '../../core/problem';
 import { calcularEdad } from '../../core/edad';
 import { presentarErrorFormulario, validarFormulario } from '../../core/validacion-formulario';
-import { conValorActual } from '../../core/ubicaciones-dummy';
+import { conValorActual } from '../../core/ubicaciones';
 import {
   ESTADOS_CIVILES_DUMMY,
-  ESTADOS_NACIMIENTO_DUMMY,
   GENEROS_DUMMY,
-  NACIONALIDADES_DUMMY,
+  NACIONALIDADES,
   NIVELES_EDUCATIVOS_DUMMY,
-  OCUPACIONES_DUMMY,
-} from '../../core/persona-opciones-dummy';
+  OCUPACIONES,
+  estadosNacimiento,
+} from '../../core/persona-opciones';
 import { SelectBuscableComponent } from '../../shared/select-buscable.component';
 import { SelectorFechaComponent } from '../../shared/selector-fecha.component';
 import { DomicilioFormComponent } from '../../shared/domicilio-form.component';
@@ -32,9 +32,10 @@ import { IconoComponent } from '../../shared/icono.component';
 /**
  * Alta y modificación de personas (RF-PER-003/005).
  * DP-007: nombre, CURP y fecha de nacimiento obligatorios (valida el backend;
- * aquí solo se marca la obligatoriedad). Género/estado civil/nivel educativo/
- * nacionalidad/estado de nacimiento: selects con data dummy mientras el equipo
- * entrega los valores oficiales (P3) — el backend sigue aceptando texto.
+ * aquí solo se marca la obligatoriedad). Nacionalidad, ocupación y estado de
+ * nacimiento salen de catálogos oficiales (ver core/persona-opciones.ts);
+ * género, estado civil y nivel educativo siguen provisionales hasta que el
+ * equipo entregue los valores del ENUM (P3) — el backend acepta texto.
  */
 @Component({
   selector: 'rw-persona-form',
@@ -85,7 +86,7 @@ export class PersonaFormComponent implements OnInit {
   };
 
   /**
-   * Opciones de cada select: catálogo dummy + el valor ya guardado si no está
+   * Opciones de cada select: el catálogo más el valor ya guardado si no está
    * en la lista (registros previos capturados como texto libre).
    */
   generosOpciones(): string[] {
@@ -101,15 +102,15 @@ export class PersonaFormComponent implements OnInit {
   }
 
   ocupacionesOpciones(): string[] {
-    return conValorActual(OCUPACIONES_DUMMY, this.modelo['ocupacion']);
+    return conValorActual(OCUPACIONES, this.modelo['ocupacion']);
   }
 
   nacionalidadesOpciones(): string[] {
-    return conValorActual(NACIONALIDADES_DUMMY, this.modelo['nacionalidad']);
+    return conValorActual(NACIONALIDADES, this.modelo['nacionalidad']);
   }
 
   estadosNacimientoOpciones(): string[] {
-    return conValorActual(ESTADOS_NACIMIENTO_DUMMY, this.modelo['estadoNacimiento']);
+    return conValorActual(estadosNacimiento(), this.modelo['estadoNacimiento']);
   }
 
   /**
