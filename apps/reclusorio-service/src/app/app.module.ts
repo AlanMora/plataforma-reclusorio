@@ -30,6 +30,9 @@ import { CentroCoordenadas1786480000000 } from '../migrations/1786480000000-Cent
 import { EstadoRevision1786500000000 } from '../migrations/1786500000000-EstadoRevision';
 import { PersonaFechaRegistro1786600000000 } from '../migrations/1786600000000-PersonaFechaRegistro';
 import { TrasladoCentroOrigen1786700000000 } from '../migrations/1786700000000-TrasladoCentroOrigen';
+import { Bitacora1786800000000 } from '../migrations/1786800000000-Bitacora';
+import { Bitacora } from './bitacora/bitacora.entity';
+import { BitacoraModule } from './bitacora/bitacora.module';
 
 /**
  * Servicio de dominio del Sistema de Control Penitenciario.
@@ -47,7 +50,7 @@ import { TrasladoCentroOrigen1786700000000 } from '../migrations/1786700000000-T
     MessagingModule.forRoot(),
     DatabaseModule.forRoot({
       database: 'reclusorio',
-      entities: [...ENTIDADES_RECLUSORIO, OutboxEvent, InboxEvent],
+      entities: [...ENTIDADES_RECLUSORIO, Bitacora, OutboxEvent, InboxEvent],
       // Como clase importada para que webpack la incluya en el bundle; en
       // producción se ejecuta al arrancar (en dev el esquema lo crea synchronize).
       migrations: [
@@ -57,6 +60,7 @@ import { TrasladoCentroOrigen1786700000000 } from '../migrations/1786700000000-T
         EstadoRevision1786500000000,
         PersonaFechaRegistro1786600000000,
         TrasladoCentroOrigen1786700000000,
+        Bitacora1786800000000,
       ],
     }),
     OutboxModule.forRoot({ withRelay: true }),
@@ -69,6 +73,7 @@ import { TrasladoCentroOrigen1786700000000 } from '../migrations/1786700000000-T
     IncidenciasModule,
     ReportesModule,
     ArchivosModule,
+    BitacoraModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

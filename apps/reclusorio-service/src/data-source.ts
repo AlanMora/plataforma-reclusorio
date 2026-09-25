@@ -12,6 +12,7 @@ export default new DataSource({
   entities: [
     'apps/reclusorio-service/src/app/entities/*.entities.ts',
     'apps/reclusorio-service/src/app/entities/*.entity.ts',
+    'apps/reclusorio-service/src/app/bitacora/bitacora.entity.ts',
     'libs/messaging/src/outbox/outbox.entities.ts',
   ],
   migrations: ['apps/reclusorio-service/src/migrations/*.ts'],
