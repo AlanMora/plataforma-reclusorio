@@ -45,7 +45,7 @@ El dev server del front ya trae proxy (`proxy.conf.json`): `/api` → gateway
 El acceso es con **nombre de usuario** y contraseña (no con correo). Con
 `SEED_ADMIN_ENABLED=true` (ya viene en `docker-compose.dev.yml` y en
 `.env.example`), el auth-service crea/actualiza al arrancar el
-**superusuario** (rol `superadmin`) con los **26 permisos**:
+**superusuario** (rol `superadmin`) con los **27 permisos**:
 
 ```
 usuario:    admin
@@ -118,6 +118,25 @@ desarrollo) y crear al resto desde el módulo `/usuarios`. Ya no existe el
 registro público `POST /api/v1/auth/register`. Operación diaria: `docker stack ps reclusorio`,
 `docker service logs reclusorio_<servicio>`; re-desplegar = volver a correr el
 script (Swarm actualiza sin downtime con `order: start-first`).
+
+### Trazabilidad: quién hizo qué
+
+- **Bitácora del dominio** (`GET /api/v1/bitacora`): cada alta, modificación,
+  confirmación/descarte o asociación quitada queda con usuario, fecha, IP,
+  `correlationId` y los valores antes/después. Filtros: `entidad`,
+  `idRegistro`, `idUsuario`, `accion`, `desde`, `hasta`.
+- **Auditoría de seguridad** (`GET /api/v1/audit`): logins, sesiones,
+  contraseñas y administración de usuarios.
+- Ambas requieren el permiso `auditoria:consultar` (módulo "Auditoría y
+  bitácora" en `/usuarios`).
+- **Logs de peticiones**: cada línea JSON trae `userId`, `username` y
+  `correlationId`. En Swarm, Promtail los manda a Loki (retención
+  `LOKI_RETENTION`, 90 días por defecto) y se consultan en
+  **https://<servidor>/grafana/** (usuario `GRAFANA_ADMIN_USER`, contraseña
+  `GRAFANA_ADMIN_PASSWORD` del `.env`), dashboard **Trazabilidad**: filtros
+  por servicio, usuario, correlation ID y ruta. Con el `correlationId` que
+  devuelve cualquier respuesta o error se sigue una petición por todos los
+  servicios.
 
 > Alternativa sin Swarm: `docker compose -f docker-compose.prod.yml up -d`
 > levanta lo mismo (más los servicios base de la plataforma) en un solo host.

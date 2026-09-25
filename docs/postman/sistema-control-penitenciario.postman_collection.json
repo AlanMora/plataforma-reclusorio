@@ -2,7 +2,7 @@
   "info": {
     "name": "Sistema de Control Penitenciario — API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Todos los endpoints del sistema (auth, usuarios, notificaciones y dominio penitenciario).\n\n1. Ejecuta **00 · Autenticación → Iniciar sesión** (usa {{username}}/{{password}}); guarda el token.\n2. El resto hereda el Bearer {{accessToken}} de la collection. Si ves 401, vuelve a iniciar sesión (10 min).\n3. Las altas guardan su id en variables ({{idPersona}}, {{idIncidencia}}...) para encadenar peticiones.\n4. Todo pasa por el gateway ({{baseUrl}}) salvo la carpeta 98, que va directo al auth-service.\n\nRespuestas envueltas en { success, data, correlationId }; errores en problem+json (RFC 9457)."
+    "description": "Todos los endpoints del sistema (auth, usuarios, notificaciones y dominio penitenciario).\n\n1. Ejecuta **00 · Autenticación → Iniciar sesión** (usa {{username}}/{{password}}); guarda el token.\n2. El resto hereda el Bearer {{accessToken}} de la collection. Si ves 401, vuelve a iniciar sesión (10 min).\n3. Las altas guardan su id en variables ({{idPersona}}, {{idIncidencia}}...) para encadenar peticiones.\n4. Todo pasa por el gateway ({{baseUrl}}) salvo la carpeta 98, que va directo al auth-service.\n5. Carpeta 14: auditoría de seguridad y bitácora del dominio (quién hizo qué); requieren auditoria:consultar.\n\nRespuestas envueltas en { success, data, correlationId }; errores en problem+json (RFC 9457)."
   },
   "auth": {
     "type": "bearer",
@@ -2825,6 +2825,119 @@
       ]
     },
     {
+      "name": "14 · Auditoría y bitácora",
+      "item": [
+        {
+          "name": "Auditoría de seguridad: logins, sesiones, contraseñas y usuarios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "action",
+                  "value": "login",
+                  "disabled": true
+                },
+                {
+                  "key": "userId",
+                  "value": "{{idUsuario}}",
+                  "disabled": true
+                },
+                {
+                  "key": "desde",
+                  "value": "2026-09-01",
+                  "disabled": true
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Auditoría de seguridad: logins, sesiones, contraseñas y usuarios (filtrable)\n\nRequiere el permiso auditoria:consultar. action: login, logout.explicito, sesion.revocada, password.cambiado, usuario.creado, usuario.actualizado, usuario.password-restablecida, usuario.permisos-asignados."
+          }
+        },
+        {
+          "name": "Bitácora del dominio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bitacora?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bitacora"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "entidad",
+                  "value": "personas",
+                  "disabled": true
+                },
+                {
+                  "key": "idRegistro",
+                  "value": "{{idPersona}}",
+                  "disabled": true
+                },
+                {
+                  "key": "idUsuario",
+                  "value": "{{idUsuario}}",
+                  "disabled": true
+                },
+                {
+                  "key": "accion",
+                  "value": "CONFIRMAR",
+                  "disabled": true
+                },
+                {
+                  "key": "desde",
+                  "value": "2026-09-01",
+                  "disabled": true
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Bitácora del dominio (P5): quién creó, modificó, confirmó o quitó cada registro\n\nRequiere el permiso auditoria:consultar. entidad = tabla del dominio (personas, domicilios, incidencias, incidencias_personas, traslados, centros...). accion: CREAR | MODIFICAR | QUITAR | CONFIRMAR | DESCARTAR | DESACTIVAR | REACTIVAR. \"cambios\" trae los valores antes/después."
+          }
+        }
+      ]
+    },
+    {
       "name": "98 · Directo a auth-service (no pasa por gateway)",
       "item": [
         {
@@ -2846,25 +2959,6 @@
               "type": "noauth"
             },
             "description": "JWKS: claves públicas para validar access tokens"
-          }
-        },
-        {
-          "name": "GET /audit",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{authUrl}}/api/v1/audit",
-              "host": [
-                "{{authUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "audit"
-              ]
-            },
-            "description": ""
           }
         },
         {

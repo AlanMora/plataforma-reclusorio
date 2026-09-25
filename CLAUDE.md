@@ -36,8 +36,8 @@ sobre una plataforma base reutilizable; el dominio vive en `apps/reclusorio-serv
   Se regeneran con `python3 tools/catalogos/generar-catalogos.py`; los selects
   siguen admitiendo captura manual.
 - **Pendientes P1–P7** (decisiones del equipo, ver PLAN): listados faltantes de
-  3 catálogos, valores ENUM Gender/MaritalStatus, baja de personas, bitácora de
-  dominio, políticas de archivos y contraseñas.
+  3 catálogos, valores ENUM Gender/MaritalStatus, baja de personas, políticas
+  de archivos y contraseñas. P5 (bitácora de dominio) APROBADA 25/09/2026.
 
 ## Arquitectura (lo esencial)
 
@@ -63,10 +63,15 @@ sobre una plataforma base reutilizable; el dominio vive en `apps/reclusorio-serv
 - Acceso por **nombre de usuario** (`users.username`, minúsculas), no correo;
   `users.nombre` (opcional, máx. 150) identifica a la persona y viaja en el JWT.
   Superusuario semilla (`DevAdminSeeder`, opt-in por `SEED_ADMIN_ENABLED=true`):
-  `admin` / `Reclusorio#Dev2026`, rol `superadmin`, 26 permisos; es la cuenta
+  `admin` / `Reclusorio#Dev2026`, rol `superadmin`, 27 permisos; es la cuenta
   de rescate (no se desactiva, solo otro superusuario lo modifica;
   `SEED_ADMIN_RESET_PASSWORD=true` restablece su contraseña al arrancar).
   En producción, contraseña fuerte propia, nunca la de dev.
+- Trazabilidad: tabla técnica `bitacora` (reclusorio, fuera del modelo) con
+  antes/después de cada cambio del dominio, escrita por `BitacoraSubscriber` en
+  la misma transacción; `GET /bitacora` y `GET /audit` (auth) piden
+  `auditoria:consultar`. Logs pino con `userId`/`username`/`correlationId`;
+  en Swarm van a Loki y se ven en Grafana (`/grafana/`).
 - Alta y restablecimiento de contraseña dejan `must_change_password=true`:
   el JWT lleva `mustChangePassword` y el `JwtAuthGuard` responde 403
   `PASSWORD_CHANGE_REQUIRED` salvo en rutas `@AllowPendingPasswordChange()`;

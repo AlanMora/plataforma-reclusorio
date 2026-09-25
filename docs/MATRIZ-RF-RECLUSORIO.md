@@ -29,6 +29,8 @@ restricción verificada en la base de datos.
 | RF-CUE-001 | `GET /auth/session` (vigencia restante) + `GET /users/me` (datos y permisos) | E2E |
 | RF-CUE-002 | `POST /auth/change-password` (verifica actual, confirma, revoca sesiones) | E2E (401/204/login viejo 401) |
 | Auditoría §17 / DP-003 | `security_audit_logs`: login exitoso/fallido, logout, revocación, cambio de contraseña — con IP | E2E (filas verificadas) |
+| Bitácora de dominio §4/§17 (P5) | `bitacora` (reclusorio) vía `BitacoraSubscriber` + `BitacoraInterceptor`; `GET /bitacora` con `auditoria:consultar` | E2E: alta/modificación de persona, alta/asociación/quitar/confirmar de incidencia con antes/después, usuario, IP y correlationId |
+| Trazabilidad de peticiones | Logs pino con `userId`, `username` y `correlationId`; Promtail → Loki → Grafana (`/grafana/`, dashboard "Trazabilidad") en `docker-stack.yml` | Cadena probada en local con las mismas configs (labels, consultas del dashboard, sub-path en nginx) |
 | RF-UI-001..005 | F10 `reclusorio-web/` (Angular 22 + Tailwind 4): login (`pages/login`), layout privado (`layout/shell` + `authGuard`), sidebar construido con los claims `permissions` (RF-SEG-001) + `permisoGuard`/`*rwPermiso` por módulo, aviso de expiración a 5 min con extensión (`core/session.service`), manejo de errores problem+json (`core/problem.ts` + alertas/toasts). QA 31/08: selects y calendarios se abren hacia arriba cuando no hay espacio abajo (`shared/desplegable.ts` — antes quedaban recortados en modales con scroll); selector de fecha con máximo configurable (`[max]`) | build prod + lint; revisión manual |
 | RF-SES-002/008 (cliente) | Cuenta regresiva sincronizada con `GET /auth/session`; refresh rota tokens y reinicia 30 min (`core/auth.service` single-flight; reintento ante 401 en `auth.interceptor`) | build + revisión |
 | RF-SES-009 (cliente) | `core/realtime.service`: socket.io autenticado con el access token; al recibir `session.revoked` de la propia sesión fuerza logout inmediato con motivo | build + revisión |
@@ -54,4 +56,4 @@ en `docs/PLAN-RECLUSORIO.md` §4 «Ajustes de la ronda de QA».
 
 ## Pendientes que siguen requiriendo decisión del equipo
 
-P1 obligatoriedad en esquema · P2 listados completos de centros/destinos/tipos de audiencia · P3 valores de Gender/MaritalStatus · P4 baja de personas · P5 bitácora de dominio · P6 política de archivos · P7 política de contraseñas completa · P8 framework del frontend (F10). Detalle en `docs/PLAN-RECLUSORIO.md`.
+P1 obligatoriedad en esquema · P2 listados completos de centros/destinos/tipos de audiencia · P3 valores de Gender/MaritalStatus · P4 baja de personas · P6 política de archivos · P7 política de contraseñas completa · P8 framework del frontend (F10). Detalle en `docs/PLAN-RECLUSORIO.md`.
