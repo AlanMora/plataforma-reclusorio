@@ -13,7 +13,7 @@ if [[ ! -f .env ]]; then
   cp .env.docker.example .env
   echo "⚠️  No había .env: lo creé desde .env.docker.example."
   echo "    EDITA los secretos (JWT_SECRET, POSTGRES_PASSWORD, RABBITMQ_PASSWORD,"
-  echo "    S3_ACCESS_KEY/S3_SECRET_KEY) y vuelve a correr este script."
+  echo "    S3_ACCESS_KEY/S3_SECRET_KEY, GRAFANA_ADMIN_PASSWORD) y vuelve a correr este script."
   exit 1
 fi
 
@@ -25,6 +25,11 @@ fi
 
 # stack deploy sustituye variables desde el entorno del shell, no lee .env.
 set -a; source .env; set +a
+
+if [[ -z "${GRAFANA_ADMIN_PASSWORD:-}" ]]; then
+  echo "❌ Falta GRAFANA_ADMIN_PASSWORD en .env (acceso a los logs en /grafana/)."
+  exit 1
+fi
 
 # ---- 2. Imágenes -----------------------------------------------------
 # Se etiquetan con el SHA de git: si el tag no cambia, Swarm considera el
@@ -56,6 +61,7 @@ echo "🚀 Desplegando stack 'reclusorio'..."
 docker stack deploy --resolve-image never -c docker-stack.yml reclusorio
 
 echo
+echo "📜 Logs y trazabilidad: https://<servidor>/grafana/ (usuario ${GRAFANA_ADMIN_USER:-admin})"
 echo "✅ Stack desplegado. Estado:"
 docker stack services reclusorio
 echo

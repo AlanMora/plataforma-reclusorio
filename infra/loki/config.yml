@@ -1,0 +1,48 @@
+# Loki de producción (Swarm): un solo nodo, almacenamiento en disco local
+# (volumen loki_data) y retención configurable con LOKI_RETENTION (por
+# defecto 2160h = 90 días). Se arranca con -config.expand-env=true.
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  log_level: warn
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2026-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v12
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  retention_period: ${LOKI_RETENTION:-2160h}
+  # Las líneas de pino traen muchos campos; se consultan con `| json`.
+  max_line_size: 256kb
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+
+compactor:
+  working_directory: /loki/compactor
+  compaction_interval: 10m
+  retention_enabled: true
+  retention_delete_delay: 2h
+  delete_request_store: filesystem
+
+analytics:
+  reporting_enabled: false

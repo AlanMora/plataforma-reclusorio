@@ -16,6 +16,9 @@
 #    vive en la red overlay interna.
 #  - Solo los 5 servicios que usa el reclusorio + su infra (el resto de la
 #    plataforma base no participa hoy; añadirlos = copiar un bloque).
+#  - Logs: Promtail (uno por nodo) → Loki (retención LOKI_RETENTION) →
+#    Grafana en https://<servidor>/grafana/ (dashboard "Trazabilidad").
+#    Docker además rota los logs locales de cada contenedor (x-logging).
 # =====================================================================
 
 x-service-env: &service-env
@@ -46,6 +49,14 @@ x-service-env: &service-env
   S3_BUCKET: ${S3_BUCKET:-icms-files}
   S3_FORCE_PATH_STYLE: 'true'
 
+# Rotación del log local de cada contenedor: el histórico vive en Loki, el
+# disco del nodo no se llena. Se aplica a todos los servicios del stack.
+x-logging: &logging-default
+  driver: json-file
+  options:
+    max-size: '20m'
+    max-file: '5'
+
 x-deploy: &deploy-default
   replicas: 1
   restart_policy:
@@ -53,6 +64,16 @@ x-deploy: &deploy-default
     delay: 5s
   update_config:
     order: start-first
+
+# Servicios con estado en un volumen propio (Loki, Grafana): al actualizar se
+# detiene el viejo antes de arrancar el nuevo para no compartir el volumen.
+x-deploy-stateful: &deploy-stateful
+  replicas: 1
+  restart_policy:
+    condition: any
+    delay: 5s
+  update_config:
+    order: stop-first
 
 services:
   # ------------------------- infraestructura -------------------------
@@ -78,6 +99,7 @@ services:
       timeout: 5s
       retries: 10
     networks: [icms]
+    logging: *logging-default
     deploy: *deploy-default
 
   postgres-replica:
@@ -98,6 +120,7 @@ services:
       timeout: 5s
       retries: 10
     networks: [icms]
+    logging: *logging-default
     deploy: *deploy-default
 
   redis:
@@ -111,6 +134,7 @@ services:
       timeout: 3s
       retries: 5
     networks: [icms]
+    logging: *logging-default
     deploy: *deploy-default
 
   rabbitmq:
@@ -126,6 +150,7 @@ services:
       timeout: 10s
       retries: 5
     networks: [icms]
+    logging: *logging-default
     deploy: *deploy-default
 
   minio:
@@ -142,6 +167,7 @@ services:
       timeout: 10s
       retries: 5
     networks: [icms]
+    logging: *logging-default
     deploy: *deploy-default
 
   # Tarea one-shot: crea el bucket y termina (restart solo si falla).
@@ -154,6 +180,7 @@ services:
       echo 'bucket listo';
       "
     networks: [icms]
+    logging: *logging-default
     deploy:
       replicas: 1
       restart_policy:
@@ -179,6 +206,7 @@ services:
       retries: 5
       start_period: 30s
     networks: [icms]
+    logging: *logging-default
     deploy: *deploy-default
 
   auth-service:
@@ -193,6 +221,7 @@ services:
       retries: 5
       start_period: 30s
     networks: [icms]
+    logging: *logging-default
     deploy: *deploy-default
 
   reclusorio-service:
@@ -207,6 +236,7 @@ services:
       retries: 5
       start_period: 30s
     networks: [icms]
+    logging: *logging-default
     deploy: *deploy-default
 
   notification-service:
@@ -221,6 +251,7 @@ services:
       retries: 5
       start_period: 30s
     networks: [icms]
+    logging: *logging-default
     deploy: *deploy-default
 
   realtime-service:
@@ -235,7 +266,80 @@ services:
       retries: 5
       start_period: 30s
     networks: [icms]
+    logging: *logging-default
     deploy: *deploy-default
+
+  # ------------------------- observabilidad --------------------------
+  # Logs centralizados. Nada se publica al exterior: Grafana se sirve por
+  # el nginx de reclusorio-web en /grafana/ con su propio login.
+  loki:
+    image: grafana/loki:${LOKI_VERSION:-2.9.10}
+    command: ['-config.file=/etc/loki/config.yml', '-config.expand-env=true']
+    environment:
+      LOKI_RETENTION: ${LOKI_RETENTION:-2160h}
+    configs:
+      - source: loki-config
+        target: /etc/loki/config.yml
+    volumes:
+      - loki_data:/loki
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1:3100/ready || exit 1']
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks: [icms]
+    logging: *logging-default
+    deploy: *deploy-stateful
+
+  # Uno por nodo: lee por la API de Docker los contenedores del stack.
+  promtail:
+    image: grafana/promtail:${LOKI_VERSION:-2.9.10}
+    command: ['-config.file=/etc/promtail/config.yml']
+    configs:
+      - source: promtail-config
+        target: /etc/promtail/config.yml
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - promtail_positions:/var/lib/promtail
+    networks: [icms]
+    logging: *logging-default
+    deploy:
+      mode: global
+      restart_policy:
+        condition: any
+        delay: 5s
+
+  grafana:
+    image: grafana/grafana:${GRAFANA_VERSION:-11.2.2}
+    environment:
+      GF_SERVER_ROOT_URL: '%(protocol)s://%(domain)s/grafana/'
+      GF_SERVER_SERVE_FROM_SUB_PATH: 'true'
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?define GRAFANA_ADMIN_PASSWORD en .env}
+      GF_AUTH_ANONYMOUS_ENABLED: 'false'
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_ANALYTICS_CHECK_FOR_UPDATES: 'false'
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/trazabilidad.json
+    configs:
+      - source: grafana-datasources
+        target: /etc/grafana/provisioning/datasources/datasources.yml
+      - source: grafana-dashboards-provider
+        target: /etc/grafana/provisioning/dashboards/dashboards.yml
+      - source: grafana-dashboard-trazabilidad
+        target: /etc/grafana/dashboards/trazabilidad.json
+    volumes:
+      - grafana_data:/var/lib/grafana
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1:3000/api/health || exit 1']
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks: [icms]
+    logging: *logging-default
+    deploy: *deploy-stateful
 
   # --------------------------- frontend ------------------------------
   # ÚNICO servicio publicado al exterior. nginx sirve la SPA y proxyea
@@ -258,11 +362,22 @@ services:
       retries: 5
       start_period: 10s
     networks: [icms]
+    logging: *logging-default
     deploy: *deploy-default
 
 configs:
   pg-init-databases:
     file: ./infra/postgres/initdb/01-create-databases.sql
+  loki-config:
+    file: ./infra/loki/config.yml
+  promtail-config:
+    file: ./infra/promtail/config.swarm.yml
+  grafana-datasources:
+    file: ./infra/grafana/provisioning-swarm/datasources/datasources.yml
+  grafana-dashboards-provider:
+    file: ./infra/grafana/provisioning-swarm/dashboards/dashboards.yml
+  grafana-dashboard-trazabilidad:
+    file: ./infra/grafana/provisioning-swarm/dashboards/trazabilidad.json
 
 networks:
   icms:
@@ -275,3 +390,6 @@ volumes:
   rabbitmq_data:
   minio_data:
   web_certs:
+  loki_data:
+  promtail_positions:
+  grafana_data:
