@@ -2,7 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { LoggerModule } from 'nestjs-pino';
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { CORRELATION_ID_HEADER } from '@icms/common';
+import { CORRELATION_ID_HEADER, CORRELATION_ID_KEY } from '@icms/common';
 import { CorrelationIdMiddleware } from './correlation-id.middleware';
 
 /**
@@ -27,9 +27,19 @@ import { CorrelationIdMiddleware } from './correlation-id.middleware';
         },
         genReqId: (req: IncomingMessage) =>
           (req.headers[CORRELATION_ID_HEADER] as string) ?? randomUUID(),
-        customProps: (req: IncomingMessage) => ({
-          correlationId: req.headers[CORRELATION_ID_HEADER],
-        }),
+        // Se evalúa también al terminar la respuesta: para entonces el guard JWT
+        // ya dejó `req.user`, así cada línea dice QUIÉN hizo la petición.
+        customProps: (req: IncomingMessage) => {
+          const user = (req as { user?: { id?: string; username?: string } }).user;
+          return {
+            // El gateway genera el id (no llega en el header): se toma del request.
+            correlationId:
+              req.headers[CORRELATION_ID_HEADER] ??
+              (req as unknown as Record<string, unknown>)[CORRELATION_ID_KEY],
+            ...(user?.id ? { userId: user.id } : {}),
+            ...(user?.username ? { username: user.username } : {}),
+          };
+        },
         serializers: {
           req: (req: IncomingMessage & { raw?: unknown }) => ({
             method: (req as any).method,

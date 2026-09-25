@@ -20,6 +20,8 @@ export const UPSTREAM_ROUTES: UpstreamRoute[] = [
   { prefix: '/api/v1/auth', envKey: 'AUTH_SERVICE_URL', fallback: 'http://localhost:3001', protected: false },
   // perfil y listado de usuarios viven en auth-service (GET /users/me para RF-CUE-001)
   { prefix: '/api/v1/users', envKey: 'AUTH_SERVICE_URL', fallback: 'http://localhost:3001', protected: true },
+  // auditoría de seguridad (auth-service); requiere el permiso auditoria:consultar
+  { prefix: '/api/v1/audit', envKey: 'AUTH_SERVICE_URL', fallback: 'http://localhost:3001', protected: true },
   { prefix: '/api/v1/configuration', envKey: 'CONFIGURATION_SERVICE_URL', fallback: 'http://localhost:3002', protected: true },
   { prefix: '/api/v1/core', envKey: 'CORE_DOMAIN_SERVICE_URL', fallback: 'http://localhost:3003', protected: true },
   { prefix: '/api/v1/reporting', envKey: 'REPORTING_SERVICE_URL', fallback: 'http://localhost:3004', protected: true },
@@ -38,6 +40,8 @@ export const UPSTREAM_ROUTES: UpstreamRoute[] = [
   { prefix: '/api/v1/ingresos-egresos', envKey: 'RECLUSORIO_SERVICE_URL', fallback: 'http://localhost:3010', protected: true },
   { prefix: '/api/v1/movimientos', envKey: 'RECLUSORIO_SERVICE_URL', fallback: 'http://localhost:3010', protected: true },
   { prefix: '/api/v1/reportes', envKey: 'RECLUSORIO_SERVICE_URL', fallback: 'http://localhost:3010', protected: true },
+  // bitácora del dominio (P5): quién hizo qué y qué cambió
+  { prefix: '/api/v1/bitacora', envKey: 'RECLUSORIO_SERVICE_URL', fallback: 'http://localhost:3010', protected: true },
 ];
 
 export function resolveTarget(route: UpstreamRoute, config: ConfigService): string {

@@ -2,7 +2,7 @@ import { Controller, Delete, Get, HttpCode, Param, Post, Req } from '@nestjs/com
 import type { Request } from 'express';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, CurrentUser } from '@icms/auth';
-import { ForbiddenDomainException } from '@icms/common';
+import { ForbiddenDomainException, ipCliente } from '@icms/common';
 import { AuthService } from '../auth/auth.service';
 import { SessionStore } from './session-store.service';
 
@@ -36,7 +36,7 @@ export class SessionsController {
       throw new ForbiddenDomainException('No puedes revocar sesiones de otro usuario');
     }
     const motivo = session && session.userId !== user.id ? 'revocacion-administrativa' : 'logout';
-    await this.auth.revoke(sid, motivo, user.id, req.ip);
+    await this.auth.revoke(sid, motivo, user.id, ipCliente(req));
   }
 
   @Post('revoke-all')
@@ -44,7 +44,7 @@ export class SessionsController {
   @ApiOperation({ summary: 'Revocar todas las sesiones del usuario (cierre global)' })
   async revokeAll(@CurrentUser() user: AuthenticatedUser, @Req() req: Request) {
     // Publica session.revoked por cada sesión (RF-SES-009).
-    const sids = await this.auth.revokeAllForUser(user.id, 'revocacion-administrativa', req.ip);
+    const sids = await this.auth.revokeAllForUser(user.id, 'revocacion-administrativa', ipCliente(req));
     return { revoked: sids.length };
   }
 }

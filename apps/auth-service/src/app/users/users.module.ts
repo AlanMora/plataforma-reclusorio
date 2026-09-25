@@ -82,6 +82,8 @@ export const CATALOGO_PERMISOS: { modulo: string; permisos: string[] }[] = [
   { modulo: 'Catálogos', permisos: ['catalogos:administrar'] },
   // Administración de la plataforma: quién puede gestionar usuarios y permisos.
   { modulo: 'Usuarios (administración)', permisos: ['users:read', 'users:write', 'permissions:write'] },
+  // Trazabilidad: auditoría de seguridad (auth) y bitácora del dominio (reclusorio).
+  { modulo: 'Auditoría y bitácora', permisos: ['auditoria:consultar'] },
 ];
 
 const PERMISOS_VALIDOS = new Set(CATALOGO_PERMISOS.flatMap((m) => m.permisos));

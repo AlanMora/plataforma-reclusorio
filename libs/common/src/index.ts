@@ -7,3 +7,4 @@ export * from './filters/all-exceptions.filter';
 export * from './interceptors/response.interceptor';
 export * from './bootstrap';
 export * from './validation/mensajes-validacion';
+export * from './http/ip-cliente';

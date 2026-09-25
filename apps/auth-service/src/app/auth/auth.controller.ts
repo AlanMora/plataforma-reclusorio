@@ -1,5 +1,6 @@
 import { Body, Controller, Get, HttpCode, Post, Req } from '@nestjs/common';
 import type { Request } from 'express';
+import { ipCliente } from '@icms/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   AllowPendingPasswordChange,
@@ -20,7 +21,7 @@ export class AuthController {
   @HttpCode(200)
   @ApiOperation({ summary: 'Iniciar sesión y obtener tokens (auditado con IP)' })
   login(@Body() dto: LoginDto, @Req() req: Request) {
-    return this.auth.login(dto, req.ip);
+    return this.auth.login(dto, ipCliente(req));
   }
 
   @Public()
@@ -38,7 +39,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Cerrar sesión (revoca la sesión actual en Redis)' })
   async logout(@CurrentUser() user: AuthenticatedUser, @Req() req: Request) {
     if (user.sessionId) {
-      await this.auth.revoke(user.sessionId, 'logout', user.id, req.ip);
+      await this.auth.revoke(user.sessionId, 'logout', user.id, ipCliente(req));
     }
   }
 
@@ -60,6 +61,6 @@ export class AuthController {
     @Body() dto: ChangePasswordDto,
     @Req() req: Request,
   ) {
-    await this.auth.changePassword(user.id, dto.currentPassword, dto.newPassword, dto.confirmPassword, req.ip);
+    await this.auth.changePassword(user.id, dto.currentPassword, dto.newPassword, dto.confirmPassword, ipCliente(req));
   }
 }
