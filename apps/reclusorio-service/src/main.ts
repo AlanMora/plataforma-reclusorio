@@ -7,8 +7,8 @@ import { initTracing } from '@icms/observability';
 import { AppModule } from './app/app.module';
 
 /**
- * reclusorio-service — servicio de dominio de la Plataforma de Gestión de
- * Reclusorio. Implementa el Modelo de Datos Consolidado (fuente de verdad)
+ * reclusorio-service — servicio de dominio del Sistema de Control
+ * Penitenciario. Implementa el Modelo de Datos Consolidado (fuente de verdad)
  * y la Especificación de Requerimientos Funcionales v1.0.
  */
 async function bootstrap() {

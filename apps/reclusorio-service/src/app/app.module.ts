@@ -32,7 +32,7 @@ import { PersonaFechaRegistro1786600000000 } from '../migrations/1786600000000-P
 import { TrasladoCentroOrigen1786700000000 } from '../migrations/1786700000000-TrasladoCentroOrigen';
 
 /**
- * Servicio de dominio de la Plataforma de Gestión de Reclusorio.
+ * Servicio de dominio del Sistema de Control Penitenciario.
  * Base de datos propia (`reclusorio`) con el esquema EXACTO del Modelo de
  * Datos Consolidado. La seguridad (JWT/JWKS), permisos, idempotencia y
  * errores RFC 9457 vienen de la plataforma base.

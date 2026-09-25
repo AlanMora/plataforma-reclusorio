@@ -1,4 +1,4 @@
-# Plataforma de Gestión de Reclusorio
+# Sistema de Control Penitenciario
 
 Monorepo Nx + pnpm con 11 microservicios NestJS. Es un proyecto REAL construido
 sobre una plataforma base reutilizable; el dominio vive en `apps/reclusorio-service`.

@@ -1,4 +1,4 @@
-# Plan de trabajo — Plataforma de Gestión de Reclusorio
+# Plan de trabajo — Sistema de Control Penitenciario
 
 **Fuentes de verdad:** `Especificacion_Requerimientos_Funcionales_Plataforma_Reclusorio.docx` (v1.0, 05/08/2026) y `Modelo_de_Datos_Consolidado_Plataforma_Reclusorio_final.docx`.
 **Base técnica:** plataforma base reutilizable de microservicios (este monorepo).

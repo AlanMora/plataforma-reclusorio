@@ -115,7 +115,7 @@ services:
       <<: *service-env
       CORE_DOMAIN_PORT: '3003'
 
-  # Proyecto REAL: dominio de la Plataforma de Gestión de Reclusorio.
+  # Proyecto REAL: dominio del Sistema de Control Penitenciario.
   reclusorio-service:
     <<: *dev-service
     command: pnpm exec nx serve reclusorio-service

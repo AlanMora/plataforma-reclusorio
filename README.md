@@ -1,4 +1,4 @@
-# Plataforma de Gestión de Reclusorio
+# Sistema de Control Penitenciario
 
 Sistema penitenciario construido sobre la plataforma base **ICMS** de
 microservicios (**NestJS + Nx**, monorepo pnpm) con frontend **Angular 22 +

@@ -1,6 +1,6 @@
 # Matriz de trazabilidad RF → implementación → verificación
 
-Plataforma de Gestión de Reclusorio. Conforme al mandato §22.12 de la
+Sistema de Control Penitenciario. Conforme al mandato §22.12 de la
 Especificación de Requerimientos Funcionales v1.0.
 
 Rutas relativas a `apps/`. Verificación: **E2E** = probado en vivo contra

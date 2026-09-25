@@ -120,7 +120,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Proyecto REAL: dominio de la Plataforma de Gestión de Reclusorio.
+  # Proyecto REAL: dominio del Sistema de Control Penitenciario.
   reclusorio-service:
     <<: *prod-service
     build: { context: ., dockerfile: Dockerfile, args: { SERVICE: reclusorio-service } }
