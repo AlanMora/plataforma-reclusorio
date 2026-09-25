@@ -94,7 +94,7 @@ export class ShellComponent {
     );
   });
 
-  readonly inicialUsuario = computed(() => (this.auth.username()?.[0] ?? '?').toUpperCase());
+  readonly inicialUsuario = computed(() => ((this.auth.nombre() || this.auth.username())?.[0] ?? '?').toUpperCase());
 
   readonly cuentaRegresiva = computed(() => {
     const s = this.session.restante();

@@ -1,7 +1,7 @@
 <div class="mx-auto max-w-6xl space-y-5">
   <div>
     <p class="etiqueta">Cuenta</p>
-    <h2 class="text-2xl font-bold text-slate-100">{{ auth.username() }}</h2>
+    <h2 class="text-2xl font-bold text-slate-100">{{ auth.nombre() || auth.username() }}</h2>
   </div>
 
   <div class="grid gap-5 lg:grid-cols-2">
@@ -143,10 +143,14 @@
   @if (usuario(); as u) {
     <div class="panel p-6">
       <p class="etiqueta mb-3">Datos de la cuenta</p>
-      <div class="grid gap-4 sm:grid-cols-3">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <p class="etiqueta">Usuario</p>
           <p class="text-sm text-slate-200 sin-mayusculas">{{ u.username }}</p>
+        </div>
+        <div>
+          <p class="etiqueta">Nombre</p>
+          <p class="text-sm text-slate-200">{{ u.nombre || '—' }}</p>
         </div>
         <div>
           <p class="etiqueta">Estado</p>

@@ -25,6 +25,7 @@ import {
   IsOptional,
   IsString,
   Matches,
+  MaxLength,
   MinLength,
 } from 'class-validator';
 import {
@@ -46,7 +47,12 @@ import {
 import { User } from './user.entity';
 import { AuthModule } from '../auth/auth.module';
 import { AuthService } from '../auth/auth.service';
-import { normalizarUsername, USERNAME_MENSAJE, USERNAME_REGEX } from '../auth/dto';
+import {
+  normalizarNombre,
+  normalizarUsername,
+  USERNAME_MENSAJE,
+  USERNAME_REGEX,
+} from '../auth/dto';
 import { AuditModule, AuditService } from '../audit/audit.module';
 
 /** Vista pública de un usuario: nunca expone el hash de la contraseña. */
@@ -91,7 +97,7 @@ export const ROL_SUPERADMIN = 'superadmin';
 const PERMISOS_ANTIBLOQUEO = ['users:read', 'users:write', 'permissions:write'];
 
 class ListarUsuariosQuery extends PaginationQueryDto {
-  /** Búsqueda por nombre de usuario (homologación de listados). */
+  /** Búsqueda por nombre de usuario o nombre completo (homologación de listados). */
   @IsOptional() @IsString() buscar?: string;
 }
 
@@ -100,6 +106,11 @@ class CrearUsuarioDto {
   @IsString()
   @Matches(USERNAME_REGEX, { message: USERNAME_MENSAJE })
   username!: string;
+  @IsOptional()
+  @Transform(normalizarNombre)
+  @IsString()
+  @MaxLength(150)
+  nombre?: string | null;
   /** Contraseña temporal: el usuario deberá cambiarla en su primer ingreso. */
   @IsString() @MinLength(8) password!: string;
   @IsOptional() @IsArray() @IsString({ each: true }) permissions?: string[];
@@ -107,6 +118,12 @@ class CrearUsuarioDto {
 
 class ActualizarUsuarioDto {
   @IsOptional() @IsBoolean() isActive?: boolean;
+  /** Nombre completo; null o vacío lo borra. */
+  @IsOptional()
+  @Transform(normalizarNombre)
+  @IsString()
+  @MaxLength(150)
+  nombre?: string | null;
 }
 
 class CambiarPasswordAdminDto {
@@ -140,10 +157,14 @@ export class UsersService {
   }
 
   async list(query: PaginationQueryDto, tenantId?: string, buscar?: string) {
-    const filtro = {
-      ...(tenantId ? { tenantId } : {}),
-      ...(buscar ? { username: ILike(`%${buscar.trim()}%`) } : {}),
-    };
+    const tenant = tenantId ? { tenantId } : {};
+    const texto = buscar?.trim();
+    const filtro = texto
+      ? [
+          { ...tenant, username: ILike(`%${texto}%`) },
+          { ...tenant, nombre: ILike(`%${texto}%`) },
+        ]
+      : tenant;
     const [items, total] = await this.users.findAndCount({
       where: filtro,
       skip: (query.page - 1) * query.limit,
@@ -178,6 +199,7 @@ export class UsersService {
     const user = await this.users.save(
       this.users.create({
         username: dto.username,
+        nombre: dto.nombre ?? null,
         passwordHash: await argon2Hash(dto.password),
         // La contraseña la eligió el administrador: se cambia al primer ingreso.
         mustChangePassword: true,
@@ -212,6 +234,7 @@ export class UsersService {
     }
 
     if (dto.isActive !== undefined) user.isActive = dto.isActive;
+    if (dto.nombre !== undefined) user.nombre = dto.nombre;
     const guardado = await this.users.save(user);
 
     // Desactivar corta el acceso de inmediato: sesiones fuera (RF-SES-009).
@@ -222,7 +245,7 @@ export class UsersService {
       userId: actor.id,
       action: 'usuario.actualizado',
       outcome: guardado.username,
-      metadata: { usuarioId: id, isActive: guardado.isActive },
+      metadata: { usuarioId: id, isActive: guardado.isActive, nombre: guardado.nombre },
     });
     return toSafeUser(guardado);
   }
@@ -339,7 +362,7 @@ export class UsersController {
 
   @Patch(':id')
   @RequirePermissions('users:write')
-  @ApiOperation({ summary: 'Activar/desactivar usuario (desactivar revoca sus sesiones)' })
+  @ApiOperation({ summary: 'Editar nombre o activar/desactivar usuario (desactivar revoca sus sesiones)' })
   actualizar(
     @Param('id') id: string,
     @Body() dto: ActualizarUsuarioDto,

@@ -9,6 +9,10 @@ export class User extends BaseEntity {
   @Column()
   username!: string;
 
+  /** Nombre completo (opcional) para saber quién es cuando el usuario es un apodo. */
+  @Column({ type: 'varchar', length: 150, nullable: true })
+  nombre!: string | null;
+
   @Column({ name: 'password_hash' })
   passwordHash!: string;
 

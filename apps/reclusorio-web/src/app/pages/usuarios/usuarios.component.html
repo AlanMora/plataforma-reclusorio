@@ -32,6 +32,19 @@
         class="space-y-4"
         (ngSubmit)="crear(formularioUsuario, $event)"
       >
+        <div>
+          <label class="campo-etiqueta" for="usrNombre">Nombre completo (opcional)</label>
+          <input
+            class="campo"
+            id="usrNombre"
+            name="nombre"
+            type="text"
+            maxlength="150"
+            autocomplete="off"
+            [(ngModel)]="forma.nombre"
+            placeholder="Nombre y apellidos de la persona"
+          />
+        </div>
         <div class="grid gap-4 md:grid-cols-2">
           <div>
             <label class="campo-etiqueta obligatorio" for="usrUsername">Nombre de usuario</label>
@@ -107,7 +120,7 @@
   <form class="panel p-4" (ngSubmit)="buscar()">
     <div class="flex flex-wrap items-end gap-3">
       <div class="grow min-w-[220px]">
-        <label class="campo-etiqueta" for="buscarUsr">Buscar por nombre de usuario</label>
+        <label class="campo-etiqueta" for="buscarUsr">Buscar por usuario o nombre</label>
         <div class="relative">
           <input
             class="campo pr-8 sin-mayusculas"
@@ -115,7 +128,7 @@
             name="buscar"
             maxlength="100"
             [(ngModel)]="texto"
-            placeholder="nombre.usuario…"
+            placeholder="nombre.usuario o nombre completo…"
           />
           @if (texto) {
             <button
@@ -233,7 +246,8 @@
                     >
                       {{ (u.username[0] || 'U').toUpperCase() }}
                     </div>
-                    <div class="flex items-center gap-2 min-w-0 max-w-[34ch]">
+                    <div class="min-w-0 max-w-[34ch]">
+                    <div class="flex items-center gap-2 min-w-0">
                       <span class="font-medium text-slate-100 truncate sin-mayusculas" [title]="u.username">
                         {{ u.username }}
                       </span>
@@ -243,6 +257,12 @@
                       @if (esSuperusuario(u)) {
                         <span class="chip-alerta py-0 text-[9px]">superusuario</span>
                       }
+                    </div>
+                    @if (u.nombre) {
+                      <p class="truncate text-[11px] text-slate-400" [title]="u.nombre">{{ u.nombre }}</p>
+                    } @else {
+                      <p class="text-[11px] text-slate-600">Sin nombre registrado</p>
+                    }
                     </div>
                   </div>
                 </td>
@@ -286,6 +306,16 @@
                 <!-- Acciones -->
                 <td class="celda-acciones text-right pr-4">
                   <div class="flex justify-end items-center gap-1.5">
+                    <button
+                      *rwPermiso="'users:write'"
+                      class="btn-secundario btn-mini inline-flex items-center gap-1 text-xs"
+                      type="button"
+                      (click)="abrirSeccion(u, 'datos')"
+                      title="Editar nombre completo"
+                    >
+                      <rw-icono nombre="editar" [tamano]="13" />
+                      <span>Nombre</span>
+                    </button>
                     <button
                       *rwPermiso="'permissions:write'"
                       class="btn-secundario btn-mini inline-flex items-center gap-1 text-xs"
@@ -352,9 +382,9 @@
   <!-- Modales de Edición (Permisos / Contraseña) -->
   @if (usuarioExpandido(); as usuario) {
     <rw-modal-formulario
-      [titulo]="expandido()?.seccion === 'permisos' ? 'Editar permisos de acceso' : 'Restablecer contraseña'"
+      [titulo]="tituloSeccion()"
       etiqueta="Gestión de cuenta"
-      [descripcion]="usuario.username"
+      [descripcion]="usuario.nombre ? usuario.username + ' · ' + usuario.nombre : usuario.username"
       [bloquearCierre]="guardando()"
       (cerrar)="cerrarEdicion()"
     >
@@ -374,6 +404,30 @@
               }
             </p>
           </div>
+        } @else if (expandido()?.seccion === 'datos') {
+          <form
+            #formularioDatos="ngForm"
+            id="formulario-datos-usuario"
+            class="space-y-3"
+            (ngSubmit)="guardarNombre(usuario)"
+          >
+            <div>
+              <label class="campo-etiqueta" for="usrNombreEditar">Nombre completo</label>
+              <input
+                class="campo"
+                id="usrNombreEditar"
+                name="nombre"
+                type="text"
+                maxlength="150"
+                autocomplete="off"
+                [(ngModel)]="nombreEditar"
+                placeholder="Nombre y apellidos de la persona"
+              />
+            </div>
+            <p class="text-xs text-slate-500 bg-slate-900/50 p-3 rounded-lg border border-white/5">
+              Es opcional y solo sirve para identificar a la persona. Déjalo vacío para quitarlo. El usuario lo verá al renovar su sesión.
+            </p>
+          </form>
         } @else {
           <form
             #formularioPassword="ngForm"
@@ -421,6 +475,16 @@
           >
             <rw-icono nombre="guardar" [tamano]="16" />
             {{ guardando() ? 'Guardando…' : 'Guardar permisos' }}
+          </button>
+        } @else if (expandido()?.seccion === 'datos') {
+          <button
+            class="btn-primario"
+            type="submit"
+            form="formulario-datos-usuario"
+            [disabled]="guardando()"
+          >
+            <rw-icono nombre="guardar" [tamano]="16" />
+            {{ guardando() ? 'Guardando…' : 'Guardar nombre' }}
           </button>
         } @else {
           <button

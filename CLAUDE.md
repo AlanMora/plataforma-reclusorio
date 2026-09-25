@@ -60,7 +60,8 @@ sobre una plataforma base reutilizable; el dominio vive en `apps/reclusorio-serv
   módulo, contraseñas, activar/desactivar — requiere `users:read`/`users:write`/
   `permissions:write`); cambiar permisos revoca sesiones para refrescar el JWT.
   El catálogo único vive en `CATALOGO_PERMISOS` (auth-service users.module.ts).
-- Acceso por **nombre de usuario** (`users.username`, minúsculas), no correo.
+- Acceso por **nombre de usuario** (`users.username`, minúsculas), no correo;
+  `users.nombre` (opcional, máx. 150) identifica a la persona y viaja en el JWT.
   Superusuario semilla (`DevAdminSeeder`, opt-in por `SEED_ADMIN_ENABLED=true`):
   `admin` / `Reclusorio#Dev2026`, rol `superadmin`, 26 permisos; es la cuenta
   de rescate (no se desactiva, solo otro superusuario lo modifica;

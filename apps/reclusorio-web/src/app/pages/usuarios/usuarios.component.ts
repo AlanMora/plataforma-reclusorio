@@ -20,10 +20,14 @@ import { mensajeDe } from '../../core/problem';
 import { presentarErrorFormulario, validarFormulario } from '../../core/validacion-formulario';
 import { IconoComponent } from '../../shared/icono.component';
 
+type SeccionUsuario = 'permisos' | 'password' | 'datos';
+
 /** Usuario de acceso tal como lo devuelve auth-service (sin hash). */
 interface UsuarioAcceso {
   id: string;
   username: string;
+  /** Nombre completo opcional para identificar a la persona. */
+  nombre: string | null;
   isActive: boolean;
   /** Contraseña temporal pendiente de cambiar por el usuario. */
   mustChangePassword: boolean;
@@ -77,8 +81,8 @@ export class UsuariosComponent implements OnInit {
   readonly errorForm = signal<string | null>(null);
   readonly guardando = signal(false);
 
-  /** Panel expandido por usuario ('permisos' | 'password') y selección. */
-  readonly expandido = signal<{ id: string; seccion: 'permisos' | 'password' } | null>(null);
+  /** Panel expandido por usuario y selección de permisos. */
+  readonly expandido = signal<{ id: string; seccion: SeccionUsuario } | null>(null);
   readonly seleccion = signal<Set<string>>(new Set());
 
   readonly mostrarForm = signal(false);
@@ -89,8 +93,9 @@ export class UsuariosComponent implements OnInit {
       ? (this.pagina().items.find((usuario) => usuario.id === expandido.id) ?? null)
       : null;
   });
-  forma = { username: '', password: '' };
+  forma = { nombre: '', username: '', password: '' };
   passwordNueva = '';
+  nombreEditar = '';
   texto = '';
 
   readonly totalCatalogo = computed(() =>
@@ -126,7 +131,7 @@ export class UsuariosComponent implements OnInit {
     void this.cargar(1);
   }
 
-  abrirSeccion(usuario: UsuarioAcceso, seccion: 'permisos' | 'password'): void {
+  abrirSeccion(usuario: UsuarioAcceso, seccion: SeccionUsuario): void {
     const actual = this.expandido();
     if (actual?.id === usuario.id && actual.seccion === seccion) {
       this.expandido.set(null);
@@ -135,6 +140,7 @@ export class UsuariosComponent implements OnInit {
     this.mostrarForm.set(false);
     this.expandido.set({ id: usuario.id, seccion });
     this.passwordNueva = '';
+    this.nombreEditar = usuario.nombre ?? '';
     if (seccion === 'permisos') {
       // Solo permisos reconocidos del catálogo: si la columna trae residuos
       // (p.ej. de ediciones manuales por SQL), se descartan aquí y guardar
@@ -146,14 +152,14 @@ export class UsuariosComponent implements OnInit {
 
   abrirAlta(): void {
     this.expandido.set(null);
-    this.forma = { username: '', password: '' };
+    this.forma = { nombre: '', username: '', password: '' };
     this.seleccionAlta.set(new Set());
     this.mostrarForm.set(true);
   }
 
   cerrarAlta(): void {
     this.mostrarForm.set(false);
-    this.forma = { username: '', password: '' };
+    this.forma = { nombre: '', username: '', password: '' };
     this.seleccionAlta.set(new Set());
   }
 
@@ -174,6 +180,7 @@ export class UsuariosComponent implements OnInit {
     try {
       await this.api.post('/api/v1/users', {
         username: this.forma.username.trim().toLowerCase(),
+        nombre: this.forma.nombre.trim() || undefined,
         password: this.forma.password,
         permissions: [...this.seleccionAlta()],
       });
@@ -237,6 +244,28 @@ export class UsuariosComponent implements OnInit {
       await this.cargar(this.pagina().page);
     } catch (err) {
       this.toast.error(presentarErrorFormulario(formulario, evento, err));
+    } finally {
+      this.guardando.set(false);
+    }
+  }
+
+  tituloSeccion(): string {
+    const seccion = this.expandido()?.seccion;
+    if (seccion === 'permisos') return 'Editar permisos de acceso';
+    if (seccion === 'datos') return 'Nombre completo';
+    return 'Restablecer contraseña';
+  }
+
+  async guardarNombre(usuario: UsuarioAcceso): Promise<void> {
+    this.guardando.set(true);
+    try {
+      await this.api.patch(`/api/v1/users/${usuario.id}`, { nombre: this.nombreEditar.trim() || null });
+      if (this.esYo(usuario)) await this.auth.refrescar();
+      this.toast.ok('Nombre guardado.');
+      this.expandido.set(null);
+      await this.cargar(this.pagina().page);
+    } catch (err) {
+      this.toast.error(mensajeDe(err));
     } finally {
       this.guardando.set(false);
     }

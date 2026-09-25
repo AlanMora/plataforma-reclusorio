@@ -10,6 +10,14 @@ export const USERNAME_MENSAJE =
 export const normalizarUsername = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim().toLowerCase() : value;
 
+/** Nombre completo opcional: espacios de sobra fuera; vacío = sin nombre. */
+export const normalizarNombre = ({ value }: { value: unknown }) => {
+  if (value === null) return null;
+  if (typeof value !== 'string') return value;
+  const limpio = value.trim().replace(/\s+/g, ' ');
+  return limpio === '' ? null : limpio;
+};
+
 export class LoginDto {
   @Transform(normalizarUsername)
   @IsString()

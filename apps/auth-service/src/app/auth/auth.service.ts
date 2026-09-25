@@ -106,6 +106,7 @@ export class AuthService {
     const payload: JwtPayload = {
       sub: user.id,
       username: user.username,
+      ...(user.nombre ? { nombre: user.nombre } : {}),
       // Solo viaja cuando aplica: el guard bloquea todo salvo el cambio.
       ...(user.mustChangePassword ? { mustChangePassword: true } : {}),
       tenantId: user.tenantId ?? undefined,

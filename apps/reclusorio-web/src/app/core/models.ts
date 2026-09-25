@@ -40,6 +40,7 @@ export interface TokenPair {
 export interface JwtClaims {
   sub: string;
   username?: string;
+  nombre?: string;
   /** Contraseña temporal: solo puede cambiarla hasta reemplazarla. */
   mustChangePassword?: boolean;
   sid?: string;
@@ -67,6 +68,7 @@ export interface SesionActiva {
 export interface UsuarioMe {
   id: string;
   username: string;
+  nombre?: string | null;
   mustChangePassword?: boolean;
   isActive: boolean;
   roles: string[];

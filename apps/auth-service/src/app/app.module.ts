@@ -22,6 +22,7 @@ import { TwoFactorModule } from './twofa/twofa.module';
 import { AuditModule } from './audit/audit.module';
 import { Init1786404410447 } from '../migrations/1786404410447-Init';
 import { UsernameYCambioPassword1790000000000 } from '../migrations/1790000000000-UsernameYCambioPassword';
+import { NombreUsuario1790000000001 } from '../migrations/1790000000001-NombreUsuario';
 
 @Module({
   imports: [
@@ -35,7 +36,7 @@ import { UsernameYCambioPassword1790000000000 } from '../migrations/179000000000
       database: 'icms_auth',
       entities: [User, AuditLog, OutboxEvent, InboxEvent],
       // Clase importada para que webpack la empaquete; corre al arrancar en producción.
-      migrations: [Init1786404410447, UsernameYCambioPassword1790000000000],
+      migrations: [Init1786404410447, UsernameYCambioPassword1790000000000, NombreUsuario1790000000001],
     }),
     OutboxModule.forRoot({ withRelay: true }),
     AuthModule,

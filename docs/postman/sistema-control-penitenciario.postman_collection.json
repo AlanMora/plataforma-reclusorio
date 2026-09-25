@@ -516,14 +516,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"operador.prueba2\",\n  \"password\": \"Temporal#2026\",\n  \"permissions\": [\n    \"personas:consultar\",\n    \"incidencias:consultar\"\n  ]\n}",
+              "raw": "{\n  \"username\": \"operador.prueba2\",\n  \"nombre\": \"Juan Carlos Pérez López\",\n  \"password\": \"Temporal#2026\",\n  \"permissions\": [\n    \"personas:consultar\",\n    \"incidencias:consultar\"\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "Crear usuario con contraseña temporal y permisos iniciales"
+            "description": "Crear usuario con contraseña temporal y permisos iniciales\n\n\"nombre\" es opcional (nombre completo, máx. 150) y sirve para saber quién es cuando el usuario es un apodo. La contraseña queda como temporal."
           },
           "event": [
             {
@@ -559,7 +559,7 @@
           }
         },
         {
-          "name": "Activar/desactivar usuario",
+          "name": "Editar nombre o activar/desactivar usuario",
           "request": {
             "method": "PATCH",
             "header": [
@@ -582,14 +582,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"isActive\": false\n}",
+              "raw": "{\n  \"nombre\": \"Juan Carlos Pérez López\",\n  \"isActive\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "Activar/desactivar usuario (desactivar revoca sus sesiones)"
+            "description": "Editar nombre o activar/desactivar usuario (desactivar revoca sus sesiones)\n\nAmbos campos son opcionales: manda solo \"nombre\" para editarlo (null o \"\" lo borra) o solo \"isActive\" para activar/desactivar (desactivar revoca sus sesiones)."
           }
         },
         {

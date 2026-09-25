@@ -7,6 +7,8 @@ export interface JwtPayload {
   sub: string;
   /** nombre de usuario con el que se inicia sesión */
   username?: string;
+  /** nombre completo del usuario, si se capturó */
+  nombre?: string;
   /** true mientras el usuario deba cambiar su contraseña temporal */
   mustChangePassword?: boolean;
   /** tenant ACTIVO de la sesión */

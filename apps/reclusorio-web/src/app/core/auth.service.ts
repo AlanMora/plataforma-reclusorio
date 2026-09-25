@@ -23,6 +23,7 @@ export class AuthService {
   readonly permisos = computed(() => this.claims()?.permissions ?? []);
   readonly roles = computed(() => this.claims()?.roles ?? []);
   readonly username = computed(() => this.claims()?.username ?? '');
+  readonly nombre = computed(() => this.claims()?.nombre ?? '');
   /** Primer ingreso o contraseña restablecida: debe cambiarla antes de seguir. */
   readonly debeCambiarPassword = computed(() => this.claims()?.mustChangePassword === true);
   readonly sid = computed(() => this.claims()?.sid ?? null);
