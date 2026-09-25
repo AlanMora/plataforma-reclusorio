@@ -1,0 +1,3189 @@
+{
+  "info": {
+    "name": "Sistema de Control Penitenciario — API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Todos los endpoints del sistema (auth, usuarios, notificaciones y dominio penitenciario).\n\n1. Ejecuta **00 · Autenticación → Iniciar sesión** (usa {{username}}/{{password}}); guarda el token.\n2. El resto hereda el Bearer {{accessToken}} de la collection. Si ves 401, vuelve a iniciar sesión (10 min).\n3. Las altas guardan su id en variables ({{idPersona}}, {{idIncidencia}}...) para encadenar peticiones.\n4. Todo pasa por el gateway ({{baseUrl}}) salvo la carpeta 98, que va directo al auth-service.\n\nRespuestas envueltas en { success, data, correlationId }; errores en problem+json (RFC 9457)."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "description": "Gateway: única entrada pública"
+    },
+    {
+      "key": "authUrl",
+      "value": "http://localhost:3001",
+      "description": "auth-service directo (audit, 2FA, recovery, JWKS)"
+    },
+    {
+      "key": "notificationUrl",
+      "value": "http://localhost:3005"
+    },
+    {
+      "key": "reclusorioUrl",
+      "value": "http://localhost:3010"
+    },
+    {
+      "key": "username",
+      "value": "admin",
+      "description": "Superusuario de desarrollo"
+    },
+    {
+      "key": "password",
+      "value": "Reclusorio#Dev2026"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "description": "Se llena al ejecutar \"Iniciar sesión\""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "sessionId",
+      "value": "",
+      "description": "Se llena con \"Sesión actual\""
+    },
+    {
+      "key": "idUsuario",
+      "value": "01a0d92f-93db-7435-a6b8-a0cc7d799dac",
+      "description": "operador.prueba"
+    },
+    {
+      "key": "catalogo",
+      "value": "centros",
+      "description": "delitos | centros | juzgados | juez_juzgados | destino_traslado | tipo_audiencia | tipo_incidencia | autoridad"
+    },
+    {
+      "key": "catalogoFijo",
+      "value": "tipo_ingreso_egreso",
+      "description": "tipo_ingreso_egreso | tipo_movimientos | motivo_movimiento | forma_ingreso_audiencia | resolucion_audiencia | modalidad_audiencia | proxima_audiencia | tipo_traslado | estatus_traslado"
+    },
+    {
+      "key": "idValorCatalogo",
+      "value": "",
+      "description": "Se llena al agregar un valor de catálogo"
+    },
+    {
+      "key": "idPersona",
+      "value": "01a0b60a-d536-72af-b543-3baa6b649047"
+    },
+    {
+      "key": "idDomicilio",
+      "value": "01a0b60a-d55e-771a-8fcc-eb583fd65e0c",
+      "description": "Domicilio de {{idPersona}}"
+    },
+    {
+      "key": "idElemento",
+      "value": "",
+      "description": "Se llena al crear/listar elementos"
+    },
+    {
+      "key": "idIngresoEgreso",
+      "value": "01a0b61d-82b0-70f3-bfa5-d079b7d69eab"
+    },
+    {
+      "key": "idMovimiento",
+      "value": ""
+    },
+    {
+      "key": "idAudiencia",
+      "value": ""
+    },
+    {
+      "key": "idTraslado",
+      "value": "01a0b61d-4b7d-745f-b653-6808199926d2"
+    },
+    {
+      "key": "idIncidencia",
+      "value": "01a0b5fd-0716-710a-86ac-3f329bbfce5a"
+    },
+    {
+      "key": "idArchivo",
+      "value": ""
+    },
+    {
+      "key": "entidadArchivo",
+      "value": "idPersona"
+    },
+    {
+      "key": "idNotificacion",
+      "value": ""
+    },
+    {
+      "key": "idNotificacionBandeja",
+      "value": ""
+    },
+    {
+      "key": "curpAleatoria",
+      "value": "",
+      "description": "La genera el pre-request de \"Alta de persona\""
+    },
+    {
+      "key": "numeroElementoAleatorio",
+      "value": "",
+      "description": "La genera el pre-request de \"Alta de elemento\""
+    },
+    {
+      "key": "idCentro",
+      "value": "01a0b17f-d908-7098-b618-0e27ba60f525",
+      "description": "CAPYL"
+    },
+    {
+      "key": "idCentroDestino",
+      "value": "01a0b17f-d917-76fb-88ed-967896fff09a",
+      "description": "Centro de Atención Integral Juvenil"
+    },
+    {
+      "key": "idDelito",
+      "value": "01a0b17f-d86d-7729-ba07-6787fae69c68"
+    },
+    {
+      "key": "idJuzgado",
+      "value": "01a0b17f-d930-710e-b7ae-eb1d198b6732"
+    },
+    {
+      "key": "idJuezJuzgado",
+      "value": "01a0b17f-d933-75ec-9e35-0d2a8fa43b2e"
+    },
+    {
+      "key": "idDestinoTraslado",
+      "value": "01a0b17f-d94e-746d-be3b-7bed9cc3fe79"
+    },
+    {
+      "key": "idTipoAudiencia",
+      "value": "01a0b17f-d980-74cd-8aa5-b933c5e2badb"
+    },
+    {
+      "key": "idTipoIncidencia",
+      "value": "01a0b17f-d99b-756d-be14-aaf87e9a90a3"
+    },
+    {
+      "key": "idAutoridad",
+      "value": "01a0b17f-d9b2-7421-98bc-adfeac706ebf"
+    },
+    {
+      "key": "idTipoIngresoEgreso",
+      "value": "01a0b17f-d9b6-73c2-9bd1-a32be1d456c9",
+      "description": "INGRESO"
+    },
+    {
+      "key": "idTipoMovimiento",
+      "value": "01a0b17f-d9b9-722b-aefc-f45c7eb1adf1"
+    },
+    {
+      "key": "idMotivoMovimiento",
+      "value": "01a0b17f-d9bb-72fd-817f-ac2cb09cda5b"
+    },
+    {
+      "key": "idFormaIngresoAudiencia",
+      "value": "01a0b17f-d9c0-76f1-985d-26afd428a513"
+    },
+    {
+      "key": "idResolucionAudiencia",
+      "value": "01a0b17f-d9c7-773b-ba89-eede4ada29f6"
+    },
+    {
+      "key": "idModalidadAudiencia",
+      "value": "01a0b17f-d9cd-76fc-984c-783c27af23be"
+    },
+    {
+      "key": "idProximaAudiencia",
+      "value": "01a0b17f-d9d0-7298-b46e-2675eaa46ef1"
+    },
+    {
+      "key": "idTipoTraslado",
+      "value": "01a0b17f-d9d3-765d-8ff2-3c625f213637"
+    },
+    {
+      "key": "idEstatusTraslado",
+      "value": "01a0b17f-d9d6-706e-ba32-2f113d73e82d"
+    }
+  ],
+  "item": [
+    {
+      "name": "00 · Autenticación",
+      "item": [
+        {
+          "name": "Iniciar sesión y obtener tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Iniciar sesión y obtener tokens (auditado con IP)\n\nGuarda accessToken y refreshToken en las variables de la collection. Ejecútala primero: todas las demás usan {{accessToken}} (vence en 10 min)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && d.accessToken !== undefined) pm.collectionVariables.set('accessToken', d.accessToken);",
+                  "if (d && d.refreshToken !== undefined) pm.collectionVariables.set('refreshToken', d.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Renovar access token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Renovar access token (valida y rota el refresh en Redis)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && d.accessToken !== undefined) pm.collectionVariables.set('accessToken', d.accessToken);",
+                  "if (d && d.refreshToken !== undefined) pm.collectionVariables.set('refreshToken', d.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cerrar sesión",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Cerrar sesión (revoca la sesión actual en Redis)"
+          }
+        },
+        {
+          "name": "Sesión actual: vigencia restante en segundos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/session",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "session"
+              ]
+            },
+            "description": "Sesión actual: vigencia restante en segundos (RF-CUE-001)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && d.sessionId !== undefined) pm.collectionVariables.set('sessionId', d.sessionId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cambio de contraseña con verificación de la actual",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "change-password"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Temporal#2026\",\n  \"newPassword\": \"MiClaveSegura#2026\",\n  \"confirmPassword\": \"MiClaveSegura#2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Cambio de contraseña con verificación de la actual (RF-CUE-002)\n\nCambio de contraseña del usuario autenticado. Es la única acción (junto con logout, session y users/me) permitida mientras tiene contraseña temporal."
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 · Usuarios (administración)",
+      "item": [
+        {
+          "name": "Perfil del usuario autenticado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me"
+              ]
+            },
+            "description": "Perfil del usuario autenticado"
+          }
+        },
+        {
+          "name": "Catálogo de permisos agrupado por módulo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/permisos-disponibles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "permisos-disponibles"
+              ]
+            },
+            "description": "Catálogo de permisos agrupado por módulo (matriz del frontend)"
+          }
+        },
+        {
+          "name": "Listar usuarios del tenant",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "buscar",
+                  "value": "operador",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Listar usuarios del tenant (paginado, con búsqueda por nombre de usuario)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && (d.items && d.items[0] ? d.items[0].id : undefined) !== undefined) pm.collectionVariables.set('idUsuario', (d.items && d.items[0] ? d.items[0].id : undefined));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear usuario con contraseña temporal y permisos iniciales",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"operador.prueba2\",\n  \"password\": \"Temporal#2026\",\n  \"permissions\": [\n    \"personas:consultar\",\n    \"incidencias:consultar\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crear usuario con contraseña temporal y permisos iniciales"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && d.id !== undefined) pm.collectionVariables.set('idUsuario', d.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener un usuario por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{idUsuario}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{idUsuario}}"
+              ]
+            },
+            "description": "Obtener un usuario por id"
+          }
+        },
+        {
+          "name": "Activar/desactivar usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{idUsuario}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{idUsuario}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Activar/desactivar usuario (desactivar revoca sus sesiones)"
+          }
+        },
+        {
+          "name": "Restablecer contraseña temporal",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{idUsuario}}/password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{idUsuario}}",
+                "password"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"Temporal#Nueva1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Restablecer contraseña temporal (revoca sesiones; se cambia al siguiente ingreso)\n\nRestablece la contraseña (temporal) del usuario {{idUsuario}}. Revoca sus sesiones y al siguiente ingreso se le obliga a cambiarla. Para el superusuario solo lo puede hacer otro superusuario."
+          }
+        },
+        {
+          "name": "Asignar permisos",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{idUsuario}}/permissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{idUsuario}}",
+                "permissions"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissions\": [\n    \"personas:consultar\",\n    \"personas:crear\",\n    \"incidencias:consultar\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Asignar permisos (sin cerrar sesión: aplican en la siguiente renovación del token)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 · Sesiones",
+      "item": [
+        {
+          "name": "Listar las sesiones activas del usuario autenticado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "sessions"
+              ]
+            },
+            "description": "Listar las sesiones activas del usuario autenticado"
+          }
+        },
+        {
+          "name": "Revocar una sesión propia por id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/sessions/{{sessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "sessions",
+                "{{sessionId}}"
+              ]
+            },
+            "description": "Revocar una sesión propia por id"
+          }
+        },
+        {
+          "name": "Revocar todas las sesiones del usuario",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/sessions/revoke-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "sessions",
+                "revoke-all"
+              ]
+            },
+            "description": "Revocar todas las sesiones del usuario (cierre global)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 · Notificaciones",
+      "item": [
+        {
+          "name": "Enviar una notificación directa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "send"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"channel\": \"internal\",\n  \"to\": \"*\",\n  \"template\": \"aviso-general\",\n  \"variables\": {\n    \"mensaje\": \"Prueba desde Postman\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Enviar una notificación directa (idempotente)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && d.id !== undefined) pm.collectionVariables.set('idNotificacion', d.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bandeja del usuario: buscable y paginada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/inbox?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "inbox"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "buscar",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Bandeja del usuario: buscable y paginada (RF-NOT-001/003/004)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && (d.items && d.items[0] ? d.items[0].id : undefined) !== undefined) pm.collectionVariables.set('idNotificacionBandeja', (d.items && d.items[0] ? d.items[0].id : undefined));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Marcar una notificación como leída",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/inbox/{{idNotificacionBandeja}}/leida",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "inbox",
+                "{{idNotificacionBandeja}}",
+                "leida"
+              ]
+            },
+            "description": "Marcar una notificación como leída (RF-NOT-002)"
+          }
+        },
+        {
+          "name": "Historial de entregas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "history"
+              ]
+            },
+            "description": "Historial de entregas (últimas 100)"
+          }
+        },
+        {
+          "name": "Obtener el estado de una entrega por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notifications/{{idNotificacion}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "{{idNotificacion}}"
+              ]
+            },
+            "description": "Obtener el estado de una entrega por id"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 · Catálogos",
+      "item": [
+        {
+          "name": "Nombres de los catálogos administrables disponibles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/catalogos/administrables",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "catalogos",
+                "administrables"
+              ]
+            },
+            "description": "Nombres de los catálogos administrables disponibles"
+          }
+        },
+        {
+          "name": "Valores activos de un catálogo fijo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/catalogos/fijos/{{catalogoFijo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "catalogos",
+                "fijos",
+                "{{catalogoFijo}}"
+              ]
+            },
+            "description": "Valores activos de un catálogo fijo (consumo por UUID, RF-CAT-010)"
+          }
+        },
+        {
+          "name": "Valores de un catálogo administrable",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/catalogos/{{catalogo}}?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "catalogos",
+                "{{catalogo}}"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "buscar",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "incluirInactivos",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Valores de un catálogo administrable (RF-CAT-001; paginado opcional)"
+          }
+        },
+        {
+          "name": "Agregar un valor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/catalogos/{{catalogo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "catalogos",
+                "{{catalogo}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"VALOR DE PRUEBA POSTMAN\",\n  \"descripcion\": \"Creado desde Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Agregar un valor (RF-CAT-002, dedup RF-CAT-006)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && (d.id || d[Object.keys(d).find(k => k.startsWith(\"id\"))]) !== undefined) pm.collectionVariables.set('idValorCatalogo', (d.id || d[Object.keys(d).find(k => k.startsWith(\"id\"))]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Corregir nombre/descripción conservando el UUID",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/catalogos/{{catalogo}}/{{idValorCatalogo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "catalogos",
+                "{{catalogo}}",
+                "{{idValorCatalogo}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"VALOR DE PRUEBA POSTMAN CORREGIDO\",\n  \"descripcion\": \"Corregido desde Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Corregir nombre/descripción conservando el UUID (RF-CAT-003)"
+          }
+        },
+        {
+          "name": "Desactivar sin eliminar físicamente",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/catalogos/{{catalogo}}/{{idValorCatalogo}}/desactivar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "catalogos",
+                "{{catalogo}}",
+                "{{idValorCatalogo}}",
+                "desactivar"
+              ]
+            },
+            "description": "Desactivar sin eliminar físicamente (RF-CAT-004)"
+          }
+        },
+        {
+          "name": "Reactivar un valor desactivado",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/catalogos/{{catalogo}}/{{idValorCatalogo}}/reactivar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "catalogos",
+                "{{catalogo}}",
+                "{{idValorCatalogo}}",
+                "reactivar"
+              ]
+            },
+            "description": "Reactivar un valor desactivado (RF-CAT-005)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 · Personas y domicilios",
+      "item": [
+        {
+          "name": "Buscar personas por nombre, apellidos, alias o CURP",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/personas?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "personas"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "buscar",
+                  "value": "JUAN",
+                  "disabled": true
+                },
+                {
+                  "key": "curp",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Buscar personas por nombre, apellidos, alias o CURP (paginado)"
+          }
+        },
+        {
+          "name": "Alta de persona",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "description": "UUID nuevo en cada envío"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/personas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "personas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"primerNombre\": \"JUAN\",\n  \"apellidoPaterno\": \"PEREZ\",\n  \"apellidoMaterno\": \"LOPEZ\",\n  \"fechaNacimiento\": \"1990-05-17\",\n  \"alias\": \"EL PRUEBA\",\n  \"curp\": \"{{curpAleatoria}}\",\n  \"genero\": \"MASCULINO\",\n  \"estadoCivil\": \"SOLTERO\",\n  \"nivelEducativo\": \"SECUNDARIA\",\n  \"ocupacion\": \"ALBAÑIL\",\n  \"nacionalidad\": \"MEXICANA\",\n  \"estadoNacimiento\": \"JALISCO\",\n  \"numeroTelefono\": \"3312345678\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Alta de persona (DP-007: nombre, CURP y fecha de nacimiento obligatorios)"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// CURP aleatoria válida por formato para no chocar con la dedup.",
+                  "const L = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', V = 'AEIOUX';",
+                  "const r = (s, n) => Array.from({length: n}, () => s[Math.floor(Math.random() * s.length)]).join('');",
+                  "const dig = n => Array.from({length: n}, () => Math.floor(Math.random() * 10)).join('');",
+                  "pm.collectionVariables.set('curpAleatoria', r(L,1) + r(V,1) + r(L,2) + '900517' + 'H' + r(L,5) + r(L,1) + dig(1));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && d.idPersona !== undefined) pm.collectionVariables.set('idPersona', d.idPersona);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detalle de la persona con edad calculada y domicilios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/personas/{{idPersona}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "personas",
+                "{{idPersona}}"
+              ]
+            },
+            "description": "Detalle de la persona con edad calculada y domicilios"
+          }
+        },
+        {
+          "name": "Modificar datos de la persona",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/personas/{{idPersona}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "personas",
+                "{{idPersona}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alias\": \"EL PRUEBA MODIFICADO\",\n  \"numeroTelefono\": \"3398765432\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Modificar datos de la persona (RF-PER-005)"
+          }
+        },
+        {
+          "name": "Domicilios de la persona",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/personas/{{idPersona}}/domicilios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "personas",
+                "{{idPersona}}",
+                "domicilios"
+              ]
+            },
+            "description": "Domicilios de la persona (RF-PER-006)"
+          }
+        },
+        {
+          "name": "Agregar un domicilio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/personas/{{idPersona}}/domicilios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "personas",
+                "{{idPersona}}",
+                "domicilios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"calle\": \"AV. JUAREZ\",\n  \"numeroExterior\": \"123-B\",\n  \"numeroInterior\": \"4\",\n  \"cruce1\": \"CALLE MORELOS\",\n  \"cruce2\": \"CALLE HIDALGO\",\n  \"colonia\": \"CENTRO\",\n  \"estado\": \"JALISCO\",\n  \"municipio\": \"GUADALAJARA\",\n  \"pais\": \"MÉXICO\",\n  \"latitud\": 20.6767,\n  \"longitud\": -103.3475\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Agregar un domicilio (RF-PER-007: números alfanuméricos como 12-A o S/N)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && d.idDomicilio !== undefined) pm.collectionVariables.set('idDomicilio', d.idDomicilio);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modificar un domicilio registrado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/personas/{{idPersona}}/domicilios/{{idDomicilio}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "personas",
+                "{{idPersona}}",
+                "domicilios",
+                "{{idDomicilio}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroInterior\": \"5\",\n  \"colonia\": \"CENTRO HISTORICO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Modificar un domicilio registrado (QA 03/09)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 · Elementos",
+      "item": [
+        {
+          "name": "Búsqueda previa: por numeroElemento y, si no existe, por nombre y adscripción",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/elementos/coincidencias?numeroElemento={{numeroElementoAleatorio}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "elementos",
+                "coincidencias"
+              ],
+              "query": [
+                {
+                  "key": "numeroElemento",
+                  "value": "{{numeroElementoAleatorio}}"
+                },
+                {
+                  "key": "nombre",
+                  "value": "PEDRO RAMIREZ",
+                  "disabled": true
+                },
+                {
+                  "key": "adscripcion",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Búsqueda previa: por numeroElemento y, si no existe, por nombre y adscripción (RF-ELE-001)"
+          }
+        },
+        {
+          "name": "Adscripciones distintas del padrón",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/elementos/adscripciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "elementos",
+                "adscripciones"
+              ]
+            },
+            "description": "Adscripciones distintas del padrón (catálogo derivado para la captura)"
+          }
+        },
+        {
+          "name": "Listado del padrón de elementos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/elementos?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "elementos"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Listado del padrón de elementos (paginado)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && (d.items && d.items[0] ? d.items[0].idElemento : undefined) !== undefined) pm.collectionVariables.set('idElemento', (d.items && d.items[0] ? d.items[0].idElemento : undefined));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Alta condicionada: crear solo tras confirmar que no hay coincidencia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/elementos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "elementos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"grado\": \"CUSTODIO\",\n  \"primerNombre\": \"PEDRO\",\n  \"apellidoPaterno\": \"RAMIREZ\",\n  \"apellidoMaterno\": \"SOTO\",\n  \"numeroElemento\": \"{{numeroElementoAleatorio}}\",\n  \"adscripcion\": \"PUESTO CENTRAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Alta condicionada: crear solo tras confirmar que no hay coincidencia (RF-ELE-002)"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('numeroElementoAleatorio', 'PM-' + Date.now().toString().slice(-7));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && d.idElemento !== undefined) pm.collectionVariables.set('idElemento', d.idElemento);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detalle de un elemento",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/elementos/{{idElemento}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "elementos",
+                "{{idElemento}}"
+              ]
+            },
+            "description": "Detalle de un elemento"
+          }
+        },
+        {
+          "name": "Modificar los datos del elemento",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/elementos/{{idElemento}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "elementos",
+                "{{idElemento}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"grado\": \"SUPERVISOR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Modificar los datos del elemento"
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 · Ingresos / Libertades",
+      "item": [
+        {
+          "name": "Historial de ingresos y libertades de la persona",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/personas/{{idPersona}}/ingresos-egresos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "personas",
+                "{{idPersona}}",
+                "ingresos-egresos"
+              ]
+            },
+            "description": "Historial de ingresos y libertades de la persona (RF-IEG-004)"
+          }
+        },
+        {
+          "name": "Registrar ingreso o libertad",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/personas/{{idPersona}}/ingresos-egresos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "personas",
+                "{{idPersona}}",
+                "ingresos-egresos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idTipoIngresoEgreso\": \"{{idTipoIngresoEgreso}}\",\n  \"fecha\": \"2026-09-25T10:00:00.000Z\",\n  \"idCentroPenitenciario\": \"{{idCentro}}\",\n  \"ubicacion\": \"MODULO 3\",\n  \"autoridad\": \"JUEZ DE CONTROL\",\n  \"idDelito\": \"{{idDelito}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Registrar ingreso o libertad (RF-IEG-001..003)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && d.idIngresoEgreso !== undefined) pm.collectionVariables.set('idIngresoEgreso', d.idIngresoEgreso);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Población actual por centro penitenciario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ingresos-egresos/poblacion-por-centro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ingresos-egresos",
+                "poblacion-por-centro"
+              ]
+            },
+            "description": "Población actual por centro penitenciario (módulo Penitenciarios, P9)"
+          }
+        },
+        {
+          "name": "Consultar un ingreso/egreso por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ingresos-egresos/{{idIngresoEgreso}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ingresos-egresos",
+                "{{idIngresoEgreso}}"
+              ]
+            },
+            "description": "Consultar un ingreso/egreso por id"
+          }
+        },
+        {
+          "name": "Confirmar el registro",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ingresos-egresos/{{idIngresoEgreso}}/confirmar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ingresos-egresos",
+                "{{idIngresoEgreso}}",
+                "confirmar"
+              ]
+            },
+            "description": "Confirmar el registro (validación inicial P10, una sola vez)"
+          }
+        },
+        {
+          "name": "Descartar el registro",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ingresos-egresos/{{idIngresoEgreso}}/descartar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ingresos-egresos",
+                "{{idIngresoEgreso}}",
+                "descartar"
+              ]
+            },
+            "description": "Descartar el registro (validación inicial P10, una sola vez)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 · Movimientos",
+      "item": [
+        {
+          "name": "Movimientos de la persona",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/personas/{{idPersona}}/movimientos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "personas",
+                "{{idPersona}}",
+                "movimientos"
+              ]
+            },
+            "description": "Movimientos de la persona (RF-MOV-005)"
+          }
+        },
+        {
+          "name": "Registrar movimiento con origen/destino de catálogo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/personas/{{idPersona}}/movimientos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "personas",
+                "{{idPersona}}",
+                "movimientos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idTipoMovimiento\": \"{{idTipoMovimiento}}\",\n  \"fecha\": \"2026-09-25T10:00:00.000Z\",\n  \"idCentroOrigen\": \"{{idCentro}}\",\n  \"idCentroDestino\": \"{{idCentroDestino}}\",\n  \"ubicacion\": \"MODULO 5\",\n  \"idMotivoMovimiento\": \"{{idMotivoMovimiento}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Registrar movimiento con origen/destino de catálogo (RF-MOV-001..004)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && d.idMovimiento !== undefined) pm.collectionVariables.set('idMovimiento', d.idMovimiento);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar un movimiento por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movimientos/{{idMovimiento}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "movimientos",
+                "{{idMovimiento}}"
+              ]
+            },
+            "description": "Consultar un movimiento por id"
+          }
+        },
+        {
+          "name": "Confirmar el registro",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movimientos/{{idMovimiento}}/confirmar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "movimientos",
+                "{{idMovimiento}}",
+                "confirmar"
+              ]
+            },
+            "description": "Confirmar el registro (validación inicial P10, una sola vez)"
+          }
+        },
+        {
+          "name": "Descartar el registro",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movimientos/{{idMovimiento}}/descartar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "movimientos",
+                "{{idMovimiento}}",
+                "descartar"
+              ]
+            },
+            "description": "Descartar el registro (validación inicial P10, una sola vez)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 · Audiencias",
+      "item": [
+        {
+          "name": "Audiencias de la persona",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/personas/{{idPersona}}/audiencias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "personas",
+                "{{idPersona}}",
+                "audiencias"
+              ]
+            },
+            "description": "Audiencias de la persona (RF-AUD-008)"
+          }
+        },
+        {
+          "name": "Registrar audiencia con datos jurídicos y clasificación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/personas/{{idPersona}}/audiencias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "personas",
+                "{{idPersona}}",
+                "audiencias"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fecha\": \"2026-09-25T10:00:00.000Z\",\n  \"ca\": \"CA-123/2026\",\n  \"ci\": \"CI-456/2026\",\n  \"idFormaIngresoAudiencia\": \"{{idFormaIngresoAudiencia}}\",\n  \"idJuzgado\": \"{{idJuzgado}}\",\n  \"idJuezJuzgado\": \"{{idJuezJuzgado}}\",\n  \"nombreJuez\": \"LIC. MARIA GONZALEZ\",\n  \"idTipoAudiencia\": \"{{idTipoAudiencia}}\",\n  \"idModalidadAudiencia\": \"{{idModalidadAudiencia}}\",\n  \"idResolucionAudiencia\": \"{{idResolucionAudiencia}}\",\n  \"observaciones\": \"Registrada desde Postman\",\n  \"idProximaAudiencia\": \"{{idProximaAudiencia}}\",\n  \"fechaSiguienteAudiencia\": \"2026-10-15T10:00:00.000Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Registrar audiencia con datos jurídicos y clasificación (RF-AUD-001..005)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && d.idAudiencia !== undefined) pm.collectionVariables.set('idAudiencia', d.idAudiencia);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detalle de la audiencia con sus elementos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audiencias/{{idAudiencia}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audiencias",
+                "{{idAudiencia}}"
+              ]
+            },
+            "description": "Detalle de la audiencia con sus elementos"
+          }
+        },
+        {
+          "name": "Asociar un elemento participante",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audiencias/{{idAudiencia}}/elementos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audiencias",
+                "{{idAudiencia}}",
+                "elementos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idElemento\": \"{{idElemento}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Asociar un elemento participante (RF-AUD-006, sin duplicados)"
+          }
+        },
+        {
+          "name": "Confirmar el registro",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audiencias/{{idAudiencia}}/confirmar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audiencias",
+                "{{idAudiencia}}",
+                "confirmar"
+              ]
+            },
+            "description": "Confirmar el registro (validación inicial P10, una sola vez)"
+          }
+        },
+        {
+          "name": "Descartar el registro",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audiencias/{{idAudiencia}}/descartar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audiencias",
+                "{{idAudiencia}}",
+                "descartar"
+              ]
+            },
+            "description": "Descartar el registro (validación inicial P10, una sola vez)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 · Traslados",
+      "item": [
+        {
+          "name": "Traslados de la persona",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/personas/{{idPersona}}/traslados",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "personas",
+                "{{idPersona}}",
+                "traslados"
+              ]
+            },
+            "description": "Traslados de la persona (RF-TRA-007)"
+          }
+        },
+        {
+          "name": "Registrar traslado con tipo, destino y estatus de catálogo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/personas/{{idPersona}}/traslados",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "personas",
+                "{{idPersona}}",
+                "traslados"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fecha\": \"2026-09-25T10:00:00.000Z\",\n  \"idTipoTraslado\": \"{{idTipoTraslado}}\",\n  \"idCentroOrigen\": \"{{idCentro}}\",\n  \"idDestinoTraslado\": \"{{idDestinoTraslado}}\",\n  \"descripcion\": \"Traslado de prueba\",\n  \"unidades\": \"UNIDAD 12\",\n  \"observaciones\": \"Registrado desde Postman\",\n  \"idEstatusTraslado\": \"{{idEstatusTraslado}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Registrar traslado con tipo, destino y estatus de catálogo (RF-TRA-001..005)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && d.idTraslado !== undefined) pm.collectionVariables.set('idTraslado', d.idTraslado);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Traslados recientes con persona y centro de origen para el mapa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/traslados/mapa",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "traslados",
+                "mapa"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01",
+                  "disabled": true
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Traslados recientes con persona y centro de origen para el mapa (P11)"
+          }
+        },
+        {
+          "name": "Detalle del traslado con sus elementos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/traslados/{{idTraslado}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "traslados",
+                "{{idTraslado}}"
+              ]
+            },
+            "description": "Detalle del traslado con sus elementos"
+          }
+        },
+        {
+          "name": "Asociar un elemento participante",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/traslados/{{idTraslado}}/elementos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "traslados",
+                "{{idTraslado}}",
+                "elementos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idElemento\": \"{{idElemento}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Asociar un elemento participante (RF-TRA-006, sin duplicados)"
+          }
+        },
+        {
+          "name": "Confirmar el registro",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/traslados/{{idTraslado}}/confirmar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "traslados",
+                "{{idTraslado}}",
+                "confirmar"
+              ]
+            },
+            "description": "Confirmar el registro (validación inicial P10, una sola vez)"
+          }
+        },
+        {
+          "name": "Descartar el registro",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/traslados/{{idTraslado}}/descartar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "traslados",
+                "{{idTraslado}}",
+                "descartar"
+              ]
+            },
+            "description": "Descartar el registro (validación inicial P10, una sola vez)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 · Incidencias",
+      "item": [
+        {
+          "name": "Consultar incidencias",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/incidencias?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "incidencias"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "idCentroPenitenciario",
+                  "value": "{{idCentro}}",
+                  "disabled": true
+                },
+                {
+                  "key": "desde",
+                  "value": "2026-01-01",
+                  "disabled": true
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31",
+                  "disabled": true
+                },
+                {
+                  "key": "idPersona",
+                  "value": "{{idPersona}}",
+                  "disabled": true
+                },
+                {
+                  "key": "buscar",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Consultar incidencias (paginado, RF-INC-009; filtros del mapa P11)"
+          }
+        },
+        {
+          "name": "Registrar incidencia independiente — sin personas es válido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/incidencias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "incidencias"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idCentroPenitenciario\": \"{{idCentro}}\",\n  \"fecha\": \"2026-09-25T10:00:00.000Z\",\n  \"idTipoIncidencia\": \"{{idTipoIncidencia}}\",\n  \"descripcion\": \"Incidencia de prueba registrada desde Postman\",\n  \"iph\": \"IPH-2026-0001\",\n  \"primerRespondiente\": \"CUSTODIO DE GUARDIA\",\n  \"narrativa\": \"Narrativa de los hechos.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Registrar incidencia independiente — sin personas es válido (RF-INC-001/002)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && d.idIncidencia !== undefined) pm.collectionVariables.set('idIncidencia', d.idIncidencia);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Conteo de incidencias por centro, con rango de fechas opcional",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/incidencias/resumen-por-centro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "incidencias",
+                "resumen-por-centro"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01",
+                  "disabled": true
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Conteo de incidencias por centro, con rango de fechas opcional (mapa, P11)"
+          }
+        },
+        {
+          "name": "Detalle con personas, autoridades, elementos y archivos asociados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/incidencias/{{idIncidencia}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "incidencias",
+                "{{idIncidencia}}"
+              ]
+            },
+            "description": "Detalle con personas, autoridades, elementos y archivos asociados"
+          }
+        },
+        {
+          "name": "Asociar persona existente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/incidencias/{{idIncidencia}}/personas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "incidencias",
+                "{{idIncidencia}}",
+                "personas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPersona\": \"{{idPersona}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Asociar persona existente (RF-INC-003)"
+          }
+        },
+        {
+          "name": "Asociar autoridad de apoyo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/incidencias/{{idIncidencia}}/autoridades",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "incidencias",
+                "{{idIncidencia}}",
+                "autoridades"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idAutoridad\": \"{{idAutoridad}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Asociar autoridad de apoyo (RF-INC-004)"
+          }
+        },
+        {
+          "name": "Asociar elemento; puede marcarse como primer respondiente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/incidencias/{{idIncidencia}}/elementos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "incidencias",
+                "{{idIncidencia}}",
+                "elementos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idElemento\": \"{{idElemento}}\",\n  \"primerRespondiente\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Asociar elemento; puede marcarse como primer respondiente (RF-INC-005/007)"
+          }
+        },
+        {
+          "name": "Quitar persona asociada mientras la incidencia está pendiente",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/incidencias/{{idIncidencia}}/personas/{{idPersona}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "incidencias",
+                "{{idIncidencia}}",
+                "personas",
+                "{{idPersona}}"
+              ]
+            },
+            "description": "Quitar persona asociada mientras la incidencia está pendiente (QA 03/09)"
+          }
+        },
+        {
+          "name": "Quitar autoridad de apoyo mientras la incidencia está pendiente",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/incidencias/{{idIncidencia}}/autoridades/{{idAutoridad}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "incidencias",
+                "{{idIncidencia}}",
+                "autoridades",
+                "{{idAutoridad}}"
+              ]
+            },
+            "description": "Quitar autoridad de apoyo mientras la incidencia está pendiente (QA 03/09)"
+          }
+        },
+        {
+          "name": "Quitar elemento participante mientras la incidencia está pendiente",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/incidencias/{{idIncidencia}}/elementos/{{idElemento}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "incidencias",
+                "{{idIncidencia}}",
+                "elementos",
+                "{{idElemento}}"
+              ]
+            },
+            "description": "Quitar elemento participante mientras la incidencia está pendiente (QA 03/09)"
+          }
+        },
+        {
+          "name": "Confirmar el registro",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/incidencias/{{idIncidencia}}/confirmar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "incidencias",
+                "{{idIncidencia}}",
+                "confirmar"
+              ]
+            },
+            "description": "Confirmar el registro (validación inicial P10, una sola vez)"
+          }
+        },
+        {
+          "name": "Descartar el registro",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/incidencias/{{idIncidencia}}/descartar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "incidencias",
+                "{{idIncidencia}}",
+                "descartar"
+              ]
+            },
+            "description": "Descartar el registro (validación inicial P10, una sola vez)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 · Archivos",
+      "item": [
+        {
+          "name": "Subir archivo con UNA referencia de entidad",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/archivos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "archivos"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "idPersona",
+                  "value": "{{idPersona}}",
+                  "type": "text"
+                },
+                {
+                  "key": "descripcion",
+                  "value": "Archivo de prueba desde Postman",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Subir archivo con UNA referencia de entidad (RF-ARC-001..004)\n\nmultipart/form-data: en \"archivo\" selecciona un archivo local. Debe llevar EXACTAMENTE una referencia de entidad (aquí idPersona)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json(); const d = (r && r.data !== undefined) ? r.data : r;",
+                  "if (d && d.idArchivo !== undefined) pm.collectionVariables.set('idArchivo', d.idArchivo);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Biblioteca: todos los archivos del expediente de la persona",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/archivos/biblioteca/{{idPersona}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "archivos",
+                "biblioteca",
+                "{{idPersona}}"
+              ]
+            },
+            "description": "Biblioteca: todos los archivos del expediente de la persona (propios y de sus actividades)"
+          }
+        },
+        {
+          "name": "Archivos activos de una entidad",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/archivos/de/{{entidadArchivo}}/{{idPersona}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "archivos",
+                "de",
+                "{{entidadArchivo}}",
+                "{{idPersona}}"
+              ]
+            },
+            "description": "Archivos activos de una entidad (idPersona, idAudiencia, ...) (RF-ARC-005)\n\nentidad = idPersona | idIngresoEgreso | idMovimiento | idAudiencia | idTraslado | idIncidencia."
+          }
+        },
+        {
+          "name": "URL temporal de descarga + hash para verificación",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/archivos/{{idArchivo}}/descarga",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "archivos",
+                "{{idArchivo}}",
+                "descarga"
+              ]
+            },
+            "description": "URL temporal de descarga + hash para verificación (RF-ARC-005/006)"
+          }
+        },
+        {
+          "name": "Desactivar sin eliminar el histórico",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/archivos/{{idArchivo}}/desactivar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "archivos",
+                "{{idArchivo}}",
+                "desactivar"
+              ]
+            },
+            "description": "Desactivar sin eliminar el histórico (RF-ARC-007)"
+          }
+        },
+        {
+          "name": "Editar la descripción mientras el registro dueño está pendiente de revisión",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/archivos/{{idArchivo}}/descripcion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "archivos",
+                "{{idArchivo}}",
+                "descripcion"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"Descripción editada desde Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Editar la descripción mientras el registro dueño está pendiente de revisión (QA 03/09)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 · Reportes",
+      "item": [
+        {
+          "name": "Reporte consolidado de actividades por periodo [desde, hasta) con estado de vali",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reportes/actividades?desde=2026-01-01&hasta=2026-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reportes",
+                "actividades"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "modulo",
+                  "value": "incidencias",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Reporte consolidado de actividades por periodo [desde, hasta) con estado de validación (P10)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "98 · Directo a auth-service (no pasa por gateway)",
+      "item": [
+        {
+          "name": "JWKS: claves públicas para validar access tokens",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authUrl}}/.well-known/jwks.json",
+              "host": [
+                "{{authUrl}}"
+              ],
+              "path": [
+                ".well-known",
+                "jwks.json"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "JWKS: claves públicas para validar access tokens"
+          }
+        },
+        {
+          "name": "GET /audit",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authUrl}}/api/v1/audit",
+              "host": [
+                "{{authUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "audit"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Solicitar recuperación de cuenta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{authUrl}}/api/v1/recovery/request",
+              "host": [
+                "{{authUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "recovery",
+                "request"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"usuario@ejemplo.mx\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Solicitar recuperación de cuenta\n\nAndamiaje sin implementar de la plataforma base (responde un mensaje fijo)."
+          }
+        },
+        {
+          "name": "Confirmar recuperación con token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{authUrl}}/api/v1/recovery/confirm",
+              "host": [
+                "{{authUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "recovery",
+                "confirm"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"token-de-recuperacion\",\n  \"newPassword\": \"MiClaveSegura#2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Confirmar recuperación con token\n\nAndamiaje sin implementar de la plataforma base."
+          }
+        },
+        {
+          "name": "Iniciar activación de 2FA",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{authUrl}}/api/v1/2fa/enable",
+              "host": [
+                "{{authUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "2fa",
+                "enable"
+              ]
+            },
+            "description": "Iniciar activación de 2FA (devuelve secreto/QR)"
+          }
+        },
+        {
+          "name": "Verificar OTP y activar 2FA",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{authUrl}}/api/v1/2fa/verify",
+              "host": [
+                "{{authUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "2fa",
+                "verify"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"otp\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Verificar OTP y activar 2FA"
+          }
+        }
+      ]
+    },
+    {
+      "name": "99 · Salud y métricas",
+      "item": [
+        {
+          "name": "GET /health /health · auth-service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authUrl}}/health",
+              "host": [
+                "{{authUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET /health/ready /health/ready · auth-service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authUrl}}/health/ready",
+              "host": [
+                "{{authUrl}}"
+              ],
+              "path": [
+                "health",
+                "ready"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET /metrics /metrics · auth-service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authUrl}}/metrics",
+              "host": [
+                "{{authUrl}}"
+              ],
+              "path": [
+                "metrics"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET /health /health · notification-service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{notificationUrl}}/health",
+              "host": [
+                "{{notificationUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET /health/ready /health/ready · notification-service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{notificationUrl}}/health/ready",
+              "host": [
+                "{{notificationUrl}}"
+              ],
+              "path": [
+                "health",
+                "ready"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET /metrics /metrics · notification-service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{notificationUrl}}/metrics",
+              "host": [
+                "{{notificationUrl}}"
+              ],
+              "path": [
+                "metrics"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET /health /health · reclusorio-service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{reclusorioUrl}}/health",
+              "host": [
+                "{{reclusorioUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET /health/ready /health/ready · reclusorio-service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{reclusorioUrl}}/health/ready",
+              "host": [
+                "{{reclusorioUrl}}"
+              ],
+              "path": [
+                "health",
+                "ready"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET /metrics /metrics · reclusorio-service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{reclusorioUrl}}/metrics",
+              "host": [
+                "{{reclusorioUrl}}"
+              ],
+              "path": [
+                "metrics"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": ""
+          }
+        }
+      ]
+    }
+  ]
+}
