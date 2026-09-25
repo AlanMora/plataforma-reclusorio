@@ -22,7 +22,9 @@ export class AuthService {
   readonly autenticado = computed(() => this.tokens() !== null);
   readonly permisos = computed(() => this.claims()?.permissions ?? []);
   readonly roles = computed(() => this.claims()?.roles ?? []);
-  readonly email = computed(() => this.claims()?.email ?? '');
+  readonly username = computed(() => this.claims()?.username ?? '');
+  /** Primer ingreso o contraseña restablecida: debe cambiarla antes de seguir. */
+  readonly debeCambiarPassword = computed(() => this.claims()?.mustChangePassword === true);
   readonly sid = computed(() => this.claims()?.sid ?? null);
   readonly idUsuario = computed(() => this.claims()?.sub ?? null);
 
@@ -36,9 +38,9 @@ export class AuthService {
   }
 
   /** RF-AUT-001..003: login con error genérico (el backend no filtra cuentas). */
-  async login(email: string, password: string): Promise<void> {
+  async login(username: string, password: string): Promise<void> {
     const res = await firstValueFrom(
-      this.http.post<ApiEnvelope<TokenPair>>('/api/v1/auth/login', { email, password }),
+      this.http.post<ApiEnvelope<TokenPair>>('/api/v1/auth/login', { username, password }),
     );
     this.avisoLogout.set(null);
     this.establecer(res.data);

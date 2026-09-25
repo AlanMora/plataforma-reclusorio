@@ -23,8 +23,10 @@ import { IconoComponent } from '../../shared/icono.component';
 /** Usuario de acceso tal como lo devuelve auth-service (sin hash). */
 interface UsuarioAcceso {
   id: string;
-  email: string;
+  username: string;
   isActive: boolean;
+  /** Contraseña temporal pendiente de cambiar por el usuario. */
+  mustChangePassword: boolean;
   roles: string[];
   permissions: string[];
   createdAt: string;
@@ -87,7 +89,7 @@ export class UsuariosComponent implements OnInit {
       ? (this.pagina().items.find((usuario) => usuario.id === expandido.id) ?? null)
       : null;
   });
-  forma = { email: '', password: '' };
+  forma = { username: '', password: '' };
   passwordNueva = '';
   texto = '';
 
@@ -144,14 +146,14 @@ export class UsuariosComponent implements OnInit {
 
   abrirAlta(): void {
     this.expandido.set(null);
-    this.forma = { email: '', password: '' };
+    this.forma = { username: '', password: '' };
     this.seleccionAlta.set(new Set());
     this.mostrarForm.set(true);
   }
 
   cerrarAlta(): void {
     this.mostrarForm.set(false);
-    this.forma = { email: '', password: '' };
+    this.forma = { username: '', password: '' };
     this.seleccionAlta.set(new Set());
   }
 
@@ -171,11 +173,11 @@ export class UsuariosComponent implements OnInit {
     this.errorForm.set(null);
     try {
       await this.api.post('/api/v1/users', {
-        email: this.forma.email.trim(),
+        username: this.forma.username.trim().toLowerCase(),
         password: this.forma.password,
         permissions: [...this.seleccionAlta()],
       });
-      this.toast.ok('Usuario creado.');
+      this.toast.ok('Usuario creado. Deberá cambiar su contraseña al primer ingreso.');
       this.cerrarAlta();
       await this.cargar(this.pagina().page);
     } catch (err) {
@@ -227,9 +229,12 @@ export class UsuariosComponent implements OnInit {
       await this.api.patch(`/api/v1/users/${usuario.id}/password`, {
         password: this.passwordNueva,
       });
-      this.toast.ok('Contraseña restablecida. Se cerraron las sesiones del usuario.');
+      this.toast.ok(
+        'Contraseña temporal asignada. Se cerraron sus sesiones y deberá cambiarla al ingresar.',
+      );
       this.expandido.set(null);
       this.passwordNueva = '';
+      await this.cargar(this.pagina().page);
     } catch (err) {
       this.toast.error(presentarErrorFormulario(formulario, evento, err));
     } finally {
@@ -256,6 +261,10 @@ export class UsuariosComponent implements OnInit {
 
   esYo(usuario: UsuarioAcceso): boolean {
     return this.auth.idUsuario() === usuario.id;
+  }
+
+  esSuperusuario(usuario: UsuarioAcceso): boolean {
+    return usuario.roles.includes('superadmin');
   }
 
   private async cargar(pagina: number): Promise<void> {

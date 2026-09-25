@@ -2,18 +2,18 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { hash as argon2Hash, verify as argon2Verify } from '@node-rs/argon2';
 import { JwtPayload } from '@icms/auth';
-import { UnauthorizedDomainException } from '@icms/common';
-import { EventPublisher, OutboxService } from '@icms/messaging';
+import { BusinessRuleException, UnauthorizedDomainException } from '@icms/common';
+import { EventPublisher } from '@icms/messaging';
 import { EventNames } from '@icms/contracts';
 import { User } from '../users/user.entity';
 import { AuditService } from '../audit/audit.module';
 import { SessionStore } from '../sessions/session-store.service';
 import { KeyService } from './key.service';
-import { LoginDto, RegisterDto } from './dto';
+import { LoginDto } from './dto';
 
 export interface TokenPair {
   accessToken: string;
@@ -22,7 +22,7 @@ export interface TokenPair {
 }
 
 // Hash dummy (argon2id) para comparar en tiempo constante cuando el usuario no
-// existe, evitando filtrar por tiempo qué correos están registrados.
+// existe, evitando filtrar por tiempo qué usuarios están registrados.
 let dummyHashPromise: Promise<string> | null = null;
 const dummyHash = () => (dummyHashPromise ??= argon2Hash('invalid-password-placeholder'));
 
@@ -69,36 +69,15 @@ export class AuthService {
     private readonly config: ConfigService,
     private readonly events: EventPublisher,
     private readonly keys: KeyService,
-    private readonly dataSource: DataSource,
-    private readonly outbox: OutboxService,
     private readonly audit: AuditService,
   ) {}
 
-  /** Crea el usuario y publica UserRegistered de forma transaccional (Outbox). */
-  async register(dto: RegisterDto): Promise<{ id: string }> {
-    const passwordHash = await argon2Hash(dto.password); // argon2id por defecto
-    return this.dataSource.transaction(async (manager) => {
-      const user = manager.getRepository(User).create({
-        email: dto.email,
-        passwordHash,
-        tenantId: dto.tenantId,
-        roles: ['user'],
-      });
-      const saved = await manager.save(user);
-      await this.outbox.enqueue(
-        manager,
-        EventNames.UserRegistered,
-        { userId: saved.id, email: saved.email },
-        { tenantId: saved.tenantId ?? undefined, aggregateId: saved.id },
-      );
-      return { id: saved.id };
-    });
-  }
-
   async login(dto: LoginDto, ipAddress?: string): Promise<TokenPair> {
-    const user = await this.users.findOne({ where: { email: dto.email, isActive: true } });
+    const user = await this.users.findOne({
+      where: { username: dto.username, isActive: true },
+    });
     // Compara siempre contra un hash (aunque el usuario no exista) para no filtrar
-    // por tiempo si un email está o no registrado.
+    // por tiempo si un usuario está o no registrado.
     const stored = user?.passwordHash ?? (await dummyHash());
     let ok = false;
     try {
@@ -115,7 +94,7 @@ export class AuthService {
     // Alimenta la proyección de destinatarios del notification-service: quien
     // ha iniciado sesión alguna vez recibe las notificaciones de difusión.
     await this.events
-      .publish(EventNames.UserLoggedIn, { userId: user.id, email: user.email })
+      .publish(EventNames.UserLoggedIn, { userId: user.id, username: user.username })
       .catch(() => undefined);
     // TODO(proyecto): si user.twoFactorEnabled, validar dto.otp antes de emitir tokens.
     return this.issueTokens(user);
@@ -126,7 +105,9 @@ export class AuthService {
     const sessionId = existingSid ?? randomUUID();
     const payload: JwtPayload = {
       sub: user.id,
-      email: user.email,
+      username: user.username,
+      // Solo viaja cuando aplica: el guard bloquea todo salvo el cambio.
+      ...(user.mustChangePassword ? { mustChangePassword: true } : {}),
       tenantId: user.tenantId ?? undefined,
       roles: user.roles ?? [],
       permissions: user.permissions ?? [],
@@ -276,7 +257,11 @@ export class AuthService {
       await this.audit.record({ userId, action: 'password.cambiado', outcome: 'fallido', ipAddress });
       throw new UnauthorizedDomainException('La contraseña actual es incorrecta');
     }
+    if (currentPassword === newPassword) {
+      throw new BusinessRuleException('La nueva contraseña debe ser distinta de la actual');
+    }
     user.passwordHash = await argon2Hash(newPassword);
+    user.mustChangePassword = false;
     await this.users.save(user);
     // Cierre global con notificación en tiempo real a cada sesión abierta.
     await this.revokeAllForUser(userId, 'cambio-password', ipAddress);

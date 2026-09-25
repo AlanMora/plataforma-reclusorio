@@ -34,20 +34,25 @@
       >
         <div class="grid gap-4 md:grid-cols-2">
           <div>
-            <label class="campo-etiqueta obligatorio" for="usrEmail">Correo institucional</label>
+            <label class="campo-etiqueta obligatorio" for="usrUsername">Nombre de usuario</label>
             <input
-              class="campo"
-              id="usrEmail"
-              name="email"
-              type="email"
+              class="campo sin-mayusculas"
+              id="usrUsername"
+              name="username"
+              type="text"
               required
+              minlength="3"
+              maxlength="30"
+              pattern="[A-Za-z0-9._\-]{3,30}"
               autocomplete="off"
-              [(ngModel)]="forma.email"
-              placeholder="usuario@reclusorio.mx"
+              autocapitalize="none"
+              spellcheck="false"
+              [(ngModel)]="forma.username"
+              placeholder="nombre.usuario"
             />
           </div>
           <div>
-            <label class="campo-etiqueta obligatorio" for="usrPass">Contraseña (mínimo 8 caracteres)</label>
+            <label class="campo-etiqueta obligatorio" for="usrPass">Contraseña temporal (mínimo 8 caracteres)</label>
             <input
               class="campo"
               id="usrPass"
@@ -61,6 +66,11 @@
             />
           </div>
         </div>
+
+        <p class="text-xs text-slate-500 bg-slate-900/50 p-3 rounded-lg border border-white/5">
+          Usuario: 3 a 30 caracteres (letras sin acentos, números, punto, guion o guion bajo).
+          Al primer ingreso el sistema le pedirá cambiar la contraseña temporal por una propia.
+        </p>
 
         <div>
           <p class="etiqueta mb-2">Permisos iniciales</p>
@@ -97,7 +107,7 @@
   <form class="panel p-4" (ngSubmit)="buscar()">
     <div class="flex flex-wrap items-end gap-3">
       <div class="grow min-w-[220px]">
-        <label class="campo-etiqueta" for="buscarUsr">Buscar usuario por correo</label>
+        <label class="campo-etiqueta" for="buscarUsr">Buscar por nombre de usuario</label>
         <div class="relative">
           <input
             class="campo pr-8 sin-mayusculas"
@@ -105,7 +115,7 @@
             name="buscar"
             maxlength="100"
             [(ngModel)]="texto"
-            placeholder="correo@institucion.gob.mx…"
+            placeholder="nombre.usuario…"
           />
           @if (texto) {
             <button
@@ -177,7 +187,7 @@
       <table class="tabla">
         <thead>
           <tr>
-            <th class="pl-4">Usuario / Correo</th>
+            <th class="pl-4">Usuario</th>
             <th>Estado</th>
             <th>Permisos asignados</th>
             <th>Fecha de creación</th>
@@ -221,14 +231,17 @@
                     <div
                       class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-900/90 border border-white/10 text-cyan-300 font-mono text-xs font-bold group-hover:border-cyan-400/40 group-hover:bg-cyan-950/60 group-hover:shadow-[0_0_12px_rgba(34,211,238,0.18)] transition-all"
                     >
-                      {{ (u.email[0] || 'U').toUpperCase() }}
+                      {{ (u.username[0] || 'U').toUpperCase() }}
                     </div>
                     <div class="flex items-center gap-2 min-w-0 max-w-[34ch]">
-                      <span class="font-medium text-slate-100 truncate sin-mayusculas" [title]="u.email">
-                        {{ u.email }}
+                      <span class="font-medium text-slate-100 truncate sin-mayusculas" [title]="u.username">
+                        {{ u.username }}
                       </span>
                       @if (esYo(u)) {
                         <span class="chip-neon py-0 text-[9px]">tú</span>
+                      }
+                      @if (esSuperusuario(u)) {
+                        <span class="chip-alerta py-0 text-[9px]">superusuario</span>
                       }
                     </div>
                   </div>
@@ -240,6 +253,11 @@
                     <span class="chip-ok text-[10px]">Activo</span>
                   } @else {
                     <span class="chip-peligro text-[10px]">Inactivo</span>
+                  }
+                  @if (u.mustChangePassword) {
+                    <span class="chip-apagado ml-1 text-[10px]" title="Debe cambiar su contraseña al ingresar">
+                      Contraseña temporal
+                    </span>
                   }
                 </td>
 
@@ -336,7 +354,7 @@
     <rw-modal-formulario
       [titulo]="expandido()?.seccion === 'permisos' ? 'Editar permisos de acceso' : 'Restablecer contraseña'"
       etiqueta="Gestión de cuenta"
-      [descripcion]="usuario.email"
+      [descripcion]="usuario.username"
       [bloquearCierre]="guardando()"
       (cerrar)="cerrarEdicion()"
     >
@@ -365,7 +383,7 @@
           >
             <div>
               <label class="campo-etiqueta obligatorio" for="passNueva">
-                Nueva contraseña (mínimo 8 caracteres)
+                Contraseña temporal (mínimo 8 caracteres)
               </label>
               <input
                 class="campo"
@@ -380,7 +398,7 @@
               />
             </div>
             <p class="text-xs text-slate-500 bg-slate-900/50 p-3 rounded-lg border border-white/5">
-              Se revocarán las sesiones activas del usuario en todos los dispositivos; deberá ingresar con la contraseña nueva.
+              Se revocarán las sesiones activas del usuario en todos los dispositivos. Al ingresar con esta contraseña temporal, el sistema le pedirá cambiarla por una propia.
             </p>
           </form>
         }

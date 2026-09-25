@@ -1,5 +1,5 @@
 import { Route } from '@angular/router';
-import { authGuard, permisoGuard } from './core/guards';
+import { authGuard, cambioPasswordGuard, permisoGuard } from './core/guards';
 
 /**
  * RF-UI: /login público; el resto vive en el layout privado protegido por
@@ -9,6 +9,13 @@ export const appRoutes: Route[] = [
   {
     path: 'login',
     loadComponent: () => import('./pages/login.component').then((m) => m.LoginComponent),
+  },
+  {
+    // Fuera del layout privado: con contraseña temporal no hay menú ni módulos.
+    path: 'cambiar-password',
+    canActivate: [cambioPasswordGuard],
+    loadComponent: () =>
+      import('./pages/cambiar-password.component').then((m) => m.CambiarPasswordComponent),
   },
   {
     path: '',

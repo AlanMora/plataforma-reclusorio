@@ -4,12 +4,20 @@ import { BaseEntity } from '@icms/database';
 /** Usuario de acceso (identidad). No confundir con "usuarios operativos" de configuration-service. */
 @Entity('users')
 export class User extends BaseEntity {
+  /** Nombre de usuario para iniciar sesión; siempre en minúsculas. */
   @Index({ unique: true })
   @Column()
-  email!: string;
+  username!: string;
 
   @Column({ name: 'password_hash' })
   passwordHash!: string;
+
+  /**
+   * Contraseña temporal (alta o restablecimiento por un administrador): el
+   * usuario solo puede cambiarla hasta que la reemplace por una propia.
+   */
+  @Column({ name: 'must_change_password', default: false })
+  mustChangePassword!: boolean;
 
   @Column({ name: 'is_active', default: true })
   isActive!: boolean;

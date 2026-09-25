@@ -23,14 +23,28 @@ export const authGuard: CanActivateFn = async () => {
   if (esJwtExpirado(tokens.accessToken)) {
     try {
       await auth.refrescar();
-      return true;
     } catch {
       auth.forzarLogout('Tu sesión expiró. Inicia sesión nuevamente.');
       return router.createUrlTree(['/login']);
     }
   }
 
+  // Contraseña temporal: nada del sistema hasta que la cambie (el backend
+  // también responde 403 PASSWORD_CHANGE_REQUIRED a todo lo demás).
+  if (auth.debeCambiarPassword()) {
+    return router.createUrlTree(['/cambiar-password']);
+  }
+
   return true;
+};
+
+/** /cambiar-password: solo con sesión y un cambio de contraseña pendiente. */
+export const cambioPasswordGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  if (!auth.autenticado()) return router.createUrlTree(['/login']);
+  return auth.debeCambiarPassword() ? true : router.createUrlTree(['/']);
 };
 
 /**

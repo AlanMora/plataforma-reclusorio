@@ -1,18 +1,28 @@
 import {
   CanActivate,
   ExecutionContext,
+  HttpStatus,
   Injectable,
   SetMetadata,
   Type,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
-import { ForbiddenDomainException } from '@icms/common';
+import { DomainException, ForbiddenDomainException } from '@icms/common';
 import { AuthenticatedUser } from './jwt-payload.interface';
 
 /** Marca una ruta como pública (omite JwtAuthGuard). */
 export const IS_PUBLIC_KEY = 'isPublic';
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
+
+/**
+ * Marca una ruta como accesible aunque el usuario tenga pendiente el cambio
+ * de su contraseña temporal (cambiar la contraseña, cerrar sesión, perfil).
+ * Cualquier otra ruta responde 403 PASSWORD_CHANGE_REQUIRED mientras tanto.
+ */
+export const ALLOW_PENDING_PASSWORD_CHANGE_KEY = 'allowPendingPasswordChange';
+export const AllowPendingPasswordChange = () =>
+  SetMetadata(ALLOW_PENDING_PASSWORD_CHANGE_KEY, true);
 
 export const ROLES_KEY = 'roles';
 export const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
@@ -52,6 +62,30 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     ]);
     if (isPublic) return true;
     return super.canActivate(context);
+  }
+
+  handleRequest<TUser = AuthenticatedUser>(
+    err: unknown,
+    user: TUser,
+    info: unknown,
+    context: ExecutionContext,
+  ): TUser {
+    const autenticado = super.handleRequest<TUser>(err, user, info, context);
+    const pendiente = (autenticado as AuthenticatedUser | undefined)?.mustChangePassword;
+    if (pendiente) {
+      const permitida = this.reflector.getAllAndOverride<boolean>(
+        ALLOW_PENDING_PASSWORD_CHANGE_KEY,
+        [context.getHandler(), context.getClass()],
+      );
+      if (!permitida) {
+        throw new DomainException(
+          'PASSWORD_CHANGE_REQUIRED',
+          'Debes cambiar tu contraseña antes de continuar',
+          HttpStatus.FORBIDDEN,
+        );
+      }
+    }
+    return autenticado;
   }
 }
 

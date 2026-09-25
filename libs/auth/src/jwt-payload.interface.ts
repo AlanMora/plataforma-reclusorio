@@ -5,7 +5,10 @@ export type OrgScope = 'own_ou' | 'assigned_ous' | 'all_ous';
 export interface JwtPayload {
   /** subject: id del usuario */
   sub: string;
-  email?: string;
+  /** nombre de usuario con el que se inicia sesión */
+  username?: string;
+  /** true mientras el usuario deba cambiar su contraseña temporal */
+  mustChangePassword?: boolean;
   /** tenant ACTIVO de la sesión */
   tenantId?: string;
   /** unidades organizacionales autorizadas (§14) */
@@ -24,7 +27,8 @@ export interface JwtPayload {
 /** Usuario autenticado que queda disponible en el request. */
 export interface AuthenticatedUser {
   id: string;
-  email?: string;
+  username?: string;
+  mustChangePassword?: boolean;
   tenantId?: string;
   organizationalUnitIds: string[];
   scope: OrgScope;

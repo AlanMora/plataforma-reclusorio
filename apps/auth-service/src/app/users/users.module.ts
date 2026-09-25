@@ -17,29 +17,36 @@ import { hash as argon2Hash } from '@node-rs/argon2';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository } from 'typeorm';
+import { Transform } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsArray,
   IsBoolean,
-  IsEmail,
   IsOptional,
   IsString,
   Matches,
   MinLength,
 } from 'class-validator';
-import { AuthenticatedUser, CurrentUser, RequirePermissions } from '@icms/auth';
+import {
+  AllowPendingPasswordChange,
+  AuthenticatedUser,
+  CurrentUser,
+  RequirePermissions,
+} from '@icms/auth';
 import { DatabaseModule } from '@icms/database';
 import { EventPublisher } from '@icms/messaging';
 import { EventNames } from '@icms/contracts';
 import {
   BusinessRuleException,
   EntityNotFoundException,
+  ForbiddenDomainException,
   PaginationQueryDto,
   paginate,
 } from '@icms/common';
 import { User } from './user.entity';
 import { AuthModule } from '../auth/auth.module';
 import { AuthService } from '../auth/auth.service';
+import { normalizarUsername, USERNAME_MENSAJE, USERNAME_REGEX } from '../auth/dto';
 import { AuditModule, AuditService } from '../audit/audit.module';
 
 /** Vista pública de un usuario: nunca expone el hash de la contraseña. */
@@ -73,16 +80,27 @@ export const CATALOGO_PERMISOS: { modulo: string; permisos: string[] }[] = [
 
 const PERMISOS_VALIDOS = new Set(CATALOGO_PERMISOS.flatMap((m) => m.permisos));
 
+/**
+ * Rol del superusuario: la cuenta de rescate que siempre puede restablecer
+ * contraseñas. Solo otro superusuario puede modificarla, y no se le puede
+ * desactivar ni quitar permisos de administración.
+ */
+export const ROL_SUPERADMIN = 'superadmin';
+
 /** Permisos que un administrador no puede quitarse a sí mismo (anti-bloqueo). */
 const PERMISOS_ANTIBLOQUEO = ['users:read', 'users:write', 'permissions:write'];
 
 class ListarUsuariosQuery extends PaginationQueryDto {
-  /** Búsqueda por correo (homologación de listados). */
+  /** Búsqueda por nombre de usuario (homologación de listados). */
   @IsOptional() @IsString() buscar?: string;
 }
 
 class CrearUsuarioDto {
-  @IsEmail() email!: string;
+  @Transform(normalizarUsername)
+  @IsString()
+  @Matches(USERNAME_REGEX, { message: USERNAME_MENSAJE })
+  username!: string;
+  /** Contraseña temporal: el usuario deberá cambiarla en su primer ingreso. */
   @IsString() @MinLength(8) password!: string;
   @IsOptional() @IsArray() @IsString({ each: true }) permissions?: string[];
 }
@@ -92,6 +110,7 @@ class ActualizarUsuarioDto {
 }
 
 class CambiarPasswordAdminDto {
+  /** Contraseña temporal: el usuario deberá cambiarla en su siguiente ingreso. */
   @IsString() @MinLength(8) password!: string;
 }
 
@@ -123,7 +142,7 @@ export class UsersService {
   async list(query: PaginationQueryDto, tenantId?: string, buscar?: string) {
     const filtro = {
       ...(tenantId ? { tenantId } : {}),
-      ...(buscar ? { email: ILike(`%${buscar.trim()}%`) } : {}),
+      ...(buscar ? { username: ILike(`%${buscar.trim()}%`) } : {}),
     };
     const [items, total] = await this.users.findAndCount({
       where: filtro,
@@ -144,15 +163,24 @@ export class UsersService {
     return [...new Set(permissions)];
   }
 
+  /** Solo un superusuario puede modificar la cuenta de otro superusuario. */
+  private protegerSuperusuario(objetivo: User, actor: AuthenticatedUser): void {
+    if (objetivo.roles.includes(ROL_SUPERADMIN) && !actor.roles.includes(ROL_SUPERADMIN)) {
+      throw new ForbiddenDomainException('Solo un superusuario puede modificar al superusuario');
+    }
+  }
+
   async crear(dto: CrearUsuarioDto, actor: AuthenticatedUser): Promise<SafeUser> {
-    const existente = await this.users.findOne({ where: { email: dto.email } });
+    const existente = await this.users.findOne({ where: { username: dto.username } });
     if (existente) {
-      throw new BusinessRuleException('Ya existe un usuario con ese correo');
+      throw new BusinessRuleException('Ya existe un usuario con ese nombre de usuario');
     }
     const user = await this.users.save(
       this.users.create({
-        email: dto.email,
+        username: dto.username,
         passwordHash: await argon2Hash(dto.password),
+        // La contraseña la eligió el administrador: se cambia al primer ingreso.
+        mustChangePassword: true,
         isActive: true,
         roles: ['user'],
         permissions: this.validarPermisos(dto.permissions ?? []),
@@ -161,7 +189,7 @@ export class UsersService {
     await this.audit.record({
       userId: actor.id,
       action: 'usuario.creado',
-      outcome: user.email,
+      outcome: user.username,
       metadata: { nuevoUsuarioId: user.id, permisos: user.permissions.length },
     });
     return toSafeUser(user);
@@ -174,9 +202,13 @@ export class UsersService {
   ): Promise<SafeUser> {
     const user = await this.users.findOne({ where: { id } });
     if (!user) throw new EntityNotFoundException('Usuario', id);
+    this.protegerSuperusuario(user, actor);
 
     if (dto.isActive === false && id === actor.id) {
       throw new BusinessRuleException('No puedes desactivar tu propia cuenta');
+    }
+    if (dto.isActive === false && user.roles.includes(ROL_SUPERADMIN)) {
+      throw new BusinessRuleException('El superusuario no se puede desactivar');
     }
 
     if (dto.isActive !== undefined) user.isActive = dto.isActive;
@@ -189,7 +221,7 @@ export class UsersService {
     await this.audit.record({
       userId: actor.id,
       action: 'usuario.actualizado',
-      outcome: guardado.email,
+      outcome: guardado.username,
       metadata: { usuarioId: id, isActive: guardado.isActive },
     });
     return toSafeUser(guardado);
@@ -202,14 +234,18 @@ export class UsersService {
   ): Promise<{ ok: true }> {
     const user = await this.users.findOne({ where: { id } });
     if (!user) throw new EntityNotFoundException('Usuario', id);
+    this.protegerSuperusuario(user, actor);
     user.passwordHash = await argon2Hash(dto.password);
+    // Contraseña temporal: al siguiente ingreso se le pide cambiarla (salvo
+    // que el administrador se la restablezca a sí mismo).
+    user.mustChangePassword = id !== actor.id;
     await this.users.save(user);
     // La contraseña cambió: cualquier sesión previa deja de ser confiable.
     await this.auth.revokeAllForUser(id, 'cambio-password');
     await this.audit.record({
       userId: actor.id,
       action: 'usuario.password-restablecida',
-      outcome: user.email,
+      outcome: user.username,
       metadata: { usuarioId: id },
     });
     return { ok: true };
@@ -222,16 +258,19 @@ export class UsersService {
   ): Promise<SafeUser> {
     const user = await this.users.findOne({ where: { id } });
     if (!user) throw new EntityNotFoundException('Usuario', id);
+    this.protegerSuperusuario(user, actor);
 
     const permisos = this.validarPermisos(dto.permissions);
 
     // Anti-bloqueo: al editar tus propios permisos debes conservar los de
     // administración; si no, nadie podría volver a administrar usuarios.
-    if (id === actor.id) {
+    if (id === actor.id || user.roles.includes(ROL_SUPERADMIN)) {
       const faltantes = PERMISOS_ANTIBLOQUEO.filter((p) => !permisos.includes(p));
       if (faltantes.length > 0) {
         throw new BusinessRuleException(
-          `No puedes quitarte tus propios permisos de administración (${faltantes.join(', ')})`,
+          id === actor.id
+            ? `No puedes quitarte tus propios permisos de administración (${faltantes.join(', ')})`
+            : `No se le pueden quitar al superusuario los permisos de administración (${faltantes.join(', ')})`,
         );
       }
     }
@@ -249,7 +288,7 @@ export class UsersService {
     await this.audit.record({
       userId: actor.id,
       action: 'usuario.permisos-asignados',
-      outcome: guardado.email,
+      outcome: guardado.username,
       metadata: { usuarioId: id, total: permisos.length },
     });
     return toSafeUser(guardado);
@@ -263,6 +302,7 @@ export class UsersController {
   constructor(private readonly users: UsersService) {}
 
   @Get('me')
+  @AllowPendingPasswordChange()
   @ApiOperation({ summary: 'Perfil del usuario autenticado' })
   me(@CurrentUser() user: AuthenticatedUser) {
     return this.users.findById(user.id);
@@ -278,7 +318,7 @@ export class UsersController {
 
   @Get()
   @RequirePermissions('users:read')
-  @ApiOperation({ summary: 'Listar usuarios del tenant (paginado, con búsqueda por correo)' })
+  @ApiOperation({ summary: 'Listar usuarios del tenant (paginado, con búsqueda por nombre de usuario)' })
   list(@Query() query: ListarUsuariosQuery, @CurrentUser() user: AuthenticatedUser) {
     return this.users.list(query, user.tenantId, query.buscar);
   }
@@ -292,7 +332,7 @@ export class UsersController {
 
   @Post()
   @RequirePermissions('users:write')
-  @ApiOperation({ summary: 'Crear usuario con permisos iniciales' })
+  @ApiOperation({ summary: 'Crear usuario con contraseña temporal y permisos iniciales' })
   crear(@Body() dto: CrearUsuarioDto, @CurrentUser() actor: AuthenticatedUser) {
     return this.users.crear(dto, actor);
   }
@@ -310,7 +350,7 @@ export class UsersController {
 
   @Patch(':id/password')
   @RequirePermissions('users:write')
-  @ApiOperation({ summary: 'Restablecer la contraseña de un usuario (revoca sus sesiones)' })
+  @ApiOperation({ summary: 'Restablecer contraseña temporal (revoca sesiones; se cambia al siguiente ingreso)' })
   cambiarPassword(
     @Param('id') id: string,
     @Body() dto: CambiarPasswordAdminDto,
@@ -337,10 +377,12 @@ export class UsersController {
 const PERMISOS_RECLUSORIO = CATALOGO_PERMISOS.flatMap((m) => m.permisos).join(',');
 
 /**
- * Usuario semilla de DESARROLLO (opt-in explícito por env).
- * Crea/actualiza al arrancar un usuario con todos los permisos del dominio
- * para poder entrar al frontend sin pasos manuales. Nunca se activa solo:
- * exige SEED_ADMIN_ENABLED=true y jamás debe habilitarse en producción.
+ * Superusuario semilla (opt-in explícito por env).
+ * Crea/actualiza al arrancar el superusuario con todos los permisos: la
+ * cuenta de rescate que restablece contraseñas olvidadas. Nunca se activa
+ * solo: exige SEED_ADMIN_ENABLED=true. Si el propio superusuario olvida su
+ * contraseña, SEED_ADMIN_RESET_PASSWORD=true la regresa a
+ * SEED_ADMIN_PASSWORD en el siguiente arranque (quitar la variable después).
  */
 @Injectable()
 export class DevAdminSeeder implements OnApplicationBootstrap {
@@ -353,10 +395,10 @@ export class DevAdminSeeder implements OnApplicationBootstrap {
 
   async onApplicationBootstrap(): Promise<void> {
     if (this.config.get<string>('SEED_ADMIN_ENABLED') !== 'true') return;
-    const email = this.config.get<string>('SEED_ADMIN_EMAIL');
+    const username = this.config.get<string>('SEED_ADMIN_USERNAME')?.trim().toLowerCase();
     const password = this.config.get<string>('SEED_ADMIN_PASSWORD');
-    if (!email || !password) {
-      this.logger.warn('SEED_ADMIN_ENABLED=true pero faltan SEED_ADMIN_EMAIL/PASSWORD; se omite');
+    if (!username || !password) {
+      this.logger.warn('SEED_ADMIN_ENABLED=true pero faltan SEED_ADMIN_USERNAME/PASSWORD; se omite');
       return;
     }
     const permissions = (this.config.get<string>('SEED_ADMIN_PERMISSIONS') ?? PERMISOS_RECLUSORIO)
@@ -364,24 +406,34 @@ export class DevAdminSeeder implements OnApplicationBootstrap {
       .map((p) => p.trim())
       .filter(Boolean);
 
-    const existente = await this.users.findOne({ where: { email } });
+    const existente = await this.users.findOne({ where: { username } });
     if (existente) {
       existente.permissions = permissions;
+      existente.roles = [...new Set([...(existente.roles ?? []), ROL_SUPERADMIN])];
       existente.isActive = true;
+      const restablecer = this.config.get<string>('SEED_ADMIN_RESET_PASSWORD') === 'true';
+      if (restablecer) {
+        existente.passwordHash = await argon2Hash(password);
+        existente.mustChangePassword = false;
+      }
       await this.users.save(existente);
-      this.logger.log(`Usuario semilla "${email}" actualizado (${permissions.length} permisos)`);
+      this.logger.log(
+        `Superusuario "${username}" actualizado (${permissions.length} permisos` +
+          `${restablecer ? ', contraseña restablecida' : ''})`,
+      );
       return;
     }
     await this.users.save(
       this.users.create({
-        email,
+        username,
         passwordHash: await argon2Hash(password),
+        mustChangePassword: false,
         isActive: true,
-        roles: ['admin'],
+        roles: [ROL_SUPERADMIN],
         permissions,
       }),
     );
-    this.logger.log(`Usuario semilla "${email}" creado (${permissions.length} permisos)`);
+    this.logger.log(`Superusuario "${username}" creado (${permissions.length} permisos)`);
   }
 }
 

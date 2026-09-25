@@ -199,7 +199,7 @@ export class NotificationConsumer {
   })
   async onUserLoggedIn(event: DomainEvent<UserLoggedInPayload>): Promise<void> {
     await this.inbox.processOnce(event.eventId, 'notification-service.logins', async () => {
-      await this.notifications.registrarDestinatario(event.payload.userId, event.payload.email);
+      await this.notifications.registrarDestinatario(event.payload.userId);
     });
   }
 }

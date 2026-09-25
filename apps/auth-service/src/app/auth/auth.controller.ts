@@ -1,24 +1,19 @@
 import { Body, Controller, Get, HttpCode, Post, Req } from '@nestjs/common';
 import type { Request } from 'express';
-import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AuthenticatedUser, CurrentUser, Public } from '@icms/auth';
-import { Idempotent } from '@icms/redis';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  AllowPendingPasswordChange,
+  AuthenticatedUser,
+  CurrentUser,
+  Public,
+} from '@icms/auth';
 import { AuthService } from './auth.service';
-import { ChangePasswordDto, LoginDto, RefreshDto, RegisterDto } from './dto';
+import { ChangePasswordDto, LoginDto, RefreshDto } from './dto';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
-
-  @Public()
-  @Idempotent()
-  @Post('register')
-  @ApiHeader({ name: 'Idempotency-Key', required: true, description: 'Clave de idempotencia (UUID)' })
-  @ApiOperation({ summary: 'Registrar un usuario de acceso (idempotente + outbox)' })
-  register(@Body() dto: RegisterDto) {
-    return this.auth.register(dto);
-  }
 
   @Public()
   @Post('login')
@@ -37,6 +32,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @AllowPendingPasswordChange()
   @HttpCode(204)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cerrar sesión (revoca la sesión actual en Redis)' })
@@ -47,6 +43,7 @@ export class AuthController {
   }
 
   @Get('session')
+  @AllowPendingPasswordChange()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Sesión actual: vigencia restante en segundos (RF-CUE-001)' })
   session(@CurrentUser() user: AuthenticatedUser) {
@@ -54,6 +51,7 @@ export class AuthController {
   }
 
   @Post('change-password')
+  @AllowPendingPasswordChange()
   @HttpCode(204)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cambio de contraseña con verificación de la actual (RF-CUE-002)' })

@@ -5,7 +5,7 @@ import { AuthService } from '../core/auth.service';
 import { mensajeDe } from '../core/problem';
 import { IconoComponent } from '../shared/icono.component';
 
-/** RF-UI-001/RF-AUT-*: acceso con correo y contraseña; error genérico. */
+/** RF-UI-001/RF-AUT-*: acceso con usuario y contraseña; error genérico. */
 @Component({
   selector: 'rw-login',
   standalone: true,
@@ -17,18 +17,18 @@ export class LoginComponent {
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  email = isDevMode() ? 'admin@reclusorio.mx' : '';
+  username = isDevMode() ? 'admin' : '';
   password = isDevMode() ? 'Reclusorio#Dev2026' : '';
   readonly enviando = signal(false);
   readonly error = signal<string | null>(null);
 
   async entrar(): Promise<void> {
-    if (!this.email || !this.password) return;
+    if (!this.username || !this.password) return;
     this.enviando.set(true);
     this.error.set(null);
     try {
-      await this.auth.login(this.email.trim(), this.password);
-      await this.router.navigateByUrl('/');
+      await this.auth.login(this.username.trim().toLowerCase(), this.password);
+      await this.router.navigateByUrl(this.auth.debeCambiarPassword() ? '/cambiar-password' : '/');
     } catch (err) {
       this.error.set(mensajeDe(err));
     } finally {

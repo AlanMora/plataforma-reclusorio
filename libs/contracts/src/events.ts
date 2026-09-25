@@ -71,7 +71,7 @@ export interface NotificationRequestedPayload {
 
 export interface UserLoggedInPayload {
   userId: string;
-  email: string;
+  username: string;
 }
 
 /** Notificación persistida en la bandeja; realtime la emite a `user:{userId}`. */

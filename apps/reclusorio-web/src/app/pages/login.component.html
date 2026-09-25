@@ -45,16 +45,18 @@
 
       <form class="mt-8 space-y-5" (ngSubmit)="entrar()">
         <div>
-          <label class="campo-etiqueta obligatorio" for="email">Correo</label>
+          <label class="campo-etiqueta obligatorio" for="username">Usuario</label>
           <input
-            class="campo"
-            id="email"
-            name="email"
-            type="email"
+            class="campo sin-mayusculas"
+            id="username"
+            name="username"
+            type="text"
             autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
             required
-            [(ngModel)]="email"
-            placeholder="usuario&#64;institucion.gob.mx"
+            [(ngModel)]="username"
+            placeholder="nombre.usuario"
           />
         </div>
         <div>

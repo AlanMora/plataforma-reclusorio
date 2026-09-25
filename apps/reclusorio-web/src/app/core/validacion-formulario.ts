@@ -37,6 +37,7 @@ const ETIQUETAS: Readonly<Record<string, string>> = {
   passwordConfirmacion: 'Confirmación de contraseña',
   passwordNueva: 'Nueva contraseña',
   primerNombre: 'Nombre',
+  username: 'Nombre de usuario',
 };
 
 /**

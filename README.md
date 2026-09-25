@@ -40,23 +40,35 @@ pnpm start                 # ng serve → http://localhost:4200
 El dev server del front ya trae proxy (`proxy.conf.json`): `/api` → gateway
 (:3000) y `/socket.io` → realtime (:3009). No hay que configurar nada más.
 
-### Usuario de desarrollo (sembrado automáticamente)
+### Superusuario (sembrado automáticamente)
 
-Con `SEED_ADMIN_ENABLED=true` (ya viene en `docker-compose.dev.yml` y en
-`.env.example`), el auth-service crea/actualiza al arrancar un usuario con
-los **23 permisos** del dominio:
+El acceso es con **nombre de usuario** y contraseña (no con correo). Con
+`SEED_ADMIN_ENABLED=true` (ya viene en `docker-compose.dev.yml` y en
+`.env.example`), el auth-service crea/actualiza al arrancar el
+**superusuario** (rol `superadmin`) con los **26 permisos**:
 
 ```
-correo:     admin@reclusorio.mx
+usuario:    admin
 contraseña: Reclusorio#Dev2026
 ```
 
+El superusuario es la cuenta de rescate: restablece contraseñas olvidadas
+desde `/usuarios`, no se puede desactivar ni perder los permisos de
+administración, y solo otro superusuario puede modificarlo. Si él mismo
+olvida su contraseña, arrancar una vez el auth-service con
+`SEED_ADMIN_RESET_PASSWORD=true` la regresa a `SEED_ADMIN_PASSWORD`.
+
+Todo usuario creado desde `/usuarios` (o al que se le restablece la
+contraseña) recibe una **contraseña temporal**: al ingresar se le lleva a
+`/cambiar-password` y el backend responde `403 PASSWORD_CHANGE_REQUIRED` a
+cualquier otra ruta hasta que la cambie.
+
 Entra en **http://localhost:4200**. El menú lateral se construye con los
 permisos del JWT: si quitas un permiso, el módulo desaparece (RF-SEG-001).
-El seeder es SOLO para desarrollo — jamás habilites `SEED_ADMIN_ENABLED`
-en producción. Para otros usuarios: `POST /api/v1/auth/register` (público,
-con `Idempotency-Key`) y otorga permisos con
-`UPDATE users SET permissions='...'` en la BD `icms_auth`.
+Los demás usuarios se crean desde el módulo `/usuarios` (`POST
+/api/v1/users`, requiere `users:write`). El registro público
+`/api/v1/auth/register` fue eliminado. En producción, `Reclusorio#Dev2026`
+jamás: el superusuario se siembra con una contraseña fuerte propia.
 
 ### Comandos útiles
 
@@ -100,9 +112,10 @@ Qué queda corriendo:
   (`infra/postgres/initdb`, entregado como `config` de Swarm); esquema y
   semillas de catálogo se generan al arrancar el servicio.
 
-Después del primer despliegue: crear usuarios con `POST /api/v1/auth/register`
-y otorgar permisos en la BD `icms_auth` (jamás `SEED_ADMIN_ENABLED` en
-producción). Operación diaria: `docker stack ps reclusorio`,
+Primer despliegue: sembrar el superusuario (`SEED_ADMIN_ENABLED=true`,
+`SEED_ADMIN_USERNAME` y una `SEED_ADMIN_PASSWORD` fuerte, nunca la de
+desarrollo) y crear al resto desde el módulo `/usuarios`. Ya no existe el
+registro público `POST /api/v1/auth/register`. Operación diaria: `docker stack ps reclusorio`,
 `docker service logs reclusorio_<servicio>`; re-desplegar = volver a correr el
 script (Swarm actualiza sin downtime con `order: start-first`).
 
